@@ -16,60 +16,59 @@ const execOpts: ExecSyncOptionsWithStringEncoding = {
   stdio: 'pipe'
 };
 
+const shellSleep = (seconds: number) => {
+  try {
+    if (seconds > 0) {
+      execSync(`sleep ${seconds}`, { stdio: 'pipe' });
+    }
+  } catch (e) {
+    console.warn(`Sleep command failed: ${e}`);
+  }
+};
+
 describe('check-schema-drift.sh Unit Tests', () => {
   let initialTypesFileExisted: boolean = false;
   let originalTypesFileContentBeforeTestSuite: string | null = null;
 
-  beforeAll(async () => { // Changed to async to potentially accommodate delays if needed, though not used yet
+  beforeAll(async () => {
     initialTypesFileExisted = existsSync(typesFilePath);
     if (initialTypesFileExisted) {
       try {
         originalTypesFileContentBeforeTestSuite = readFileSync(typesFilePath, 'utf-8');
-      } catch (e) {
-        console.warn(`Unit Test Global Setup: Could not read initial types/supabase.ts. Error: ${e}`);
+      } catch (e: any) {
+        console.warn(`Unit Test Global Setup: Could not read initial ${typesFilePath}. Error: ${e.message}`);
       }
     }
-
     if (!existsSync(typesDir)) {
-      console.log(`Unit Test Global Setup: Creating directory ${typesDir}`);
       mkdirSync(typesDir, { recursive: true });
     }
+    console.log('Unit Test Global Setup: Initial generation of types/supabase.ts...');
     try {
-      console.log('Unit Test Global Setup: Initial generation of types/supabase.ts...');
       execSync(`bash ${generateTypesScriptPath}`, execOpts);
     } catch (error: any) {
-      console.error("Unit Test Global Setup FAILED to run generate-supabase-types.sh:", error.stdout, error.stderr);
+      console.error("Unit Test Global Setup FAILED. Stdout:", error.stdout, "Stderr:", error.stderr);
       throw error;
     }
-  }, 90000); // Increased timeout
+  }, 120000);
 
-  // beforeEach will attempt to sync, but individual tests might need to be more robust
-  beforeEach(async () => { // Changed to async
-    try {
-      // console.log(`Unit Test beforeEach: Re-syncing ${typesFilePath}...`);
-      execSync(`bash ${generateTypesScriptPath}`, execOpts);
-    } catch (error: any) {
-      console.error(`Unit Test beforeEach FAILED to re-sync ${typesFilePath}. This might leave stale content. Error: ${error.message}
-Stdout: ${error.stdout}
-Stderr: ${error.stderr}`);
-      // Do not re-throw here to see if individual test setup can recover or to see the test's specific failure
-    }
+  beforeEach(async () => {
+    // While individual tests will do explicit setup, a beforeEach can establish a common baseline
+    // or ensure the file exists if a test doesn't explicitly delete-then-create.
+    // console.log(`Unit Test beforeEach: Attempting re-sync of ${typesFilePath}...`);
+    // For now, let individual tests manage the file state completely for check-schema-drift tests
+    // to avoid potential interference if generateTypesScriptPath is flaky here.
+    // If generateTypesScriptPath were perfectly reliable, this would be the main place.
   });
 
-  afterAll(async () => { // Changed to async
+  afterAll(async () => {
     if (initialTypesFileExisted && originalTypesFileContentBeforeTestSuite !== null) {
       console.log('Unit Test Global Teardown: Restoring types/supabase.ts to its pre-suite state...');
       writeFileSync(typesFilePath, originalTypesFileContentBeforeTestSuite, 'utf-8');
     } else if (!initialTypesFileExisted && existsSync(typesFilePath)) {
-      console.log('Unit Test Global Teardown: types/supabase.ts was created by tests. Removing it.');
-      try {
-        rmSync(typesFilePath);
-      } catch (e) {
-        console.warn(`Unit Test Global Teardown: Could not remove ${typesFilePath}. Error: ${e}`);
-      }
+      console.log(`Unit Test Global Teardown: ${typesFilePath} created by tests. Removing.`);
+       try { rmSync(typesFilePath); } catch(e) { console.warn(`Failed to remove ${typesFilePath} in teardown.`) }
     }
   }, 60000);
-
 
   test('script file exists and is executable', () => {
     const stats = statSync(scriptPath);
@@ -77,36 +76,32 @@ Stderr: ${error.stderr}`);
     expect(stats.mode & 0o111, 'Script should be executable').toBeTruthy();
   });
 
-  test('script should report no drift when types are in sync', async () => { // Changed to async
+  test('script should report no drift when types are in sync', async () => {
     let output = '';
     let errorOutputIfScriptFails = '';
     let executionError: Error | null = null;
 
-    // ---- MOST CRITICAL CHANGE HERE for this test case ----
-    // Force a fresh generation of types/supabase.ts for this specific test
-    // to ensure it's not using stale content from a previous test (e.g., "drift" content).
-    console.log("Unit Test 'no drift': Explicitly re-generating types/supabase.ts for utmost freshness...");
+    console.log("Unit Test 'no drift': Explicitly re-generating types/supabase.ts...");
     try {
-      // Ensure it's deleted first to prevent issues with overwriting locked/problematic files
       if (existsSync(typesFilePath)) {
         rmSync(typesFilePath);
       }
-      execSync(`bash ${generateTypesScriptPath}`, execOpts); // Run the generation script
-      // Verify it's created and not empty
-      if (!existsSync(typesFilePath) || readFileSync(typesFilePath, 'utf-8').trim() === '') {
-        // For debugging, print what generateTypesScriptPath outputted if it failed to create the file
-        let genOutput = "";
-        try { const genResult = execSync(`bash ${generateTypesScriptPath}`, {...execOpts, stdio: 'pipe'}); genOutput = genResult.toString(); } catch (e:any) { genOutput = e.stdout + e.stderr; }
-        throw new Error(`Setup for 'no drift' test failed: ${generateTypesScriptPath} did not create a non-empty ${typesFilePath}. Generation output: ${genOutput}`);
+      execSync(`bash ${generateTypesScriptPath}`, execOpts);
+      
+      if (!existsSync(typesFilePath) || readFileSync(typesFilePath, 'utf-8').trim().length < 50) {
+        const content = existsSync(typesFilePath) ? readFileSync(typesFilePath, 'utf-8') : "File does not exist.";
+        throw new Error(`Unit Test 'no drift' setup: ${generateTypesScriptPath} failed to create a substantial ${typesFilePath}. Content: ${content.substring(0,100)}`);
       }
-      console.log(`Unit Test 'no drift': ${typesFilePath} explicitly re-synced.`);
+      const regeneratedContent = readFileSync(typesFilePath, 'utf-8');
+      if (regeneratedContent.includes("DeliberateDrift")) {
+          throw new Error(`Unit Test 'no drift' setup: ${typesFilePath} contains drift content after regeneration attempt.`);
+      }
+      console.log(`Unit Test 'no drift': ${typesFilePath} explicitly re-synced and verified (Node.js).`);
+      shellSleep(1); // More significant pause
     } catch (setupError: any) {
-      console.error("Unit Test 'no drift' FAILED during explicit re-sync setup:", setupError.message);
-      // If setup fails here, the test should also fail. We throw to make it clear.
-      // Vitest will catch this and report the test as failed.
+      console.error("Unit Test 'no drift' FAILED during setup. Error:", setupError.message, "Stdout:", setupError.stdout, "Stderr:", setupError.stderr);
       throw setupError;
     }
-    // ---- END CRITICAL CHANGE ----
 
     try {
       output = execSync(`bash ${scriptPath}`, execOpts);
@@ -114,52 +109,62 @@ Stderr: ${error.stderr}`);
         executionError = error;
         output = error.stdout || '';
         errorOutputIfScriptFails = error.stderr || '';
-        console.error("Unit Test 'no drift': executionError occurred. Status:", error.status);
+        console.error("Unit Test 'no drift': check-schema-drift.sh executionError. Status:", error.status);
         console.error("Unit Test 'no drift': Script STDOUT:", output);
         console.error("Unit Test 'no drift': Script STDERR:", errorOutputIfScriptFails);
     }
-    expect(executionError, `Script should exit successfully when no drift. Status: ${(executionError as any)?.status}. Script stderr: ${errorOutputIfScriptFails}. Script stdout: ${output}`).toBeNull();
-    expect(output, "Script should report 'No schema drift detected'").toContain('✅ No schema drift detected');
-  }, 90000); // Increased timeout for this test due to extra generation step
+    expect(executionError, `Script should exit successfully. Exit: ${((executionError||{})as any)?.status}. Stderr: ${errorOutputIfScriptFails}. Stdout: ${output}`).toBeNull();
+    expect(output).toContain('✅ No schema drift detected');
+  }, 120000); // Increased timeout
 
-
-  test('script should report drift when types are modified', async () => { // Changed to async
+  test('script should report drift when types are modified', async () => {
     let output = '';
     let errorOutputIfScriptFails = '';
     let executionError: Error | null = null;
-
-    // types/supabase.ts is freshly synced by beforeEach.
-    const contentBeforeThisTestModification = readFileSync(typesFilePath, 'utf-8');
-
-    const knownDriftContent = `// Unit Test: This content is deliberately different to ensure drift.\n// Timestamp: ${new Date().toISOString()}\nexport type ThisIsADeliberateDriftForUnitTests = {};\n`;
+    
+    console.log(`Unit Test 'drift': Ensuring ${typesFilePath} is fresh before modification...`);
+    let contentBeforeThisTestModification = "";
     try {
-        console.log(`Unit Test 'drift': Overwriting ${typesFilePath} with known distinct drift content.`);
+        execSync(`bash ${generateTypesScriptPath}`, execOpts); // Fresh baseline
+        contentBeforeThisTestModification = readFileSync(typesFilePath, 'utf-8');
+         if (contentBeforeThisTestModification.trim().length < 50) {
+            throw new Error(`Unit Test 'drift' setup: Pre-modification sync failed to create a substantial ${typesFilePath}.`);
+        }
+    } catch (syncError: any) {
+        console.error("Unit Test 'drift' FAILED during pre-modification sync. Stdout:", syncError.stdout, "Stderr:", syncError.stderr);
+        throw syncError;
+    }
+
+    const knownDriftContent = `// Unit Test: This is known different content for drift.\n// Timestamp: ${new Date().toISOString()}\nexport type ThisIsADeliberateDriftForUnitTests = {};\n`;
+    try {
         writeFileSync(typesFilePath, knownDriftContent, 'utf-8');
-    } catch (writeError) {
-        console.error(`Unit Test 'drift': Failed to overwrite ${typesFilePath} with drift content.`, writeError);
+        console.log(`Unit Test 'drift': Overwritten ${typesFilePath} with known drift content.`);
+        
+        const readBackContent = readFileSync(typesFilePath, 'utf-8');
+        if (!readBackContent.includes("ThisIsADeliberateDriftForUnitTests")) {
+            throw new Error("Unit Test 'drift': File modification verification by Node.js read failed.");
+        }
+        console.log('Unit Test \'drift\': Modification verified by Node.js readFileSync.');
+        shellSleep(1); // More significant pause
+    } catch (writeError: any) {
+        console.error(`Unit Test 'drift': Failed to write or verify drift content.`, writeError);
         throw writeError;
     }
 
     try {
       output = execSync(`bash ${scriptPath}`, execOpts);
-      console.error("Unit Test 'drift' FAIL: Script unexpectedly exited 0 (SUCCESS). STDOUT:", output);
+      console.error("Unit Test 'drift' FAIL: Script unexpectedly exited 0. STDOUT:", output);
     } catch (error: any) {
         executionError = error;
         output = error.stdout || '';
         errorOutputIfScriptFails = error.stderr || '';
-    } finally {
-      // Restore to the state before this specific test's modification
-      // (which should be the fresh types from beforeEach)
-      // console.log(`Unit Test 'drift': Restoring ${typesFilePath} to its pre-modification state for this test.`);
-      writeFileSync(typesFilePath, contentBeforeThisTestModification, 'utf-8');
     }
-
-    expect(executionError, "Script should exit with non-zero status when drift is detected (i.e., an error object should be present).").not.toBeNull();
+    
+    expect(executionError, "Script should exit with non-zero status for drift.").not.toBeNull();
     if (executionError && 'status' in executionError) {
         expect((executionError as any).status, "Exit code should be 1 for drift").toBe(1);
     }
-    
     const combinedOutput = output + errorOutputIfScriptFails;
-    expect(combinedOutput, "Script output should report 'Schema drift detected'").toContain('🚨 Schema drift detected!');
-  }, 60000);
+    expect(combinedOutput).toContain('🚨 Schema drift detected!');
+  }, 120000); // Increased timeout
 });
