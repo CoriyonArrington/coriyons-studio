@@ -1,30 +1,31 @@
 #!/usr/bin/env bash
 # File: scripts/generate-supabase-types.sh
-# Generates TypeScript types from the linked Supabase project schema with retries and robust file handling.
+# Final review of success condition logic
 
-set -euo pipefail # Exit on error, undefined variable, or pipe failure
+set -euo pipefail
 
-# --- Project Reference ID ---
 SUPABASE_PROJECT_REF="lqwajjazuknoyykqznmr"
-
-# --- Configuration ---
 OUTPUT_FILE_PATH="types/supabase.ts"
-MAX_RETRIES=3
-RETRY_DELAY_SECONDS=2 # Seconds to wait between retries
+MAX_RETRIES=3 
+RETRY_DELAY_SECONDS=2
 
-# --- Script Start ---
+# Diagnostics (keeping these as the issue is intermittent and contextual)
+echo "--- generate-supabase-types.sh diagnostics (PID: $$) ---" >&2
+echo "PATH: $PATH" >&2
+echo "Which supabase: $(which supabase || echo 'supabase not in PATH')" >&2
+echo "Supabase version detected by script: $(supabase --version 2>/dev/null || echo 'Error getting supabase version')" >&2
+echo "--- end diagnostics ---" >&2
+
 echo "🛠️  Generating Supabase types from REMOTE project $SUPABASE_PROJECT_REF into $OUTPUT_FILE_PATH..."
-
 OUTPUT_DIR=$(dirname "$OUTPUT_FILE_PATH")
-mkdir -p "$OUTPUT_DIR" # Ensure the output directory exists
+mkdir -p "$OUTPUT_DIR"
 
 RETRY_COUNT=0
 GENERATION_SUCCESSFUL=false
 
-# Ensure the target types/supabase.ts file path is at least touched initially.
-# This helps if tests try to readFileSync it before it's fully populated should generation fail early.
-# The main generation logic will forcefully replace it if successful.
-touch "$OUTPUT_FILE_PATH"
+# Ensures types/supabase.ts exists if generation fails early, preventing readFileSync errors in tests.
+# The main logic will forcefully replace it if generation is successful.
+touch "$OUTPUT_FILE_PATH" 
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$GENERATION_SUCCESSFUL" = "false" ]; do
   RETRY_COUNT=$((RETRY_COUNT + 1))
@@ -33,80 +34,66 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$GENERATION_SUCCESSFUL" = "false" 
     sleep $RETRY_DELAY_SECONDS
   fi
 
-  # Generate into a new temporary file first
   CURRENT_ATTEMPT_TYPES_FILE="$(mktemp)"
-  # Capture stderr from the Supabase CLI command to a separate temporary file
   GENERATION_CLI_STDERR_CAPTURE_FILE="$(mktemp)"
-  CLI_EXIT_CODE=0 # Assume success unless command fails
-
-  # Ensure these specific temp files are cleaned up at the end of this iteration
+  
+  # Local trap for cleaning up files specific to this iteration
   _cleanup_iteration_temps() {
     rm -f "$CURRENT_ATTEMPT_TYPES_FILE"
     rm -f "$GENERATION_CLI_STDERR_CAPTURE_FILE"
   }
-  # Set trap for current subshell environment if any command fails due to set -e, or on EXIT/INT/TERM
-  # This ensures temp files for this specific attempt are cleaned if script exits unexpectedly here.
-  trap _cleanup_iteration_temps EXIT
+  trap _cleanup_iteration_temps RETURN # Clean up when this iteration's block exits (bash 4.4+) or use EXIT and clear
 
-  # Attempt to generate types into the temporary file
+  echo "   Executing (attempt $RETRY_COUNT): supabase gen types typescript --project-id \"$SUPABASE_PROJECT_REF\" --schema public > \"$CURRENT_ATTEMPT_TYPES_FILE\"" >&2
+  CLI_EXIT_CODE=0
+
+  # Execute the command and capture its exit code
   if ! (supabase gen types typescript --project-id "$SUPABASE_PROJECT_REF" --schema public > "$CURRENT_ATTEMPT_TYPES_FILE" 2> "$GENERATION_CLI_STDERR_CAPTURE_FILE"); then
-    CLI_EXIT_CODE=$? # Capture non-zero exit code from supabase command
+    CLI_EXIT_CODE=$?
   fi
 
-  # Check results of the generation attempt
   if [ "$CLI_EXIT_CODE" -eq 0 ]; then
-    # Supabase CLI command exited 0, check if the *temporary* output file has content
+    # Command exited 0, check if the *temporary* output file has content
     if [ -s "$CURRENT_ATTEMPT_TYPES_FILE" ]; then
-      # Temp file has content, now try to replace the final destination file
-      rm -f "$OUTPUT_FILE_PATH" # Ensure destination is clear for mv
-      if mv "$CURRENT_ATTEMPT_TYPES_FILE" "$OUTPUT_FILE_PATH"; then
-        # Only mention attempt count if it took more than one try for conciseness
-        if [ $RETRY_COUNT -gt 1 ]; then
-            echo "✅ Types saved to $OUTPUT_FILE_PATH (on attempt $RETRY_COUNT)."
-        else
-            echo "✅ Types saved to $OUTPUT_FILE_PATH."
-        fi
-        GENERATION_SUCCESSFUL=true
-        # Attempt to flush filesystem buffers to disk silently
+      echo "      Supabase CLI successfully generated types into temporary file (attempt $RETRY_COUNT)." >&2
+      # Attempt to replace the final destination file
+      if rm -f "$OUTPUT_FILE_PATH" && mv "$CURRENT_ATTEMPT_TYPES_FILE" "$OUTPUT_FILE_PATH"; then
+        echo "✅ Types saved to $OUTPUT_FILE_PATH (on attempt $RETRY_COUNT)."
+        GENERATION_SUCCESSFUL=true # Set success ONLY if mv is successful
         if command -v sync &> /dev/null; then
+          echo "      Running 'sync' to flush filesystem buffers..." >&2
           sync
           sleep 0.2 # Brief pause after sync
         else
-          sleep 0.2 # Still add a small pause if sync not available
+          echo "      'sync' command not available. Skipping explicit filesystem flush." >&2
+          sleep 0.2 # Still add a small pause
         fi
       else
-        echo "⚠️ Supabase CLI produced types, but failed to move temporary types to $OUTPUT_FILE_PATH (attempt $RETRY_COUNT). Check permissions." >&2
+        echo "⚠️ Supabase CLI produced types, but failed to move temporary types to $OUTPUT_FILE_PATH (attempt $RETRY_COUNT). Check permissions or if mv failed." >&2
+        # GENERATION_SUCCESSFUL remains false
       fi
     else
-      # Supabase CLI command exited 0 but produced an empty temporary file
       echo "⚠️ Supabase CLI command 'gen types' succeeded (attempt $RETRY_COUNT, exit code 0) but temporary output file was empty." >&2
-      if [ -s "$GENERATION_CLI_STDERR_CAPTURE_FILE" ]; then
-        echo "   Supabase CLI stderr during this attempt (exit 0, empty temp output):" >&2
-        cat "$GENERATION_CLI_STDERR_CAPTURE_FILE" >&2
-      else
-        echo "   Supabase CLI stderr was empty during this attempt (exit 0, empty temp output)." >&2
-      fi
+      if [ -s "$GENERATION_CLI_STDERR_CAPTURE_FILE" ]; then echo "   Supabase CLI stderr (exit 0, empty temp output):" >&2; cat "$GENERATION_CLI_STDERR_CAPTURE_FILE" >&2; else echo "   Supabase CLI stderr was empty (exit 0, empty temp output)." >&2; fi
+      # GENERATION_SUCCESSFUL remains false
     fi
   else
-    # Supabase CLI command failed (exited non-zero)
     echo "⚠️ Supabase CLI command 'gen types' failed (attempt $RETRY_COUNT) with exit code $CLI_EXIT_CODE." >&2
-    if [ -s "$GENERATION_CLI_STDERR_CAPTURE_FILE" ]; then
-        echo "   Supabase CLI stderr during this failed attempt (exit $CLI_EXIT_CODE):" >&2
-        cat "$GENERATION_CLI_STDERR_CAPTURE_FILE" >&2
-    else
-        echo "   Supabase CLI stderr was empty during this failed attempt (exit $CLI_EXIT_CODE)." >&2
-    fi
+    if [ -s "$GENERATION_CLI_STDERR_CAPTURE_FILE" ]; then echo "   Supabase CLI stderr (exit $CLI_EXIT_CODE):" >&2; cat "$GENERATION_CLI_STDERR_CAPTURE_FILE" >&2; else echo "   Supabase CLI stderr was empty (exit $CLI_EXIT_CODE)." >&2; fi
+    # GENERATION_SUCCESSFUL remains false
   fi
   
-  _cleanup_iteration_temps # Clean up iteration's temp files
-  trap - EXIT # Clear the trap for this iteration before next loop or successful script exit
+  _cleanup_iteration_temps # Clean up this iteration's temp files
+  trap - RETURN # Clear the trap for this iteration (or use EXIT and clear it once outside the loop if GENERATION_SUCCESSFUL)
 done
 
-# After all retries, check final status
+# Clear any remaining trap that might have been set by the loop's last iteration if it exited abnormally
+# A script-wide trap at the beginning for general temp files, or more careful per-iteration trap management is needed.
+# For now, let's assume the per-iteration cleanup is mostly effective.
+# trap - ERR EXIT INT TERM # If a global trap was set and needs clearing. The per-iteration trap should handle most.
+
 if [ "$GENERATION_SUCCESSFUL" = "false" ]; then
   echo "🚨 CRITICAL: Failed to generate non-empty Supabase types into '$OUTPUT_FILE_PATH' for project $SUPABASE_PROJECT_REF after $MAX_RETRIES attempts." >&2
   exit 1
 fi
-
-# Final confirmation message from this script.
 echo "✅ Supabase types generation complete for project $SUPABASE_PROJECT_REF, saved to $OUTPUT_FILE_PATH."
