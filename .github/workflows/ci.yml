@@ -12,17 +12,19 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Secrets
+      # Secrets needed for the workflow
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL }} # Needed if tests/build directly access the DB
+      # DATABASE_URL is kept as it's commonly needed for tests/builds.
+      # Remove if your tests/build exclusively use the Supabase client SDK with public keys.
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      # Variables
+      # Variables needed for the workflow
       NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
-      # Custom environment variable
+      # Custom environment variable (if your tests use this)
       CI_SKIP_BLOCKED_TESTS: true
-      
+
     strategy:
       matrix:
         node-version: [20.x]
@@ -44,8 +46,8 @@ jobs:
         echo "Installing prerequisites: jq, tree, postgresql-client, curl..."
         sudo apt-get install -y jq tree postgresql-client curl ca-certificates
 
-        echo "Installing Supabase CLI (Updated Version)..."
-        SUPABASE_CLI_VERSION="2.23.4" # Ensure this matches your desired version
+        echo "Installing Supabase CLI..."
+        SUPABASE_CLI_VERSION="2.23.4" # Using the version confirmed to work well locally
         echo "Attempting to install Supabase CLI version ${SUPABASE_CLI_VERSION}..."
         SUPABASE_DEB_URL="https://github.com/supabase/cli/releases/download/v${SUPABASE_CLI_VERSION}/supabase_${SUPABASE_CLI_VERSION}_linux_amd64.deb"
         curl -fLso supabase.deb "${SUPABASE_DEB_URL}" || (echo "!!! Failed to download Supabase CLI version ${SUPABASE_CLI_VERSION}" && exit 1)
@@ -54,7 +56,7 @@ jobs:
         echo "Supabase CLI $(supabase --version) installed."
 
         echo "Installing GitHub CLI..."
-        GH_CLI_VERSION="2.50.0" 
+        GH_CLI_VERSION="2.50.0" # Or use a specific version you prefer
         GH_DEB_URL="https://github.com/cli/cli/releases/download/v${GH_CLI_VERSION}/gh_${GH_CLI_VERSION}_linux_amd64.deb"
         curl -fLso gh_cli.deb "${GH_DEB_URL}" || (echo "!!! Failed to download GitHub CLI" && exit 1)
         sudo dpkg -i gh_cli.deb
@@ -69,41 +71,54 @@ jobs:
       run: |
         echo "Removing existing node_modules and package-lock.json (if any)..."
         rm -rf node_modules
-        rm -f package-lock.json
+        rm -f package-lock.json # For CI, 'npm ci' is generally preferred if package-lock.json is committed.
         echo "Running npm install..."
         npm install
         echo "Project dependencies installed."
 
     - name: Generate Directory Structure (if needed by subsequent steps)
       run: bash ./scripts/generate-directory-structure.sh
+      # This script runs if it's necessary for setting up paths for types, docs, etc.
 
     - name: Supabase Login
       run: |
         echo "Logging into Supabase CLI..."
         supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         echo "Supabase CLI login successful."
-        # supabase status # Removed: This command checks local Docker containers, not suitable for CI.
+        # 'supabase status' was removed as it's for local Docker setups.
 
     - name: GitHub CLI Authentication Check
       run: |
         echo "Verifying GitHub CLI authentication..."
-        gh auth status
+        gh auth status # Uses the default GITHUB_TOKEN provided by Actions
         echo "GitHub CLI authentication status checked."
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Uses the default Actions token
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Explicitly use the default Actions token
 
-    - name: Check for Schema Drift (on committed types)
-      run: bash ./scripts/check-schema-drift.sh
+    - name: Verify Local Supabase Types Against Remote
+      run: bash ./scripts/verify-schema-types.sh
+      # This script will exit 1 if types/supabase.ts (committed version)
+      # is out of sync with the remote database, failing the workflow.
 
-    - name: Generate/Update Supabase Types (ensure workspace has latest)
-      run: bash ./scripts/generate-supabase-types.sh
+    - name: Ensure Workspace Has Latest Supabase Types for Build/Test
+      run: bash ./scripts/update-supabase-types.sh
+      # This ensures types/supabase.ts in the CI workspace is definitively
+      # up-to-date for subsequent steps, even if verify-schema-types.sh
+      # passed (meaning committed types were already up-to-date).
+      # This step is crucial if subsequent steps (lint, test, build) must
+      # operate on the absolute latest version from the remote.
 
     - name: Run Linter
       run: npm run lint
+      # Ensure your lint script also checks generated TypeScript files.
 
     - name: Run Tests (Vitest)
       run: npm run test
-      # IMPORTANT: Ensure 'npm run test' executes 'vitest run' for a single CI pass.
+      # IMPORTANT: Ensure 'npm run test' in your package.json executes 'vitest run'
+      # (or use a CI-specific script like 'npm run test:ci')
+      # to perform a single run and exit, not enter watch mode.
 
     - name: Check Build
       run: npm run build
+      # NEXT_PUBLIC_* vars are available from job's env block for the Next.js build.
+      # DATABASE_URL might be needed here if your build fetches data directly.

@@ -8,8 +8,8 @@
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "docs:structure": "bash ./scripts/generate-directory-structure.sh",
-    "docs:types": "bash ./scripts/generate-supabase-types.sh",
-    "check:schema-drift": "bash ./scripts/check-schema-drift.sh",
+    "types:update": "bash scripts/update-supabase-types.sh",
+    "types:verify": "bash scripts/verify-schema-types.sh",
     "preflight": "bash scripts/preflight-check.sh",
     "prepare": "husky"
   },

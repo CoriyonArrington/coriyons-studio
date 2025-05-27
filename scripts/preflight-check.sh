@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
+# File: scripts/preflight-check.sh
 
-# Exit immediately if a command exits with a non-zero status.
-set -e
+set -e # Exit immediately if a command exits with a non-zero status.
 
 # --- Helper function for logging ---
 log_step() {
@@ -9,90 +9,73 @@ log_step() {
   echo "🚀 Step: $1"
   echo "--------------------------------------------------"
 }
-
-log_success() {
-  echo "✅ $1"
-}
-
-log_warning() {
-  echo "⚠️ $1"
-}
-
-log_info() {
-  echo "ℹ️ $1"
-}
+log_success() { echo "✅ $1"; }
+log_warning() { echo "⚠️ $1"; } # Not used if set -e is active for warnings that mean failure
+log_info() { echo "ℹ️ $1"; }
 
 # --- Start Pre-flight Checks ---
 echo "🏁 Starting Pre-flight Checks..."
 
-# 1. Generate Supabase Types & Check Schema Drift
-log_step "Supabase Schema & Types"
-echo "   Ensuring Supabase types are up-to-date..."
-bash scripts/generate-supabase-types.sh
-log_success "Supabase types generated."
+# 1. Verify Supabase Schema Types
+log_step "Supabase Schema Type Verification"
+if bash scripts/verify-schema-types.sh; then
+  log_success "Local Supabase types are IN SYNC with the remote schema."
+else
+  # verify-schema-types.sh exits 1 on drift and prints instructions.
+  # set -e will cause this preflight script to exit here if verify-schema-types.sh failed.
+  echo "   👆 Schema drift detected or verification failed. Pre-flight check cannot continue." >&2
+  exit 1 
+fi
 
-echo "   Checking for schema drift..."
-bash scripts/check-schema-drift.sh
-log_success "Schema drift check passed (no drift detected)."
+# 2. Generate Directory Structure (if this script exists and is needed)
+log_step "Directory Structure Setup"
+if [ -f scripts/generate-directory-structure.sh ]; then
+  echo "   Running directory structure generation..."
+  bash scripts/generate-directory-structure.sh
+  log_success "Directory structure script completed."
+else
+  log_info "scripts/generate-directory-structure.sh not found. Skipping."
+fi
 
-# 2. Linting
+
+# 3. Linting
 log_step "Linting & Formatting"
-# Assumption: You have an npm script "lint" configured (e.g., "eslint .")
-# Or "format:check" for prettier
 if [ -f package.json ] && grep -q "\"lint\"" package.json; then
   echo "   Running 'npm run lint'..."
   npm run lint
   log_success "Linting passed."
 else
-  log_warning "'npm run lint' script not found in package.json. Skipping linting. Consider adding it."
-  # You could add direct calls here if you know the tools, e.g.:
-  # if command -v eslint &> /dev/null; then eslint .; else log_warning "ESLint not found."; fi
+  log_warning "'npm run lint' script not found in package.json. Skipping."
 fi
 
-# 3. Run Tests (Unit & Integration)
+# 4. Run Tests (Unit & Integration)
 log_step "Running Tests"
-# Assumption: Your 'npm run test' script calls 'vitest run' for a single pass.
-# If 'npm run test' uses 'vitest' (watch mode), this will hang.
-# It's better to have a dedicated script like 'npm run test:ci' or call 'vitest run' directly.
 if [ -f package.json ] && grep -q "\"test\"" package.json; then
-  echo "   Running 'npm run test' (ensure this uses 'vitest run' or similar for non-watch mode)..."
-  # IMPORTANT: Ensure your "test" script in package.json is configured for a single run, e.g., "vitest run"
-  # If it's just "vitest", it will hang in watch mode.
-  # Alternatively, call vitest directly if available:
-  if command -v vitest &> /dev/null; then
-    vitest run
-  else
-    npm run test # Fallback, hoping it's configured correctly
-  fi
+  echo "   Running 'npm run test' (ensure this uses 'vitest run')..."
+  npm run test # Make sure your package.json "test" script is "vitest run"
   log_success "All tests passed."
 else
-  log_warning "'npm run test' script not found in package.json. Skipping tests. Consider adding it."
+  log_warning "'npm run test' script not found. Skipping tests."
 fi
 
-# 4. Production Build (Example for Next.js, adapt if different)
+# 5. Production Build Check (Example for Next.js)
 log_step "Production Build Check"
 if [ -f package.json ] && grep -q "\"build\"" package.json; then
   echo "   Attempting production build using 'npm run build'..."
   npm run build
   log_success "Production build successful."
 else
-  log_info "No 'npm run build' script found. Skipping production build check."
+  log_info "No 'npm run build' script found. Skipping."
 fi
 
-# 5. Generate Documentation (Example using TypeDoc, adapt if different)
+# 6. Generate Documentation (Example)
 log_step "Documentation Generation"
-# Assumption: You have an npm script "docs:generate" or use a tool like TypeDoc
 if [ -f package.json ] && grep -q "\"docs:generate\"" package.json; then
   echo "   Generating documentation using 'npm run docs:generate'..."
   npm run docs:generate
   log_success "Documentation generated."
-elif command -v typedoc &> /dev/null && [ -d "src" ]; then # Check if typedoc is globally available and src dir exists
-  echo "   Attempting to generate documentation with TypeDoc..."
-  # Adjust TypeDoc options as needed: --out <outputDir> <entryPoints>
-  typedoc --out docs src || log_warning "TypeDoc generation failed or completed with warnings."
-  log_success "Documentation generation attempted."
 else
-  log_info "No documentation generation script (e.g., 'npm run docs:generate' or TypeDoc) found/configured. Skipping."
+  log_info "No documentation generation script found. Skipping."
 fi
 
 echo ""
