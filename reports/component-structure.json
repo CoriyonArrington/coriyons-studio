@@ -1,0 +1,93 @@
+[
+  {
+    "name": "CodeBlock",
+    "location": "@/components/tutorial/code-block.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "ConnectSupabaseSteps",
+    "location": "@/components/tutorial/connect-supabase-steps.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "DeployButton",
+    "location": "@/components/deploy-button.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "EnvVarWarning",
+    "location": "@/components/env-var-warning.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "FetchDataSteps",
+    "location": "@/components/tutorial/fetch-data-steps.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "FormMessage",
+    "location": "@/components/form-message.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "HeaderAuth",
+    "location": "@/components/header-auth.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "Hero",
+    "location": "@/components/hero.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "NextLogo",
+    "location": "@/components/next-logo.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "SignUpUserSteps",
+    "location": "@/components/tutorial/sign-up-user-steps.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "SubmitButton",
+    "location": "@/components/submit-button.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "SupabaseLogo",
+    "location": "@/components/supabase-logo.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "TutorialStep",
+    "location": "@/components/tutorial/tutorial-step.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  }
+]

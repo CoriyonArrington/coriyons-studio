@@ -1,0 +1,107 @@
+# .github/workflows/ci.yml
+name: 🧪 CI Checks
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      CI_SKIP_BLOCKED_TESTS: true
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Install External CLI Dependencies
+      run: |
+        echo "Updating apt..."
+        sudo apt-get update -y
+        echo "Installing prerequisites: jq, tree, postgresql-client, curl..."
+        sudo apt-get install -y jq tree postgresql-client curl ca-certificates
+
+        echo "Installing Supabase CLI (Updated Version)..."
+        # UPDATED Supabase CLI version to the one recommended in logs
+        SUPABASE_CLI_VERSION="2.23.4" 
+        echo "Attempting to install Supabase CLI version ${SUPABASE_CLI_VERSION}..."
+        SUPABASE_DEB_URL="https://github.com/supabase/cli/releases/download/v${SUPABASE_CLI_VERSION}/supabase_${SUPABASE_CLI_VERSION}_linux_amd64.deb"
+        curl -fLso supabase.deb "${SUPABASE_DEB_URL}" || (echo "!!! Failed to download Supabase CLI version ${SUPABASE_CLI_VERSION}" && exit 1)
+        sudo dpkg -i supabase.deb
+        rm -f supabase.deb
+        echo "Supabase CLI $(supabase --version) installed."
+
+        echo "Installing GitHub CLI..."
+        GH_CLI_VERSION="2.50.0" 
+        GH_DEB_URL="https://github.com/cli/cli/releases/download/v${GH_CLI_VERSION}/gh_${GH_CLI_VERSION}_linux_amd64.deb"
+        curl -fLso gh_cli.deb "${GH_DEB_URL}" || (echo "!!! Failed to download GitHub CLI" && exit 1)
+        sudo dpkg -i gh_cli.deb
+        rm -f gh_cli.deb
+        echo "GitHub CLI $(gh --version) installed."
+
+        echo "Verifying installations..."
+        command -v jq && command -v tree && command -v pg_dump && command -v supabase && command -v gh || (echo "One or more CLI tools not found!" && exit 1)
+      shell: bash
+
+    - name: Clean and Install Project Dependencies
+      run: |
+        echo "Removing existing node_modules and package-lock.json (if any)..."
+        rm -rf node_modules
+        rm -f package-lock.json
+        echo "Running npm install..."
+        npm install
+        echo "Project dependencies installed."
+
+    - name: Generate Directory Structure (if needed by subsequent steps)
+      run: bash ./scripts/generate-directory-structure.sh
+
+    - name: Supabase Login
+      run: |
+        echo "Logging into Supabase CLI..."
+        supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        echo "Supabase CLI login attempted."
+        supabase status # Verify login and linked project
+      env:
+        SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+    - name: GitHub CLI Authentication Check
+      run: |
+        echo "Verifying GitHub CLI authentication..."
+        gh auth status
+        echo "GitHub CLI authentication status checked."
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Check for Schema Drift (on committed types)
+      run: bash ./scripts/check-schema-drift.sh
+
+    - name: Generate/Update Supabase Types (ensure workspace has latest)
+      run: bash ./scripts/generate-supabase-types.sh
+
+    - name: Run Linter
+      run: npm run lint
+
+    - name: Run Tests (Vitest)
+      run: npm run test
+      # IMPORTANT: Ensure 'npm run test' executes 'vitest run' for a single CI pass.
+
+    - name: Check Build
+      run: npm run build
