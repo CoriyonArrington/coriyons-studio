@@ -4,60 +4,70 @@
 # 1. A JSON list of components for the component audit tool.
 # 2. A Markdown file representing the project's directory tree.
 
-set -e # Exit immediately if a command exits with a non-zero status.
+set -euo pipefail # Ensure pipefail is also set, along with -e and -u
+
+# --- Define Project Root ---
+# This assumes the script is being run from the root of the project.
+PROJECT_ROOT=$(pwd)
 
 # --- Configuration for JSON Component List ---
-JSON_OUTPUT_DIR="reports"
+JSON_OUTPUT_DIR_RELATIVE="reports" # Relative to project root
 JSON_FILENAME="component-structure.json"
-JSON_FILEPATH="$JSON_OUTPUT_DIR/$JSON_FILENAME"
+JSON_FILEPATH="${PROJECT_ROOT}/${JSON_OUTPUT_DIR_RELATIVE}/${JSON_FILENAME}"
 
 # --- Configuration for Markdown Directory Tree ---
-TREE_OUTPUT_DIR="reports" # Or choose 'docs' or another location
-TREE_FILENAME="project-directory-tree.md" # Changed from timestamped, generic name
-TREE_FILEPATH="$TREE_OUTPUT_DIR/$TREE_FILENAME"
+TREE_OUTPUT_DIR_RELATIVE="reports" # Relative to project root
+TREE_FILENAME="project-directory-tree.md"
+TREE_FILEPATH="${PROJECT_ROOT}/${TREE_OUTPUT_DIR_RELATIVE}/${TREE_FILENAME}"
 TREE_TITLE="# Project Directory Structure"
-TREE_EXCLUDE_PATTERN="node_modules|.git|.next|*.log*|dist|build|coverage|supabase/.temp|project-planning|database/schemas" # Added more exclusions
+# Added .DS_Store and other common exclusions, ensure paths in exclude are relative to the tree command's starting point or use absolute paths if tree supports.
+# For tree running from PROJECT_ROOT (./), patterns like "node_modules" are fine.
+TREE_EXCLUDE_PATTERN="node_modules|.git|.next|*.log*|dist|build|coverage|supabase/.temp|project-planning|database/schemas|reports/.DS_Store|assets/.DS_Store|docs/.DS_Store|public/.DS_Store"
 
 echo "🔄 Generating outputs..."
 
-# --- 1. Prepare output folder for JSON (also used by Markdown tree) ---
-mkdir -p "$JSON_OUTPUT_DIR"
-mkdir -p "$TREE_OUTPUT_DIR" # Ensure tree output directory also exists
+# --- 1. Prepare output directories (relative to project root) ---
+mkdir -p "${PROJECT_ROOT}/${JSON_OUTPUT_DIR_RELATIVE}"
+mkdir -p "${PROJECT_ROOT}/${TREE_OUTPUT_DIR_RELATIVE}" # In case it's different in the future
 
 # --- 2. Generate the component list JSON using embedded Node ---
 echo "   Generating component list JSON ($JSON_FILEPATH)..."
-# Run the Node script. Output goes directly to the file via fs.writeFileSync.
-node << NODE
+
+# The Node.js script will execute with process.cwd() as PROJECT_ROOT.
+# Shell variables JSON_OUTPUT_DIR_RELATIVE and JSON_FILENAME will be expanded into the Node script string.
+node << NODE_SCRIPT
 const fs = require('fs');
 const path = require('path');
 
 // --- Configuration for Node Script ---
 const componentRootDirs = [
-    path.join(process.cwd(), 'components')
+    path.join(process.cwd(), 'components') // Assumes 'components' is at project root
 ];
-// Corrected path usage from shell variable
-const outputFilePath = path.join(process.cwd(), '$JSON_FILEPATH');
+// Output path for the JSON file, constructed inside Node using process.cwd()
+const outputDir = path.join(process.cwd(), '${JSON_OUTPUT_DIR_RELATIVE}');
+const outputFilePath = path.join(outputDir, '${JSON_FILENAME}');
 
 const excludePatterns = [
-    'ui',
-    'typography',
+    'ui', 
+    'typography', 
     'node_modules',
     '.git',
     '.next',
-    'index.ts', // Exclude index.ts files by name
+    'index.ts',
+    'index.tsx',
     '.DS_Store',
+    // Example: '*.stories.tsx', '*.test.tsx' // if you want to exclude these patterns
 ];
 
 function toPascalCase(str) {
     if (!str) return 'UnnamedComponent';
     const baseName = path.basename(str, path.extname(str));
     return baseName
-        .split(/[-_]/)
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join('');
+        .replace(/[^a-zA-Z0-9]+(.)/g, (_match, chr) => chr.toUpperCase())
+        .replace(/^[a-z]/, (chr) => chr.toUpperCase());
 }
 
-function findComponents(dir, basePath) {
+function findComponents(dir, projectRootForAlias) {
     let components = [];
     let items;
     try {
@@ -69,22 +79,31 @@ function findComponents(dir, basePath) {
 
     for (const item of items) {
         const currentPath = path.join(dir, item.name);
-        const relativePath = path.relative(basePath, currentPath);
-        const pathSegments = relativePath.split(path.sep);
-        const isExcluded = excludePatterns.includes(item.name) || 
-                           (pathSegments.length > 0 && excludePatterns.includes(pathSegments[0]));
+        const relativePathFromProjectRoot = path.relative(projectRootForAlias, currentPath);
+        const pathSegments = relativePathFromProjectRoot.split(path.sep);
+        
+        const isExcludedByName = excludePatterns.includes(item.name);
+        // Check if any part of the path up to the component's dir is in excludePatterns (e.g. components/ui/...)
+        let isExcludedByParentDir = false;
+        for (let i = 0; i < pathSegments.length -1; i++) { // Check parent dirs, not the file/dir name itself
+            if (excludePatterns.includes(pathSegments[i])) {
+                isExcludedByParentDir = true;
+                break;
+            }
+        }
+        const isStoryOrTest = item.name.endsWith('.stories.tsx') || item.name.endsWith('.test.tsx');
 
-        if (isExcluded) {
+        if (isExcludedByName || isExcludedByParentDir || isStoryOrTest) {
              continue;
         }
 
         if (item.isDirectory()) {
-            components = components.concat(findComponents(currentPath, basePath));
+            components = components.concat(findComponents(currentPath, projectRootForAlias));
         } else if (item.isFile() && (item.name.endsWith('.tsx'))) {
              const componentName = toPascalCase(item.name);
-             if (componentName === 'Index') continue;
+             if (componentName === 'Index' && (item.name === 'index.tsx' || item.name === 'index.ts')) continue;
 
-             const aliasPath = \`@/\${path.relative(process.cwd(), currentPath).replace(/\\\\/g, '/')}\`;
+             const aliasPath = \`@/\${relativePathFromProjectRoot.replace(/\\\\/g, '/')}\`;
 
              try {
                  const content = fs.readFileSync(currentPath, 'utf8');
@@ -106,10 +125,12 @@ function findComponents(dir, basePath) {
 }
 
 let allComponents = [];
+const projectRoot = process.cwd(); 
+
 componentRootDirs.forEach(rootDir => {
     console.log(\`   Scanning component directory: \${rootDir}\`);
     if(fs.existsSync(rootDir)){
-        allComponents = allComponents.concat(findComponents(rootDir, rootDir));
+        allComponents = allComponents.concat(findComponents(rootDir, projectRoot));
     } else {
         console.warn(\`   Component directory not found, skipping: \${rootDir}\`);
     }
@@ -118,43 +139,62 @@ componentRootDirs.forEach(rootDir => {
 allComponents.sort((a, b) => a.name.localeCompare(b.name));
 
 try {
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+    }
     fs.writeFileSync(outputFilePath, JSON.stringify(allComponents, null, 2));
     console.log(\`   Component list successfully written to \${outputFilePath}\`);
-    process.exit(0);
+    process.exit(0); // Explicitly exit 0 on success
 } catch (writeErr) {
     console.error(\`   Error writing component list JSON to \${outputFilePath}:\`, writeErr);
-    process.exit(1);
+    process.exit(1); // Explicitly exit 1 on failure
 }
-NODE
+NODE_SCRIPT
 # --- End of Node script marker ---
 
-NODE_EXIT_CODE=$?
-if [ "$NODE_EXIT_CODE" -eq 0 ]; then
- echo "✅ Component list JSON generated successfully."
-else
- echo "❌ Failed to generate component list JSON (Node script exited with code $NODE_EXIT_CODE)."
- # Decide if you want to exit the whole script or continue to tree generation
- # exit 1 
+NODE_EXIT_CODE=$? 
+
+if [ "$NODE_EXIT_CODE" -ne 0 ]; then
+ echo "❌ ERROR: Node script for component list generation failed with exit code $NODE_EXIT_CODE." >&2
+ exit 1 
 fi
 
-echo "" # Newline for readability
+# Verify component list JSON was created and is not empty by the bash script
+if [ ! -f "$JSON_FILEPATH" ] || [ ! -s "$JSON_FILEPATH" ]; then
+  echo "🚨 ERROR: Failed to create or populate $JSON_FILEPATH (verified by bash)." >&2
+  exit 1
+else
+  echo "✅ Component list JSON generated successfully."
+fi
+
+echo "" 
 
 # --- 3. Generate the Markdown Directory Tree ---
 echo "   Generating Markdown directory tree ($TREE_FILEPATH)..."
-if command -v tree &> /dev/null
-then
-    # Add title to the Markdown file
+if command -v tree &> /dev/null; then
     echo "$TREE_TITLE" > "$TREE_FILEPATH"
-    echo "" >> "$TREE_FILEPATH" # Add a newline
-    echo "\`\`\`" >> "$TREE_FILEPATH" # Start code block for tree
-    # Run tree command, append its output to the file
-    tree -L 4 -aF --noreport -I "$TREE_EXCLUDE_PATTERN" ./ >> "$TREE_FILEPATH" # -L 4 for depth, -a for all files, -F to classify, --noreport
-    echo "\`\`\`" >> "$TREE_FILEPATH" # End code block
-    echo "✅ Project directory tree saved as $TREE_FILENAME in $TREE_OUTPUT_DIR/"
+    echo "" >> "$TREE_FILEPATH" 
+    echo "\`\`\`" >> "$TREE_FILEPATH" 
+    # Run tree command from the PROJECT_ROOT, targeting its current directory (./)
+    if (cd "$PROJECT_ROOT" && tree -L 4 -aF --noreport -I "$TREE_EXCLUDE_PATTERN" ./ >> "$TREE_FILEPATH"); then
+      echo "\`\`\`" >> "$TREE_FILEPATH" 
+      echo "✅ Project directory tree saved as $TREE_FILENAME in $TREE_OUTPUT_DIR_RELATIVE/"
+    else
+      TREE_EXIT_CODE=$?
+      echo "⚠️ 'tree' command failed or had issues (exit code: $TREE_EXIT_CODE). Check $TREE_FILEPATH." >&2
+      if [ -f "$TREE_FILEPATH" ]; then echo "\`\`\`" >> "$TREE_FILEPATH"; fi
+      # set -e will handle exit if tree itself fails.
+    fi
 else
-    echo "⚠️ 'tree' command not found. Skipping Markdown directory tree generation."
-    echo "   To install 'tree' on macOS: brew install tree"
-    echo "   To install 'tree' on Debian/Ubuntu: sudo apt install tree"
+    echo "⚠️ 'tree' command not found. Skipping Markdown directory tree generation." >&2
 fi
 
-echo "✨ Script finished."
+# Verify tree file existence (content check might be too strict as it could be just a title)
+if command -v tree &> /dev/null; then
+  if [ ! -f "$TREE_FILEPATH" ]; then
+    echo "🚨 ERROR: Tree command ran but $TREE_FILEPATH was not created." >&2
+    exit 1
+  fi
+fi
+
+echo "✨ Directory structure generation script finished."
