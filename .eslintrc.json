@@ -2,5 +2,19 @@
   "extends": [
     "next/core-web-vitals",
     "next/typescript"
-  ]
+  ],
+  "rules": {
+    // You can add other custom rules here if needed
+    "@typescript-eslint/no-unused-vars": [
+      "warn", // You can change this to "error" if you prefer linting to fail
+      {
+        "vars": "all", // Default behavior: check all variables
+        "args": "after-used", // Default behavior: check all arguments except those after the last used argument
+        "ignoreRestSiblings": true, // Default behavior for object destructuring
+        "varsIgnorePattern": "^_", // Ignore variables starting with an underscore
+        "argsIgnorePattern": "^_", // Ignore function arguments starting with an underscore
+        "caughtErrorsIgnorePattern": "^_" // Specifically ignore 'catch' clause errors starting with an underscore
+      }
+    ]
+  }
 }

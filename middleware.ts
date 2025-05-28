@@ -1,6 +1,6 @@
 // middleware.ts
 import { NextResponse, type NextRequest } from "next/server";
-import { updateSession } from "@/utils/supabase/middleware";
+import { updateSession } from "@/src/utils/supabase/middleware";
 import { createServerClient, type CookieOptions } from '@supabase/ssr'; // Import for creating a client to read session
 
 export async function middleware(request: NextRequest) {

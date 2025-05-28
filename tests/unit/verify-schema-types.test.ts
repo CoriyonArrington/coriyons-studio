@@ -2,30 +2,32 @@
 import { describe, test, expect, beforeAll, beforeEach, afterEach } from 'vitest';
 import { execSync, ExecSyncOptionsWithStringEncoding } from 'child_process';
 import { writeFileSync, rmSync, existsSync, mkdirSync, readFileSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path'; // Added dirname
 
 const PROJECT_ROOT = process.cwd();
 const scriptPath = resolve(PROJECT_ROOT, 'scripts/verify-schema-types.sh');
 
-// Dedicated temporary directory for this test's types/supabase.ts to avoid conflicts
+// Dedicated temporary directory for this test's mock files
 const testSessionDir = resolve(PROJECT_ROOT, 'tests/unit/temp-verify-schema-test');
-const typesTestDir = resolve(testSessionDir, 'types'); // The script expects 'types/supabase.ts' relative to CWD
-const localTypesFilePathForTest = resolve(typesTestDir, 'supabase.ts');
+
+// The script verify-schema-types.sh now expects "src/types/supabase.ts" relative to its CWD.
+// So, we need to create this structure within testSessionDir.
+const localTypesFilePathForTest = resolve(testSessionDir, 'src', 'types', 'supabase.ts');
+const typesTestDirForScript = dirname(localTypesFilePathForTest); // This will be testSessionDir/src/types
 
 const mockSupabaseBinDir = resolve(testSessionDir, 'mocks/bin');
 const mockSupabaseScriptPath = resolve(mockSupabaseBinDir, 'supabase');
 const originalPath = process.env.PATH;
 
-// execOpts will run the script from testSessionDir and use a PATH that prioritizes our mock supabase
+// execOpts will run the script from testSessionDir.
+// The script will look for "src/types/supabase.ts" relative to testSessionDir.
 const execOpts: ExecSyncOptionsWithStringEncoding = {
-  cwd: testSessionDir, // Run script from here so "types/supabase.ts" resolves to our test-specific one
+  cwd: testSessionDir, 
   encoding: 'utf-8',
   stdio: 'pipe',
   env: { 
     ...process.env, 
     PATH: `${mockSupabaseBinDir}:${originalPath}`,
-    // Override SUPABASE_PROJECT_REF if script uses it and you want to ensure mock uses it
-    // SUPABASE_PROJECT_REF: "mock_project_ref" 
   } 
 };
 
@@ -36,7 +38,8 @@ const mockRemoteTypesContent_B = "export type Json = number;\nexport type Databa
 describe('verify-schema-types.sh Unit Tests (with Mocked Supabase CLI)', () => {
   beforeAll(() => {
     mkdirSync(mockSupabaseBinDir, { recursive: true });
-    mkdirSync(typesTestDir, { recursive: true });
+    // Ensure the src/types directory structure exists within the test session directory
+    mkdirSync(typesTestDirForScript, { recursive: true });
   });
 
   beforeEach(() => {
@@ -45,7 +48,6 @@ describe('verify-schema-types.sh Unit Tests (with Mocked Supabase CLI)', () => {
       rmSync(localTypesFilePathForTest);
     }
     // Default mock supabase CLI: successful generation of mockRemoteTypesContent_A
-    // This mock will be called by verify-schema-types.sh for its *temporary remote file generation*.
     writeFileSync(mockSupabaseScriptPath, `#!/bin/bash\necho -n "${mockRemoteTypesContent_A}"\nexit 0`, { mode: 0o755 });
   });
 
@@ -59,13 +61,11 @@ describe('verify-schema-types.sh Unit Tests (with Mocked Supabase CLI)', () => {
   });
 
   test('should report no drift if local types match mock remote types', () => {
-    writeFileSync(localTypesFilePathForTest, mockRemoteTypesContent_A, 'utf-8'); // Local types match remote mock
+    writeFileSync(localTypesFilePathForTest, mockRemoteTypesContent_A, 'utf-8'); 
     
     let output = '';
     let executionError: Error | null = null;
     try {
-      // The script verify-schema-types.sh will internally use LOCAL_TYPES_FILE="types/supabase.ts"
-      // Since we set cwd to testSessionDir, this will resolve to tests/unit/temp-verify-session/types/supabase.ts
       output = execSync(`bash ${scriptPath}`, execOpts);
     } catch (e: any) {
       executionError = e; 
@@ -77,7 +77,7 @@ describe('verify-schema-types.sh Unit Tests (with Mocked Supabase CLI)', () => {
   });
 
   test('should report drift if local types differ from mock remote types', () => {
-    writeFileSync(localTypesFilePathForTest, mockRemoteTypesContent_B, 'utf-8'); // Local types differ
+    writeFileSync(localTypesFilePathForTest, mockRemoteTypesContent_B, 'utf-8'); 
 
     let executionError: Error | null = null;
     let scriptStderr = '';
@@ -90,11 +90,11 @@ describe('verify-schema-types.sh Unit Tests (with Mocked Supabase CLI)', () => {
     expect(executionError, "Script should fail with exit code 1 when types differ").not.toBeNull();
     if (executionError) expect((executionError as any).status).toBe(1);
     expect(scriptStderr).toContain("🚨 Schema drift DETECTED!");
-    expect(scriptStderr).toContain("--- types/supabase.ts"); // Check that it's diffing the correct local file path
+    // Updated to check for the new path in the diff output
+    expect(scriptStderr).toContain("--- src/types/supabase.ts"); 
   });
 
   test('should fail and instruct to generate if local types file is missing', () => {
-    // localTypesFilePathForTest is already removed by beforeEach and not recreated for this test
     let executionError: Error | null = null;
     let scriptStderr = '';
     try {
@@ -105,12 +105,12 @@ describe('verify-schema-types.sh Unit Tests (with Mocked Supabase CLI)', () => {
     }
     expect(executionError, "Script should fail if local types file is missing").not.toBeNull();
     if (executionError) expect((executionError as any).status).toBe(1);
-    expect(scriptStderr).toContain("Local types file 'types/supabase.ts' not found");
+    // Updated to check for the new path in the error message
+    expect(scriptStderr).toContain("Local types file 'src/types/supabase.ts' not found");
   });
 
   test('should fail if mock remote type generation (temp file) is empty', () => {
-    writeFileSync(localTypesFilePathForTest, mockRemoteTypesContent_A, 'utf-8'); // Local types exist
-    // Mock supabase CLI to output nothing for its temporary remote generation
+    writeFileSync(localTypesFilePathForTest, mockRemoteTypesContent_A, 'utf-8'); 
     writeFileSync(mockSupabaseScriptPath, `#!/bin/bash\necho -n ""\nexit 0`, { mode: 0o755 });
     
     let executionError: Error | null = null;
@@ -129,8 +129,7 @@ describe('verify-schema-types.sh Unit Tests (with Mocked Supabase CLI)', () => {
   });
 
    test('should fail if mock remote type generation command fails (non-zero exit)', () => {
-    writeFileSync(localTypesFilePathForTest, mockRemoteTypesContent_A, 'utf-8'); // Local types exist
-    // Mock supabase CLI to exit non-zero
+    writeFileSync(localTypesFilePathForTest, mockRemoteTypesContent_A, 'utf-8'); 
     writeFileSync(mockSupabaseScriptPath, `#!/bin/bash\necho "Mock CLI Error" >&2\nexit 7`, { mode: 0o755 });
     
     let executionError: Error | null = null;

@@ -2,12 +2,13 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach } from 'vitest'; // Ensure all Vitest globals used are imported
 import { execSync, ExecSyncOptionsWithStringEncoding } from 'child_process';
 import { readFileSync, rmSync, existsSync, mkdirSync, writeFileSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path'; // Added dirname
 
 const PROJECT_ROOT = process.cwd();
 const scriptPath = resolve(PROJECT_ROOT, 'scripts/update-supabase-types.sh');
-const typesDirPath = resolve(PROJECT_ROOT, 'types');
-const outputFilePath = resolve(typesDirPath, 'supabase.ts');
+// Updated to reflect the new path: src/types/supabase.ts
+const outputFilePath = resolve(PROJECT_ROOT, 'src', 'types', 'supabase.ts');
+const typesDirPath = dirname(outputFilePath); // Get the directory for the output file: src/types
 
 const execOpts: ExecSyncOptionsWithStringEncoding = {
   cwd: PROJECT_ROOT,
@@ -29,6 +30,7 @@ describe('update-supabase-types.sh Integration Test', () => {
         initialContent = null; 
       }
     }
+    // Ensure the target directory (src/types) exists
     if (!existsSync(typesDirPath)) {
       mkdirSync(typesDirPath, { recursive: true });
     }
@@ -69,6 +71,7 @@ describe('update-supabase-types.sh Integration Test', () => {
     }
 
     expect(executionError, `Script should execute without error. Stderr: ${scriptStderr}`).toBeNull();
+    // Check for the file at the new path
     expect(existsSync(outputFilePath), `${outputFilePath} should be created`).toBe(true);
     
     const content = readFileSync(outputFilePath, 'utf8');

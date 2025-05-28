@@ -20,9 +20,8 @@ TREE_OUTPUT_DIR_RELATIVE="reports" # Relative to project root
 TREE_FILENAME="project-directory-tree.md"
 TREE_FILEPATH="${PROJECT_ROOT}/${TREE_OUTPUT_DIR_RELATIVE}/${TREE_FILENAME}"
 TREE_TITLE="# Project Directory Structure"
-# Added .DS_Store and other common exclusions, ensure paths in exclude are relative to the tree command's starting point or use absolute paths if tree supports.
-# For tree running from PROJECT_ROOT (./), patterns like "node_modules" are fine.
-TREE_EXCLUDE_PATTERN="node_modules|.git|.next|*.log*|dist|build|coverage|supabase/.temp|project-planning|database/schemas|reports/.DS_Store|assets/.DS_Store|docs/.DS_Store|public/.DS_Store"
+# Updated TREE_EXCLUDE_PATTERN for paths now inside 'src/'
+TREE_EXCLUDE_PATTERN="node_modules|.git|.next|*.log*|dist|build|coverage|supabase/.temp|project-planning|src/database/schemas|reports/.DS_Store|src/assets/.DS_Store|docs/.DS_Store|public/.DS_Store"
 
 echo "🔄 Generating outputs..."
 
@@ -40,11 +39,13 @@ const fs = require('fs');
 const path = require('path');
 
 // --- Configuration for Node Script ---
+const projectRoot = process.cwd();
+// Updated to reflect components moving into the 'src' directory
 const componentRootDirs = [
-    path.join(process.cwd(), 'components') // Assumes 'components' is at project root
+    path.join(projectRoot, 'src', 'components') 
 ];
 // Output path for the JSON file, constructed inside Node using process.cwd()
-const outputDir = path.join(process.cwd(), '${JSON_OUTPUT_DIR_RELATIVE}');
+const outputDir = path.join(projectRoot, '${JSON_OUTPUT_DIR_RELATIVE}');
 const outputFilePath = path.join(outputDir, '${JSON_FILENAME}');
 
 const excludePatterns = [
@@ -79,13 +80,15 @@ function findComponents(dir, projectRootForAlias) {
 
     for (const item of items) {
         const currentPath = path.join(dir, item.name);
+        // relativePathFromProjectRoot will be e.g., src/components/Button.tsx
         const relativePathFromProjectRoot = path.relative(projectRootForAlias, currentPath);
         const pathSegments = relativePathFromProjectRoot.split(path.sep);
         
         const isExcludedByName = excludePatterns.includes(item.name);
-        // Check if any part of the path up to the component's dir is in excludePatterns (e.g. components/ui/...)
         let isExcludedByParentDir = false;
-        for (let i = 0; i < pathSegments.length -1; i++) { // Check parent dirs, not the file/dir name itself
+        // Check if any part of the path up to the component's dir is in excludePatterns
+        // e.g. if pathSegments is ['src', 'components', 'ui', 'Button.tsx'], it checks 'src', 'components', 'ui'
+        for (let i = 0; i < pathSegments.length -1; i++) { 
             if (excludePatterns.includes(pathSegments[i])) {
                 isExcludedByParentDir = true;
                 break;
@@ -103,7 +106,12 @@ function findComponents(dir, projectRootForAlias) {
              const componentName = toPascalCase(item.name);
              if (componentName === 'Index' && (item.name === 'index.tsx' || item.name === 'index.ts')) continue;
 
-             const aliasPath = \`@/\${relativePathFromProjectRoot.replace(/\\\\/g, '/')}\`;
+             // Adjust aliasPath to be relative to 'src' directory for '@/' imports
+             // e.g., currentPath = /project/src/components/Button.tsx
+             // path.join(projectRootForAlias, 'src') = /project/src
+             // pathInsideSrcDir = components/Button.tsx
+             const pathInsideSrcDir = path.relative(path.join(projectRootForAlias, 'src'), currentPath);
+             const aliasPath = \`@/\${pathInsideSrcDir.replace(/\\\\/g, '/')}\`;
 
              try {
                  const content = fs.readFileSync(currentPath, 'utf8');
@@ -125,7 +133,6 @@ function findComponents(dir, projectRootForAlias) {
 }
 
 let allComponents = [];
-const projectRoot = process.cwd(); 
 
 componentRootDirs.forEach(rootDir => {
     console.log(\`   Scanning component directory: \${rootDir}\`);

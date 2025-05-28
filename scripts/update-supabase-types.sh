@@ -5,7 +5,7 @@
 set -euo pipefail
 
 SUPABASE_PROJECT_REF="lqwajjazuknoyykqznmr" # Ensure this is your correct project ref
-OUTPUT_FILE_PATH="types/supabase.ts"
+OUTPUT_FILE_PATH="src/types/supabase.ts" # MODIFIED PATH
 MAX_RETRIES=5 # Increased for more resilience
 RETRY_DELAY_SECONDS=5 # Increased delay
 

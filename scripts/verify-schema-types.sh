@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # File: scripts/verify-schema-types.sh
-# Purpose: Compares local types/supabase.ts against fresh remote types.
+# Purpose: Compares local src/types/supabase.ts against fresh remote types.
 # Exits 0 if no drift, 1 if drift is detected or an error occurs.
 
 set -euo pipefail
 
 SUPABASE_PROJECT_REF="lqwajjazuknoyykqznmr" 
-LOCAL_TYPES_FILE="types/supabase.ts"
+LOCAL_TYPES_FILE="src/types/supabase.ts" # MODIFIED PATH
 MAX_RETRIES_FOR_TEMP_GEN=3 
 RETRY_DELAY_SECONDS=3
 
@@ -89,6 +89,6 @@ else
   fi
   echo "" >&2
   echo "   To fix this, run: bash scripts/update-supabase-types.sh" >&2
-  echo "   Then, add and commit the updated 'types/supabase.ts' file." >&2
+  echo "   Then, add and commit the updated 'src/types/supabase.ts' file." >&2 # MODIFIED PATH IN MESSAGE
   exit 1 
 fi
