@@ -1,51 +1,93 @@
+// src/app/(auth-pages)/sign-up/page.tsx
 import { signUpAction } from "@/app/actions";
 import { FormMessage, Message } from "@/src/components/form-message";
 import { SubmitButton } from "@/src/components/submit-button";
-import { Input } from "@/src/components/ui/input";
-import { Label } from "@/src/components/ui/label";
-import Link from "next/link";
+import {
+  Box,
+  FormControl,
+  FormLabel,
+  Heading,
+  Input,
+  Link as ChakraLink,
+  Text,
+  VStack,
+  Container,
+  Center,
+} from "@chakra-ui/react";
+import NextLink from "next/link"; // Corrected import for Next.js Link
 import { SmtpMessage } from "../smtp-message";
 
 export default async function Signup(props: {
   searchParams: Promise<Message>;
 }) {
   const searchParams = await props.searchParams;
-  if ("message" in searchParams) {
+
+  if ("message" in searchParams && !("success" in searchParams) && !("error" in searchParams) && searchParams.message) {
     return (
-      <div className="w-full flex-1 flex items-center h-screen sm:max-w-md justify-center gap-2 p-4">
-        <FormMessage message={searchParams} />
-      </div>
+      <Container centerContent py={{ base: 8, md: 16 }} flex="1">
+        <Center h="full" w="full" maxW="md">
+          <FormMessage message={searchParams} />
+        </Center>
+      </Container>
     );
   }
 
   return (
-    <>
-      <form className="flex flex-col min-w-64 max-w-64 mx-auto">
-        <h1 className="text-2xl font-medium">Sign up</h1>
-        <p className="text-sm text text-foreground">
-          Already have an account?{" "}
-          <Link className="text-primary font-medium underline" href="/sign-in">
-            Sign in
-          </Link>
-        </p>
-        <div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
-          <Label htmlFor="email">Email</Label>
-          <Input name="email" placeholder="you@example.com" required />
-          <Label htmlFor="password">Password</Label>
-          <Input
-            type="password"
-            name="password"
-            placeholder="Your password"
-            minLength={6}
-            required
-          />
-          <SubmitButton formAction={signUpAction} pendingText="Signing up...">
+    <Container centerContent py={{ base: 8, md: 16 }} display="flex" flexDirection="column" flex="1">
+      <VStack
+        as="form"
+        action={signUpAction}
+        spacing={6}
+        w="full"
+        maxW="sm"
+        p={8}
+        borderWidth={1}
+        borderRadius="lg"
+        boxShadow="md"
+      >
+        <Box textAlign="center" w="full">
+          <Heading as="h1" size="lg" mb={2}>
+            Create Account
+          </Heading>
+          <Text fontSize="sm" color="gray.600">
+            Already have an account?{" "}
+            <ChakraLink as={NextLink} href="/sign-in" color="blue.500" fontWeight="medium">
+              Sign in
+            </ChakraLink>
+          </Text>
+        </Box>
+
+        <VStack spacing={4} w="full" mt={4}>
+          <FormControl id="email-signup" isRequired>
+            <FormLabel>Email address</FormLabel>
+            <Input
+              name="email"
+              type="email"
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
+          </FormControl>
+
+          <FormControl id="password-signup" isRequired>
+            <FormLabel>Password</FormLabel>
+            <Input
+              name="password"
+              type="password"
+              placeholder="Your password (min. 6 characters)"
+              minLength={6}
+              autoComplete="new-password"
+            />
+          </FormControl>
+
+          <SubmitButton pendingText="Signing up..." w="full" colorScheme="blue">
             Sign up
           </SubmitButton>
-          <FormMessage message={searchParams} />
-        </div>
-      </form>
+          {("success" in searchParams || "error" in searchParams || ("message" in searchParams && searchParams.message)) && (
+             <FormMessage message={searchParams} mt={2} w="full" />
+          )}
+        </VStack>
+      </VStack>
       <SmtpMessage />
-    </>
+    </Container>
   );
 }

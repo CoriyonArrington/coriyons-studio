@@ -1,13 +1,15 @@
+// src/components/theme-switcher.tsx
 "use client";
 
-import { Button } from "@/src/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/src/components/ui/dropdown-menu";
+  Button,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuOptionGroup,
+  MenuItemOption,
+  Icon,
+} from "@chakra-ui/react";
 import { Laptop, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -16,62 +18,63 @@ const ThemeSwitcher = () => {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  // useEffect only runs on the client, so now we can safely show the UI
   useEffect(() => {
     setMounted(true);
   }, []);
 
   if (!mounted) {
-    return null;
+    return <Button variant="ghost" size={"sm"} width="40px" aria-label="Loading theme switcher" />;
   }
 
-  const ICON_SIZE = 16;
+  const ICON_SIZE = "1rem"; 
+
+  let currentIcon;
+  if (theme === "light") {
+    currentIcon = <Icon as={Sun} boxSize={ICON_SIZE} color="gray.500" />;
+  } else if (theme === "dark") {
+    currentIcon = <Icon as={Moon} boxSize={ICON_SIZE} color="gray.500" />;
+  } else {
+    currentIcon = <Icon as={Laptop} boxSize={ICON_SIZE} color="gray.500" />;
+  }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size={"sm"}>
-          {theme === "light" ? (
-            <Sun
-              key="light"
-              size={ICON_SIZE}
-              className={"text-muted-foreground"}
-            />
-          ) : theme === "dark" ? (
-            <Moon
-              key="dark"
-              size={ICON_SIZE}
-              className={"text-muted-foreground"}
-            />
-          ) : (
-            <Laptop
-              key="system"
-              size={ICON_SIZE}
-              className={"text-muted-foreground"}
-            />
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-content" align="start">
-        <DropdownMenuRadioGroup
+    // Corrected Gstrategy to strategy
+    <Menu strategy="fixed"> 
+      <MenuButton
+        as={Button}
+        variant="ghost"
+        size={"sm"}
+        aria-label="Switch color theme"
+        px={2}
+      >
+        {currentIcon}
+      </MenuButton>
+      <MenuList minW="150px">
+        <MenuOptionGroup
           value={theme}
-          onValueChange={(e) => setTheme(e)}
+          title="Theme"
+          type="radio"
+          onChange={(value) => {
+            if (typeof value === 'string') {
+              setTheme(value);
+            }
+          }}
         >
-          <DropdownMenuRadioItem className="flex gap-2" value="light">
-            <Sun size={ICON_SIZE} className="text-muted-foreground" />{" "}
+          <MenuItemOption value="light" display="flex" alignItems="center">
+            <Icon as={Sun} boxSize={ICON_SIZE} mr="2" color="gray.500" />
             <span>Light</span>
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="dark">
-            <Moon size={ICON_SIZE} className="text-muted-foreground" />{" "}
+          </MenuItemOption>
+          <MenuItemOption value="dark" display="flex" alignItems="center">
+            <Icon as={Moon} boxSize={ICON_SIZE} mr="2" color="gray.500" />
             <span>Dark</span>
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="system">
-            <Laptop size={ICON_SIZE} className="text-muted-foreground" />{" "}
+          </MenuItemOption>
+          <MenuItemOption value="system" display="flex" alignItems="center">
+            <Icon as={Laptop} boxSize={ICON_SIZE} mr="2" color="gray.500" />
             <span>System</span>
-          </DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          </MenuItemOption>
+        </MenuOptionGroup>
+      </MenuList>
+    </Menu>
   );
 };
 

@@ -5,7 +5,7 @@ import {
   Box, Container, Heading, Text, Link as ChakraLink,
   VStack, HStack, SimpleGrid, Code, Button, Badge, Input,
   Skeleton, SkeletonText, /* SkeletonCircle removed */ Icon,
-  List,
+  List, // Correctly imported
   ListItem,
   // Card, CardHeader, CardBody, CardFooter, // Still commented out
 } from "@chakra-ui/react";
@@ -52,14 +52,16 @@ export default function DesignSystemPage() {
 
       <Box as="nav" mb={16} p={4} borderWidth="1px" borderRadius="lg">
         <Heading as="h4" size="md" mb={3}>On This Page</Heading>
-        <List.Root>
+        {/* Changed List.Root to List */}
+        <List>
           {sections.map((section) => (
             <ListItem key={section.id} _hover={{ bg: "gray.50" }} py={1}>
               <ChakraLink href={`#${section.id}`} _hover={{ textDecoration: 'none', color: 'blue.600' }} fontWeight="medium">
                 {section.title}
               </ChakraLink>
               {section.id === 'components' && section.componentLinks && (
-                <List.Root pl={4} mt={1.5} >
+                // Changed List.Root to List
+                <List pl={4} mt={1.5} >
                    {section.componentLinks.map(link => (
                      <ListItem key={link.href} py={0.5}>
                        <ChakraLink href={link.href} fontSize="sm" _hover={{ textDecoration: 'underline', color: 'blue.500' }}>
@@ -67,11 +69,11 @@ export default function DesignSystemPage() {
                        </ChakraLink>
                      </ListItem>
                    ))}
-                </List.Root>
+                </List>
               )}
             </ListItem>
           ))}
-        </List.Root>
+        </List>
       </Box>
 
       <VStack alignItems="stretch">
@@ -110,10 +112,11 @@ export default function DesignSystemPage() {
               <Text>Blockquote.</Text>
             </Box>
             <Text mb={4}>Use <Code>inline code</Code>.</Text>
-            <List.Root listStyleType="disc" pl={5} mb={4}>
+            {/* Changed List.Root to List */}
+            <List listStyleType="disc" pl={5} mb={4}>
               <ListItem>List item one</ListItem>
               <ListItem>List item two</ListItem>
-            </List.Root>
+            </List>
             <Text>Use <ChakraLink href="#" color="blue.500">inline links</ChakraLink>.</Text>
           </VStack>
         </Box>

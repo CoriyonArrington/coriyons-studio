@@ -1,17 +1,15 @@
-// middleware.ts
+// middleware.ts (User's Original Logic Base + Minimal Logging & Matcher Fix)
 import { NextResponse, type NextRequest } from "next/server";
-import { updateSession } from "@/src/utils/supabase/middleware";
-import { createServerClient, type CookieOptions } from '@supabase/ssr'; // Import for creating a client to read session
+import { updateSession } from "@/src/utils/supabase/middleware"; // Your existing import
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 export async function middleware(request: NextRequest) {
-  // Let your existing updateSession handle cookie refreshing and get the response it prepares.
-  // This response will have any updated session cookies set.
-  const response = await updateSession(request);
+  // VERY FIRST LOG: To see if middleware is entered AT ALL for the path
+  console.log(`[User Original Middleware] Path: ${request.nextUrl.pathname}, Timestamp: ${new Date().toISOString()}`);
 
-  // To make a decision for redirection *before* returning the response,
-  // we need to check the auth state based on the cookies in the *incoming request*.
-  // createServerClient helps read this. `updateSession` should have ensured
-  // the session is fresh if it was renewable.
+  const response = await updateSession(request); // Your Step 1
+
+  // Client to check session state based on original request cookies
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -20,57 +18,55 @@ export async function middleware(request: NextRequest) {
         get(name: string) {
           return request.cookies.get(name)?.value;
         },
-        // set and remove are not strictly needed here if updateSession handles all cookie writing
-        // and we are only *reading* the state for this redirect logic.
-        // However, including them makes it a fully functional client if needed elsewhere.
         set(name: string, value: string, options: CookieOptions) {
-          // In this pattern, if we needed to set cookies, we'd modify `request.cookies`
-          // and the `response.cookies` (response is already prepared by updateSession)
-          // But for a simple redirect check, we primarily need `get`.
+          // Intentionally minimal for this client as per your original
         },
         remove(name: string, options: CookieOptions) {
-          // Similar to set, for reading state, not strictly needed here.
+          // Intentionally minimal for this client as per your original
         },
       },
     }
   );
 
-  const { data: { session } } = await supabase.auth.getSession(); // Reads session based on request cookies
+  const { data: { session } } = await supabase.auth.getSession(); // Your Step 3
   const { pathname } = request.nextUrl;
 
+  console.log(`[User Original Middleware] Pathname for check: ${pathname}, Session found: ${!!session}`);
+
   // If trying to access any admin route and there's no session
-  if (pathname.startsWith('/admin') && !session) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/sign-in'; // Your login page
-    // Prepend the redirect path to the existing response's headers if necessary for `updateSession`'s effects.
-    // However, a redirect is a new response entirely.
-    return NextResponse.redirect(url);
+  if (pathname.startsWith('/admin')) {
+    console.log("[User Original Middleware] ==> Checking /admin path.");
+    if (!session) {
+      console.log("[User Original Middleware] No session for /admin. Redirecting to /sign-in.");
+      const url = request.nextUrl.clone();
+      url.pathname = '/sign-in';
+      return NextResponse.redirect(url);
+    }
+    console.log("[User Original Middleware] Session found for /admin. Proceeding.");
   }
 
   // Optional: If user is logged in and tries to access sign-in/sign-up, redirect them
   if (session && (pathname === '/sign-in' || pathname === '/sign-up')) {
+    console.log("[User Original Middleware] Authenticated user on auth page. Redirecting to /protected.");
      const url = request.nextUrl.clone();
-     url.pathname = '/protected'; // Or your main dashboard/app page
+     url.pathname = '/protected';
      return NextResponse.redirect(url);
   }
 
   // If no redirect is needed, return the response from updateSession (which has updated cookies)
+  console.log("[User Original Middleware] No redirect. Returning response from updateSession.");
   return response;
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
-     * Feel free to modify this pattern to include more paths.
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-    // The matcher should already cover /admin paths with the pattern above.
-    // If you want to be more explicit or if the above doesn't catch all admin routes:
-    // "/admin/:path*",
+    '/admin/:path*', // <<< --- CRITICAL: Ensure this line is active and not commented out
+    // You can add other specific paths you want the middleware to run on first
+    '/protected/:path*',
+    '/sign-in',
+    '/sign-up',
+    // Your original broad matcher, kept for other paths.
+    // Paths starting with /admin/ should be caught by the more specific matcher above.
+    "/((?!_next/static|_next/image|favicon.ico|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

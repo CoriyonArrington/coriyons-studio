@@ -1,11 +1,10 @@
-// app/providers.tsx
-'use client'
+// src/app/providers.tsx
+'use client';
 
-import { ChakraProvider } from '@chakra-ui/react'
-// Assuming chakraTheme from '@/lib/theme' is correctly typed as SystemContext
-import chakraTheme from '@/src/lib/theme'
+import { ChakraProvider } from '@chakra-ui/react';
+import chakraTheme from '@/src/lib/theme'; // Your custom theme object
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  // Use the 'value' prop as defined in ChakraProviderProps
-  return <ChakraProvider value={chakraTheme}>{children}</ChakraProvider>
+  // Pass your custom theme object to the 'theme' prop of ChakraProvider
+  return <ChakraProvider theme={chakraTheme}>{children}</ChakraProvider>;
 }
