@@ -1,6 +1,8 @@
 // components/form-message.tsx
+
 "use client";
 
+import React from 'react'; // Added this line
 import {
   Alert,
   AlertIcon,

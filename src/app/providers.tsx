@@ -1,10 +1,20 @@
 // src/app/providers.tsx
-'use client';
+"use client";
 
-import { ChakraProvider } from '@chakra-ui/react';
-import chakraTheme from '@/src/lib/theme'; // Your custom theme object
+import { ChakraProvider } from "@chakra-ui/react";
+import chakraTheme from "@/src/lib/theme"; // Ensure this path is correct
+import { ChakraNextThemeSyncer
+  
+ } from "../components/chakra-next-theme-syncer";
+interface ProvidersProps {
+  children: React.ReactNode;
+}
 
-export function Providers({ children }: { children: React.ReactNode }) {
-  // Pass your custom theme object to the 'theme' prop of ChakraProvider
-  return <ChakraProvider theme={chakraTheme}>{children}</ChakraProvider>;
+export function Providers({ children }: ProvidersProps) {
+  return (
+    <ChakraProvider theme={chakraTheme}>
+      <ChakraNextThemeSyncer />
+      {children} {/* Your application content */}
+    </ChakraProvider>
+  );
 }

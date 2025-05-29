@@ -1,60 +1,58 @@
 // src/app/layout.tsx
-import { Geist } from "next/font/google";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { Providers } from "./providers";
-import SiteHeader from "@/src/components/layout/site-header"; // Ensure kebab-case path
-import SiteFooter from "@/src/components/layout/site-footer"; // Ensure kebab-case path
-import { Flex, Box } from "@chakra-ui/react";
-import "./globals.css";
+import { montserrat, nunito_sans } from '@/src/lib/fonts'; // Import your custom fonts
+import { ThemeProvider as NextThemesProvider } from "next-themes"; //
+import { Providers } from "./providers"; //
+import SiteHeader from "@/src/components/layout/site-header"; //
+import SiteFooter from "@/src/components/layout/site-footer"; //
+import { Flex, Box } from "@chakra-ui/react"; //
+import "./globals.css"; //
 
-import { createClient } from "@/src/utils/supabase/server";
-// Removed: import type { User } from "@supabase/supabase-js"; // Unused in this file
+import { createClient } from "@/src/utils/supabase/server"; //
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
+  : "http://localhost:3000"; //
 
 export const metadata = {
-  metadataBase: new URL(defaultUrl),
-  title: "Your Awesome Project",
-  description: "Description of your awesome project.",
+  metadataBase: new URL(defaultUrl), //
+  title: "Your Awesome Project", //
+  description: "Description of your awesome project.", //
 };
-
-const geistSans = Geist({
-  display: "swap",
-  subsets: ["latin"],
-});
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient(); // Correctly await the client instance
+  const supabase = await createClient(); //
   const {
     data: { user },
-  } = await supabase.auth.getUser(); // Now supabase is the resolved client
+  } = await supabase.auth.getUser(); //
 
   return (
-    <html lang="en" className={geistSans.className} suppressHydrationWarning>
-      <body className="bg-background text-foreground">
+    <html
+      lang="en"
+      className={`${montserrat.variable} ${nunito_sans.variable}`} // Apply your custom font variables
+      suppressHydrationWarning
+    >
+      <body className="bg-background text-foreground"> {/* */}
         <NextThemesProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
-        >
-          <Providers>
-            <Flex direction="column" minH="100vh">
-              <SiteHeader user={user} /> {/* SiteHeader will type its own 'user' prop */}
+        > {/* */}
+          <Providers> {/* */}
+            <Flex direction="column" minH="100vh"> {/* */}
+              <SiteHeader user={user} /> {/* */}
               <Box
                 as="main"
                 flex="1"
                 w="full"
-              >
+              > {/* */}
                 {children}
               </Box>
-              <SiteFooter />
+              <SiteFooter /> {/* */}
             </Flex>
           </Providers>
         </NextThemesProvider>

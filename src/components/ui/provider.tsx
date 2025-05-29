@@ -1,18 +1,30 @@
 // src/components/ui/provider.tsx
 "use client"
 
-import { ChakraProvider } from "@chakra-ui/react" // Removed defaultSystem
-import chakraTheme from "@/src/lib/theme"; // Import your custom theme
+import { ChakraProvider } from "@chakra-ui/react"
+import chakraTheme from "@/src/lib/theme";
 import {
-  ColorModeProvider,
-  type ColorModeProviderProps,
-} from "./color-mode"
+  ColorModeProvider as NextThemesProviderInternal, // Aliased for clarity
+  type ColorModeProviderProps as NextThemesProviderInternalProps,
+} from "./color-mode"; // This file exports next-themes' ThemeProvider as ColorModeProvider
+import { ChakraNextThemeSyncer } from "../chakra-next-theme-syncer";
 
-export function Provider(props: ColorModeProviderProps) {
+// Define props for your main Provider, ensuring it accepts children
+// and the props required by next-themes' ThemeProvider.
+interface AppProviderProps extends NextThemesProviderInternalProps {
+  children: React.ReactNode;
+}
+
+export function Provider({ children, ...restNextThemesProps }: AppProviderProps) {
   return (
-    // Use the 'theme' prop with your custom theme
+    // ChakraProvider is the outermost provider for Chakra UI context and theme
     <ChakraProvider theme={chakraTheme}>
-      <ColorModeProvider {...props} />
+      {/* NextThemesProviderInternal (next-themes' ThemeProvider) wraps both the syncer and app children */}
+      {/* It receives props like 'attribute', 'defaultTheme', etc. */}
+      <NextThemesProviderInternal {...restNextThemesProps}>
+        <ChakraNextThemeSyncer /> {/* Syncer is now a child of both providers */}
+        {children}                {/* Your application content */}
+      </NextThemesProviderInternal>
     </ChakraProvider>
-  )
+  );
 }

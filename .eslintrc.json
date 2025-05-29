@@ -1,19 +1,27 @@
+// .eslintrc.json
 {
   "extends": [
     "next/core-web-vitals",
     "next/typescript"
   ],
   "rules": {
-    // You can add other custom rules here if needed
     "@typescript-eslint/no-unused-vars": [
-      "warn", // You can change this to "error" if you prefer linting to fail
+      "warn",
       {
-        "vars": "all", // Default behavior: check all variables
-        "args": "after-used", // Default behavior: check all arguments except those after the last used argument
-        "ignoreRestSiblings": true, // Default behavior for object destructuring
-        "varsIgnorePattern": "^_", // Ignore variables starting with an underscore
-        "argsIgnorePattern": "^_", // Ignore function arguments starting with an underscore
-        "caughtErrorsIgnorePattern": "^_" // Specifically ignore 'catch' clause errors starting with an underscore
+        "vars": "all",
+        "args": "after-used",
+        "ignoreRestSiblings": true,
+        "varsIgnorePattern": "^_",
+        "argsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn", // You can change this to "error" to make it a failing lint
+      {
+        // The selector now includes the regex for the Literal's value attribute
+        "selector": "JSXAttribute[name.name=/^(color|bg|backgroundColor|borderColor|fill|stroke|bgColor|emptyColor)$/] > Literal[value=/^#([0-9a-fA-F]{3,4}){1,2}$|^(rgb|hsl)a?\\s*\\(|^(red|blue|green|yellow|black|white|purple|orange|cyan|magenta|lime|pink|teal|lavender|brown|beige|maroon|navy|olive|silver|gold)$/i]",
+        "message": "Avoid using literal color values (hex, rgb, hsl, or common CSS color names like 'red', 'blue', etc.). Please use theme tokens from your Chakra UI theme (e.g., 'primary.DEFAULT', 'border', 'foreground', 'red.500')."
       }
     ]
   }

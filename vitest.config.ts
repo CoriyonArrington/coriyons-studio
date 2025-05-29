@@ -4,15 +4,18 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = dirname(__filename); // This resolves to your project root directory
 
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'node',
-    // Use the default include pattern or a very broad one for the root
-    include: ['**/*.{test,spec}.?(c|m)[jt]s?(x)'], // Vitest default
-    // Or even just: include: ['*.test.ts'],
-    root: resolve(__dirname),
+    environment: 'jsdom',
+    include: ['**/*.{test,spec}.?(c|m)[jt]s?(x)'],
+    setupFiles: ['./vitest-setup.ts'],
+  },
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, '.'), // Corrected: Maps '@/' to the project root directory
+    },
   },
 });

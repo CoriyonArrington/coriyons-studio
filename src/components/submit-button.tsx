@@ -1,6 +1,7 @@
 // src/components/submit-button.tsx
 "use client";
 
+import React from 'react'; // Added this line
 import { Button, ButtonProps } from "@chakra-ui/react"; // Use Chakra UI Button
 import { useFormStatus } from "react-dom";
 // Removed: import { type ComponentProps } from "react"; // Not needed if extending ButtonProps from Chakra

@@ -1,41 +1,44 @@
 // src/components/layout/site-footer.tsx
-"use client";
-
-import { Box, Text, Flex, Link as ChakraLink, VStack } from "@chakra-ui/react";
+import React from 'react';
+import { Box, Container, Stack, Text, Link as ChakraLink } from "@chakra-ui/react";
 import NextLink from "next/link";
 
-export default function SiteFooter() { // Component name remains PascalCase
+const FOOTER_LINKS = [
+  { label: "Privacy Policy", href: "/privacy-policy" },
+  { label: "Terms of Service", href: "/terms-of-service" },
+];
+
+export default function SiteFooter() {
   return (
-    <Box
-      as="footer"
-      w="full"
-      py={6}
-      px={{ base: 4, md: 8 }}
-      borderTopWidth="1px"
-      borderColor="gray.200"
-      _dark={{ borderColor: "gray.700" }}
-    >
-      <VStack spacing={4} maxW="container.xl" mx="auto">
-        <Flex
-          w="full"
-          direction={{ base: "column", md: "row" }}
-          justify="space-between"
-          align="center"
-          gap={4}
-        >
-          <Text fontSize="sm" color="gray.600" _dark={{ color: "gray.400" }}>
-            &copy; {new Date().getFullYear()} YourSite. All rights reserved.
-          </Text>
-          <Flex gap={{ base: 4, md: 6 }}>
-            <ChakraLink as={NextLink} href="/privacy" fontSize="sm" _hover={{ textDecoration: "underline" }}>
-              Privacy Policy
-            </ChakraLink>
-            <ChakraLink as={NextLink} href="/terms" fontSize="sm" _hover={{ textDecoration: "underline" }}>
-              Terms of Service
-            </ChakraLink>
-          </Flex>
-        </Flex>
-      </VStack>
+    <Box as="footer" bg="background" color="foreground" borderTopWidth="1px" borderColor="border">
+      <Container
+        as={Stack} maxW={"container.xl"} py={4} spacing={4}
+        justify={{ base: "center", md: "space-between" }}
+        align={{ base: "center", md: "center" }}
+        direction={{ base: "column-reverse", md: "row" }}
+      >
+        <Text fontSize="sm" color="foreground">
+          © {new Date().getFullYear()} Your Awesome Project. All rights reserved.
+        </Text>
+
+        {FOOTER_LINKS.length > 0 && (
+          <Stack direction={"row"} spacing={6}>
+            {FOOTER_LINKS.map((link) => (
+              <ChakraLink 
+                as={NextLink} 
+                key={link.label} 
+                href={link.href} 
+                fontSize="sm"
+                color="foreground"
+                _hover={{ textDecoration: "underline", color: "primary.DEFAULT" }}
+                // passHref removed
+              >
+                {link.label}
+              </ChakraLink>
+            ))}
+          </Stack>
+        )}
+      </Container>
     </Box>
   );
 }
