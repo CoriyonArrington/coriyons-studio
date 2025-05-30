@@ -4,18 +4,18 @@ Welcome to the **official documentation hub** for Coriyon’s Studio — a CMS-d
 
 This documentation empowers you to understand and extend:
 
-* 🎨 **Portfolio & Services** — dynamic case studies and service offerings
-* ⚙️ **Interactive Playground** — DBT Diary Card, Health Tracker, Quiz tools
-* 🔒 **Admin Dashboard** — secure content management and user admin
+* 🎨 **Portfolio & Services** — dynamic case studies and service offerings  
+* ⚙️ **Interactive Playground** — interactive demos and tools  
+* 🔒 **Admin Dashboard** — secure content management and user admin  
 
 ---
 
 ## 🔎 Who This Documentation Is For
 
-* **Founders & Stakeholders** – Review business model, strategy, and project vision
-* **Designers & Researchers** – Access design tokens, component guidelines, and UX frameworks
-* **Developers & Contractors** – Find setup instructions, architecture overviews, and API references
-* **QA & Compliance** – Consult testing strategies, security guidelines, and deployment checklists
+* **Founders & Stakeholders** – Review business model, strategy, and project vision  
+* **Designers & Researchers** – Access design tokens, component guidelines, and UX frameworks  
+* **Developers & Contractors** – Find setup instructions, architecture overviews, and API references  
+* **QA & Compliance** – Consult testing strategies, security guidelines, and deployment checklists  
 
 ---
 
@@ -32,6 +32,7 @@ This documentation empowers you to understand and extend:
 | `06-support-legal/` | Privacy, terms of use, security & permissions                  |
 | `07-reference/`     | Glossary, commit templates, coding conventions                 |
 | `08-testing/`       | QA strategy, test coverage, and CI/CD pipelines                |
+| `09-launch/`        | Launch checklists, sprint plans, and trackers                  |
 | `99-archive/`       | Deprecated or legacy docs (for historical reference)           |
 
 ---
@@ -50,15 +51,15 @@ This documentation empowers you to understand and extend:
 
 ## ✅ Next Steps
 
-1. **Start here:**
-   `docs/00-intro/wiki.md` — overview and visual index
-2. **Business context:**
-   `docs/01-strategy/README.md`
-3. **Contribute or build:**
-   `docs/04-development/README.md`
+1. **Start here:**  
+   `docs/00-intro/wiki.md` — overview and visual index  
+2. **Business context:**  
+   `docs/01-strategy/README.md`  
+3. **Contribute or build:**  
+   `docs/04-development/README.md`  
 
-Need help? Reach out to **Coriyon Arrington** at [coriyon@studio.dev](mailto:coriyon@studio.dev) or open an issue in the repo.
+Need help? Reach out to **Coriyon Arrington** at [coriyons@studio.dev](mailto:coriyons@studio.dev) or open an issue in the repo.
 
 ---
 
-*Built with ❤️ by Coriyon’s Studio*
+_⏱ Last updated: May 29, 2025_
