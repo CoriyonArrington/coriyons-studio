@@ -1,140 +1,55 @@
-# 🧱 `components/` — Shared UI Components
+# 📁 components/ — Shared UI Components – Coriyon’s Studio
 
-This folder contains **modular UI components** used across Coriyon’s Studio, built with **React + Tailwind CSS** and following the ShadCN design system patterns. Components live here to support:
-
-* 🎨 **Portfolio & Services** pages
-* ⚙️ **Interactive Playground** tools (DBT Diary Card, Quiz, Tracker)
-* 🔒 **Admin Dashboard** interfaces
+This folder contains modular UI components used across Coriyon’s Studio, built with React and Chakra UI. These components support various parts of the application, including portfolio pages, interactive tools, and admin dashboard interfaces. The focus is on creating reusable, consistent, and accessible UI elements.
 
 ---
 
 ## ✅ Who This Is For
 
-* Frontend developers crafting new UI or refactoring existing components
-* Designers and maintainers ensuring consistent application of design tokens
+* Frontend developers crafting new UI or refactoring existing components.
+* Designers and maintainers ensuring consistent application of design tokens and UI patterns.
+* AI tools or automation involved in code analysis or generation (if applicable).
 
 ---
 
-## 📂 Folder Structure
+## 📁 Folder Structure or Common Files
 
-| Subfolder        | Purpose                                                              |
-| ---------------- | -------------------------------------------------------------------- |
-| `ui/`            | ShadCN UI & Radix-based primitives (buttons, cards, dialogs)         |
-| `common/`        | Shared atoms & molecules (icons, headings, image cards, typography)  |
-| `forms/`         | Form fields, inputs, validation messages, and error states           |
-| `page-sections/` | Section-level blocks (Hero, Testimonials, Features)                  |
-| `playground/`    | Components specific to interactive tools (Quiz controls, Tracker UI) |
-| `dashboard/`     | Admin components (tables, modals, nav, toolbar)                      |
-| `index.ts`       | Central exports for each domain                                      |
+The `src/components/` directory is organized as follows:
 
----
-
-## 🧭 Guidelines
-
-* Base all styles on the design tokens defined in `tailwind.config.ts`
-* Use ShadCN/UI primitives for accessibility and consistency
-* Favor composition over inheritance; build small, atomic components that can be combined
-* Keep components stateless where possible; pass behavior via props or hooks
-* Co-locate `*.types.ts` alongside components for complex prop definitions
-* Name folders in **kebab-case** and component files in **PascalCase.tsx** per conventions
-* Export domain-specific components through a single `index.ts` for simpler imports
+| File / Folder                | Purpose                                                            |
+| ---------------------------- | ------------------------------------------------------------------ |
+| `ui/`                        | Core UI utilities (Chakra provider, color mode management, toaster). |
+| `layout/`                    | Structural components for page layouts (e.g., SiteHeader, SiteFooter). |
+| `typography/`                | Custom typography-related components (e.g., TypographyInlineCode).   |
+| `chakra-next-theme-syncer.tsx` | Synchronizes Chakra UI's color mode with Next.js themes.            |
+| `form-message.tsx`           | Displays user feedback messages (errors, success, info).           |
+| `header-auth.tsx`            | Handles authentication display (e.g., user info, sign-in/out buttons) in the header. |
+| `submit-button.tsx`          | A specialized button for form submissions, often handling pending states. |
+| `theme-switcher.tsx`         | Allows users to switch between light, dark, and system color themes.   |
+| `*.test.tsx`                 | Co-located Vitest tests for corresponding components.                  |
+| `README.md`                  | This file, providing an overview of the components directory.        |
 
 ---
 
-## 📌 Related Documentation
+## 🔁 Guidelines or Usage Notes
 
-* **Design Tokens** → `docs/03-design/design-tokens-sheet.md`
-* **Developer Handbook (Component Conventions)** → `docs/developer-handbook.md`
-* **Playground Tool Specs** → `docs/playground-tool-specs.md`
-
----
-
-Use this `components/` directory to keep your UI scalable, consistent, and easy to maintain ✅
-
----
-
-## 🧱 Component Map — Coriyon’s Studio
-
-This guide defines the component system used across the **Coriyon’s Studio** platform, organized by UI scope: atomic components, content sections, CMS rendering, and page layouts.
+* Base all component styles on the Chakra UI theme defined in `src/lib/theme.ts` and global CSS variables in `src/app/globals.css`.
+* Utilize Chakra UI components and their props for styling, accessibility, and consistency.
+* Favor composition: build smaller, focused components that can be combined to create more complex UIs.
+* Keep components as stateless as possible, managing state in parent components or hooks where appropriate.
+* Co-locate complex prop type definitions within component files or in adjacent `*.types.ts` files.
+* Follow naming conventions: folders in **kebab-case** (if any sub-folders beyond the current ones are added) and component files in **PascalCase.tsx**.
+* Consider using an `index.ts` file within subdirectories (like `ui/`, `layout/`) for cleaner exports if they grow larger.
 
 ---
 
-### ✅ Shared UI Components (Atomic)
+## ⚙️ How to Contribute or Extend
 
-| Component           | Purpose                              | Related Types     |
-| ------------------- | ------------------------------------ | ----------------- |
-| `Button`            | CTAs, primary/secondary buttons      | —                 |
-| `Input`             | Text input fields                    | `ContactInput`    |
-| `Textarea`          | Longform message areas               | `ContactMessage`  |
-| `Card`              | Layout wrapper for services, bundles | `Service`, `Page` |
-| `Dialog`            | Modal behavior for tools or forms    | —                 |
-| `Toast` / `Toaster` | Feedback after submission            | —                 |
-| `FormField`         | Label + error wrapper for forms      | All forms         |
-| `Separator`         | Dividers in layouts                  | —                 |
+Ensure new components are well-tested and adhere to the established styling and accessibility standards.
 
----
+```bash
+# Lint files in the components directory
+npm run lint ./src/components/
 
-### 🧩 Layout & Structure Components
-
-| Component        | Purpose                                | Used In                       |
-| ---------------- | -------------------------------------- | ----------------------------- |
-| `SiteHeader`     | Top nav (logo, links, CTA)             | All pages                     |
-| `Footer`         | Footer nav + branding                  | All pages                     |
-| `ContentSection` | Shared section wrapper                 | Hero, Services, Process, etc. |
-| `LayoutShell`    | Page wrapper with header/footer layout | Default layouts               |
-
----
-
-### 🎯 Page Section Components (Marketing / CMS)
-
-| Component             | Purpose                              | Related Types   | Pages                    |
-| --------------------- | ------------------------------------ | --------------- | ------------------------ |
-| `HeroSection`         | Above-the-fold introduction          | `Hero`, `Page`  | Homepage, Services, etc. |
-| `WhyUXSection`        | Problem/value framing section        | `WhyUX[]`       | `/consulting`            |
-| `ProcessSection`      | UX process phases                    | `Process[]`     | `/process`, `/services`  |
-| `ServicesSection`     | Showcase service cards               | `Service[]`     | `/services`              |
-| `TestimonialsSection` | Display client quotes                | `Testimonial[]` | `/testimonials`          |
-| `CTASection`          | Final call to action with CTA button | `CTA`           | All primary pages        |
-
----
-
-### 🧠 CMS-Driven Content Blocks
-
-| Component          | Purpose                            | Data Source     | Pages              |
-| ------------------ | ---------------------------------- | --------------- | ------------------ |
-| `MarkdownRenderer` | Render CMS-stored markdown content | `pages.content` | Projects, Blog     |
-| `ServiceCard`      | Reusable card layout for services  | `services`      | `/services`        |
-| `ProjectCard`      | Project preview w/ image           | `projects`      | `/work`            |
-| `FAQItem`          | Toggleable question/answer pairs   | `faqs`          | `/faq`, `/support` |
-| `ToolCard`         | Display playground tools           | `pages`         | `/labs`            |
-
----
-
-### 🧾 Form Components
-
-| Component      | Purpose                  | Related Types  | Pages      |
-| -------------- | ------------------------ | -------------- | ---------- |
-| `ContactForm`  | Send inquiries           | `ContactInput` | `/contact` |
-| `FeedbackForm` | Feedback on site/content | `Feedback`     | `/support` |
-
----
-
-### 🧪 Playground Tool Components
-
-| Component      | Purpose                               | Related Tables                    | Used In                    |
-| -------------- | ------------------------------------- | --------------------------------- | -------------------------- |
-| `QuizForm`     | Interactive quiz with multiple choice | `quizzes`, `questions`, `options` | `/interactive-quiz`        |
-| `TrackerGraph` | Chart for wellness tracking over time | `tracker_logs`                    | `/health-progress-tracker` |
-| `DiaryForm`    | Log daily skills, notes, mood         | `entries`, `trackers`             | `/dbt-diary-card`          |
-| `ClientCard`   | Dashboard view for therapists         | `users`, `entries`                | `/therapist-dashboard`     |
-
----
-
-## 📁 Future Features & Patterns
-
-These components support roadmap extensions:
-
-* `BlogCard` — Summarized post display (v2)
-* `BlogSection` — Paginated or recent posts section
-* `Scorecard` — Quiz result summary
-* `ReportExportButton` — PDF/CSV generation for tools
+# Run tests related to components (adjust glob if needed)
+npm run test -- src/components
