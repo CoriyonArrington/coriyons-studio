@@ -1,7 +1,7 @@
 // src/app/protected/reset-password/page.tsx
 import { resetPasswordAction } from "@/app/actions";
-import { FormMessage, Message } from "@/src/components/form-message"; // Assumes this is now Chakra-aligned
-import { SubmitButton } from "@/src/components/submit-button";     // Assumes this now uses Chakra Button
+import { FormMessage, Message } from "@/src/components/forms/form-message"; // Assumes this is now Chakra-aligned
+import { SubmitButton } from "@/src/components/forms/submit-button";     // Assumes this now uses Chakra Button
 
 // Import Chakra UI components
 import {

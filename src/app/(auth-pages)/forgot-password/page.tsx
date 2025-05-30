@@ -1,7 +1,7 @@
 // src/app/(auth-pages)/forgot-password/page.tsx
 import { forgotPasswordAction } from "@/app/actions";
-import { FormMessage, Message } from "@/src/components/form-message";
-import { SubmitButton } from "@/src/components/submit-button";
+import { FormMessage, Message } from "@/src/components/forms/form-message";
+import { SubmitButton } from "@/src/components/forms/submit-button";
 import {
   Box,
   FormControl,

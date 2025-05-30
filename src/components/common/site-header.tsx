@@ -9,8 +9,8 @@ import {
 } from "@chakra-ui/react";
 import { HamburgerIcon } from "@chakra-ui/icons";
 import NextLink from "next/link";
-import { ThemeSwitcher } from "../theme-switcher"; // Assuming path from project structure
-import AuthButton from "../header-auth"; // Assuming path from project structure
+import { ThemeSwitcher } from "../navigation/theme-switcher"; // Assuming path from project structure
+import AuthButton from "../navigation/header-auth"; // Assuming path from project structure
 import type { User } from "@supabase/supabase-js";
 
 interface SiteHeaderProps { user: User | null; }

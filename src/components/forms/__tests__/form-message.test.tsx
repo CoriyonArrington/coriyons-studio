@@ -1,10 +1,10 @@
-// src/components/form-message.test.tsx
-import React from 'react'; // Added React import
+// src/components/forms/__tests__/form-message.test.tsx
+import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { axe } from 'jest-axe';
-import { FormMessage, type Message } from './form-message';
+import { FormMessage, type Message } from '../form-message'; // Corrected import path
 import baseTheme from '@/src/lib/theme';
 
 const renderWithChakra = (ui: React.ReactElement, colorMode: 'light' | 'dark' = 'light') => {

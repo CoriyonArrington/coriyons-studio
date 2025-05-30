@@ -2,8 +2,8 @@
 import { montserrat, nunito_sans } from '@/src/lib/fonts'; // Import your custom fonts
 import { ThemeProvider as NextThemesProvider } from "next-themes"; //
 import { Providers } from "./providers"; //
-import SiteHeader from "@/src/components/layout/site-header"; //
-import SiteFooter from "@/src/components/layout/site-footer"; //
+import SiteHeader from "@/src/components/common/site-header"; //
+import SiteFooter from "@/src/components/common/site-footer"; //
 import { Flex, Box } from "@chakra-ui/react"; //
 import "./globals.css"; //
 
