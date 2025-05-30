@@ -7,7 +7,7 @@
 import { extendTheme, type ThemeConfig } from '@chakra-ui/react';
 import { mode, type StyleFunctionProps } from '@chakra-ui/theme-tools';
 
-const colors = { // Your existing colors object...
+const colors = {
   background: 'hsl(var(--background))',
   foreground: 'hsl(var(--foreground))',
   border: 'hsl(var(--border))',
@@ -21,6 +21,10 @@ const colors = { // Your existing colors object...
     DEFAULT: 'hsl(var(--secondary))',
     foreground: 'hsl(var(--secondary-foreground))',
   },
+  destructive: { // Added destructive color
+    DEFAULT: 'hsl(var(--destructive))',
+    foreground: 'hsl(var(--destructive-foreground))',
+  },
   muted: {
     DEFAULT: 'hsl(var(--muted))',
     foreground: 'hsl(var(--muted-foreground))',
@@ -29,9 +33,9 @@ const colors = { // Your existing colors object...
     DEFAULT: 'hsl(var(--accent))',
     foreground: 'hsl(var(--accent-foreground))',
   },
-  popover: { 
-    DEFAULT: 'hsl(var(--popover))', 
-    foreground: 'hsl(var(--popover-foreground))', 
+  popover: {
+    DEFAULT: 'hsl(var(--popover))',
+    foreground: 'hsl(var(--popover-foreground))',
   },
   card: {
     DEFAULT: 'hsl(var(--card))',
@@ -44,83 +48,82 @@ const colors = { // Your existing colors object...
   },
 };
 
-const radii = { /* ...your radii... */ 
+const radii = {
   sm: 'calc(var(--radius) - 4px)',
   md: 'calc(var(--radius) - 2px)',
   lg: 'var(--radius)',
 };
 
 const config: ThemeConfig = {
-  initialColorMode: 'light', 
-  useSystemColorMode: false, 
+  initialColorMode: 'light',
+  useSystemColorMode: false,
 };
 
 const chakraTheme = extendTheme({
   config,
   colors,
   radii,
-  fonts: { /* ...your fonts... */ 
+  fonts: {
     heading: 'var(--font-montserrat), sans-serif',
     body: 'var(--font-nunito-sans), sans-serif',
   },
   styles: {
-    // Changed 'props' to '_props' as it's not used in this specific global style function
-    global: (_props: StyleFunctionProps) => ({ 
+    global: (_props: StyleFunctionProps) => ({
       body: { /* Already handled by globals.css or can be themed here if needed */ },
     }),
   },
   components: {
-    Button: { 
+    Button: {
       variants: {
-        "themedOutline": (props: StyleFunctionProps) => ({ // 'props' is used here by mode()
+        "themedOutline": (props: StyleFunctionProps) => ({
           border: "1px solid",
           bg: "transparent",
           borderColor: mode(colors.border, "whiteAlpha.500")(props),
-          color: mode(colors.foreground, "whiteAlpha.900")(props), 
+          color: mode(colors.foreground, "whiteAlpha.900")(props),
           _hover: {
-            bg: mode("gray.100", "white")(props), 
-            borderColor: mode(colors.primary.DEFAULT, "gray.200")(props), 
-            color: mode(colors.primary.DEFAULT, "black")(props), 
+            bg: mode("gray.100", "white")(props),
+            borderColor: mode(colors.primary.DEFAULT, "gray.200")(props),
+            color: mode(colors.primary.DEFAULT, "black")(props),
           },
           _focus: {
             borderColor: mode(colors.primary.DEFAULT, colors.primary.DEFAULT)(props),
             boxShadow: `0 0 0 1px ${mode(colors.primary.DEFAULT, colors.primary.DEFAULT)(props)}`,
           },
           _active: {
-            bg: mode("gray.200", "gray.50")(props), 
-            borderColor: mode(colors.primary.DEFAULT, "gray.300")(props), 
-            color: mode(colors.primary.DEFAULT, "black")(props), 
+            bg: mode("gray.200", "gray.50")(props),
+            borderColor: mode(colors.primary.DEFAULT, "gray.300")(props),
+            color: mode(colors.primary.DEFAULT, "black")(props),
           }
         }),
       },
     },
-    Menu: { 
-      baseStyle: (props: StyleFunctionProps) => ({ // 'props' is used here by mode()
-        list: { 
+    Menu: {
+      baseStyle: (props: StyleFunctionProps) => ({
+        list: {
           bg: mode(colors.popover.DEFAULT, "black")(props),
           color: mode(colors.popover.foreground, colors.popover.foreground)(props),
           borderWidth: "1px",
-          borderColor: mode(colors.border, colors.border)(props), 
+          borderColor: mode(colors.border, colors.border)(props),
           boxShadow: mode("md", "dark-lg")(props),
         },
-        item: { 
+        item: {
           bg: mode("transparent", "black")(props),
           color: mode(colors.popover.foreground, colors.popover.foreground)(props),
           _hover: {
-            bg: mode("gray.100", "white")(props), 
-            color: mode(colors.popover.foreground, "black")(props), 
-          },
-          _focus: { 
             bg: mode("gray.100", "white")(props),
             color: mode(colors.popover.foreground, "black")(props),
           },
-          _active: { 
-            bg: mode("gray.200", "gray.50")(props), 
+          _focus: {
+            bg: mode("gray.100", "white")(props),
             color: mode(colors.popover.foreground, "black")(props),
           },
-          _checked: { 
-             bg: mode("blue.50", "blue.700")(props), 
-             color: mode("blue.600", "white")(props), 
+          _active: {
+            bg: mode("gray.200", "gray.50")(props),
+            color: mode(colors.popover.foreground, "black")(props),
+          },
+          _checked: {
+             bg: mode("blue.50", "blue.700")(props),
+             color: mode("blue.600", "white")(props),
           }
         },
       }),
