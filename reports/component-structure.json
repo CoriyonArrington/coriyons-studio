@@ -1,0 +1,51 @@
+[
+  {
+    "name": "ChakraNextThemeSyncer",
+    "location": "@/components/chakra-next-theme-syncer.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "FormMessage",
+    "location": "@/components/form-message.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "HeaderAuth",
+    "location": "@/components/header-auth.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "SiteFooter",
+    "location": "@/components/layout/site-footer.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "SiteHeader",
+    "location": "@/components/layout/site-header.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "SubmitButton",
+    "location": "@/components/submit-button.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "ThemeSwitcher",
+    "location": "@/components/theme-switcher.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  }
+]

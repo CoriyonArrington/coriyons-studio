@@ -1,52 +1,45 @@
-# 📁 Strategy Folder — Boutique UX Studio (Minneapolis)
+--- docs/01-strategy/README.md ---
+# 📚 Strategy Documentation – Coriyon’s Studio
 
-Welcome to the **Strategy** folder for \[Your Studio Name]—your guide to launching and scaling a boutique UX design studio for local health & wellness practices.
+Welcome to the **01-strategy** folder. This section contains the core strategic deliverables that define our business model, service offerings, and market communications for Coriyon’s Studio. These documents guide our vision, ground our financial planning, and shape how we talk about and deliver value to clients.
+
+---
 
 ## ✅ Who This Is For
 
-* **Clinic Owners & Managers** evaluating UX partners.
-* **Advisors & Mentors** providing strategic guidance.
-* **Team Members & Contractors** aligning on business goals.
+* **Founders & Stakeholders** – Align on studio vision, business model, and service scope  
+* **Business Analysts & Planners** – Develop and validate revenue models and break-even analyses  
+* **Marketing & Communications Leads** – Craft positioning, messaging frameworks, and outreach plans  
 
-## 🚀 Strategy Quick Launcher
+---
 
-| File                                 | Purpose                                                         |
-| ------------------------------------ | --------------------------------------------------------------- |
-| `pitch-deck.md`                      | Story-driven presentation covering problem, solution, and model |
-| `business-model-canvas-studio-focus` | Visual summary of customer, problem, solution, and revenue      |
-| `market-analysis.md`                 | Market size, segments, and phased reach goals                   |
-| `financial-model-break-even.md`      | Startup costs, ongoing expenses, and break-even analysis        |
-| `3-5-year-growth-plan.md`            | Roadmap of phased milestones and revenue targets                |
-| `studio_service_packages.md`         | Tiered packages framed as irresistible offers                   |
-| `studio_service_alacarte_offers.md`  | A-la-carte services with value, bonuses, and guarantees         |
-| `phase-metric-mapping.md`            | Mapping of phases to metrics and business-oriented stories      |
-| `marketing-messaging-strategy.md`    | Know → Like → Trust framework and messaging pillars             |
-| `communications-plan.md`             | Channels, timeline, and KPIs for launch communications          |
-| `hiring-strategy.md`                 | Team roles and phase-based hiring roadmap                       |
-| `funding-summary-strategy.md`        | Bootstrapping, grants, and sponsorships                         |
-| `revenue-opportunities.md`           | Diversified revenue streams and productized offers              |
-| `sales-projection-cashflow.md`       | Monthly sales, expenses, and cash flow projections              |
+## 🗂 File Structure
 
-## 📚 Suggested Reading Order
+- **business-planning/**  
+  - `business-model-canvas.md`  
+  - `one-page-business-plan.md`  
+  - `financial-model-break-even.md`  
+  - `revenue-opportunities.md`  
+  - `sales-projection-cashflow.md`
 
-1. `pitch-deck.md`
-2. `business-model-canvas-studio-focus`
-3. `market-analysis.md`
-4. `financial-model-break-even.md`
-5. `3-5-year-growth-plan.md`
-6. `studio_service_packages.md`
-7. `phase-metric-mapping.md`
-8. `marketing-messaging-strategy.md`
-9. `communications-plan.md`
-10. `hiring-strategy.md`
-11. `funding-summary-strategy.md`
-12. `revenue-opportunities.md`
-13. `sales-projection-cashflow.md`
+- **service-definition/**  
+  - `elevator-pitch.md`  
+  - `positioning-with-employer.md`  
+  - `studio-service-alacarte-offers.md`  
+  - `studio-service-packages.md`  
+  - `ux-studio-name-ideas.md`
 
-## 📌 How to Use This Folder
+- **market-communications/**  
+  - `market-analysis.md`  
+  - `communications-plan.md`
 
-* **Review** files in order to understand the studio’s strategy.
-* **Update** deliverables with real data and client insights.
-* **Share** select docs with stakeholders for feedback and alignment.
+---
 
-*This README provides a roadmap through the strategy folder, ensuring you find the right document at each stage of planning and execution.*
+## 🔗 Related Docs
+
+* [`docs/00-intro/wiki.md`](../00-intro/wiki.md)  
+* [`docs/00-intro/how-to-use-wiki.md`](../00-intro/how-to-use-wiki.md)  
+
+---
+
+_⏱ Last updated: May 30, 2025_  
