@@ -4,20 +4,16 @@
 import {
   Box, Container, Heading, Text, Link as ChakraLink,
   VStack, HStack, SimpleGrid, Code, Button, Badge, Input,
-  Skeleton, SkeletonText, /* SkeletonCircle removed */ Icon,
+  Skeleton, SkeletonText, Icon,
   List,
   ListItem,
-  // Card, CardHeader, CardBody, CardFooter, // Still commented out
 } from "@chakra-ui/react";
 
 import { FormControl, FormLabel, FormHelperText } from "@chakra-ui/form-control";
-// TrashIconSvg removed as it's not used in the current simplified iconography section
-import { Home as HomeIconSvg, Settings as SettingsIconSvg /*, Trash2 as TrashIconSvg*/ } from 'lucide-react';
+import { Home as HomeIconSvg, Settings as SettingsIconSvg } from 'lucide-react';
 
 interface SectionLink { href: string; text: string; }
 interface SectionType { id: string; title: string; componentLinks?: SectionLink[]; }
-
-// Metadata removed
 
 const sections: SectionType[] = [
   { id: "colors", title: "Color System" },
@@ -32,7 +28,6 @@ const sections: SectionType[] = [
     id: "components", title: "Components",
     componentLinks: [
        { href: "#buttons", text: "Buttons"},
-    //    { href: "#cards", text: "Cards"},
        { href: "#badges", text: "Badges"},
        { href: "#forms", text: "Form Elements"},
        { href: "#loading-states", text: "Loading States"},
@@ -52,14 +47,14 @@ export default function DesignSystemPage() {
 
       <Box as="nav" mb={16} p={4} borderWidth="1px" borderRadius="lg">
         <Heading as="h4" size="md" mb={3}>On This Page</Heading>
-        <List.Root>
+        <List>
           {sections.map((section) => (
             <ListItem key={section.id} _hover={{ bg: "gray.50" }} py={1}>
               <ChakraLink href={`#${section.id}`} _hover={{ textDecoration: 'none', color: 'blue.600' }} fontWeight="medium">
                 {section.title}
               </ChakraLink>
               {section.id === 'components' && section.componentLinks && (
-                <List.Root pl={4} mt={1.5} >
+                <List pl={4} mt={1.5} >
                    {section.componentLinks.map(link => (
                      <ListItem key={link.href} py={0.5}>
                        <ChakraLink href={link.href} fontSize="sm" _hover={{ textDecoration: 'underline', color: 'blue.500' }}>
@@ -67,11 +62,11 @@ export default function DesignSystemPage() {
                        </ChakraLink>
                      </ListItem>
                    ))}
-                </List.Root>
+                </List>
               )}
             </ListItem>
           ))}
-        </List.Root>
+        </List>
       </Box>
 
       <VStack alignItems="stretch">
@@ -98,49 +93,43 @@ export default function DesignSystemPage() {
           <Heading as="h2" size="xl" mb={4}>Typography</Heading>
           <Text mb={6}>Fonts: Nunito Sans (Body), Montserrat (Headings) - configured in theme.</Text>
           <VStack alignItems="start">
-            {/* Corrected unescaped entities below */}
             <Box mb={4}><Heading as="h1" size="2xl">Heading 1</Heading><Text>Font: {`"var(--font-montserrat)"`}</Text></Box>
             <Box mb={4}><Heading as="h2" size="xl">Heading 2</Heading><Text>Font: {`"var(--font-montserrat)"`}</Text></Box>
             <Box mb={4}><Heading as="h3" size="lg">Heading 3</Heading><Text>Font: {`"var(--font-montserrat)"`}</Text></Box>
             <Box mb={4}><Heading as="h4" size="md">Heading 4</Heading><Text>Font: {`"var(--font-montserrat)"`}</Text></Box>
             <Text mb={4}>Paragraph text. Font: {`"var(--font-nunito-sans)"`}</Text>
-            {/* End corrected unescaped entities */}
             <Text fontSize="lg" color="gray.700" mb={4}>Lead text.</Text>
             <Box as="blockquote" borderLeft="4px" borderColor="gray.300" pl={4} py={2} fontStyle="italic" mb={4}>
               <Text>Blockquote.</Text>
             </Box>
             <Text mb={4}>Use <Code>inline code</Code>.</Text>
-            <List.Root listStyleType="disc" pl={5} mb={4}>
+            <List listStyleType="disc" pl={5} mb={4}>
               <ListItem>List item one</ListItem>
               <ListItem>List item two</ListItem>
-            </List.Root>
+            </List>
             <Text>Use <ChakraLink href="#" color="blue.500">inline links</ChakraLink>.</Text>
           </VStack>
         </Box>
 
-        {/* ... other sections (Spacing, Breakpoints, Border Radius, Shadows, Animations, Iconography) ... */}
-        {/* Ensure to check these sections for any literal quotes in JSX text that might need escaping */}
-        {/* For brevity, I'm not repeating all sections, but apply the &quot; or {`"..."`} fix where needed */}
-
         <Box as="section" id="spacing" borderTopWidth="1px" pt={12} mb="16">
           <Heading as="h2" size="xl" mb={4}>Spacing & Layout</Heading>
-          <Text mb={6}>Using the &quot;Inside-Out Spacing&quot; method with a 4px base scale (4px-120px).</Text> {/* Corrected */}
+          <Text mb={6}>Using the &quot;Inside-Out Spacing&quot; method with a 4px base scale (4px-120px).</Text>
           <VStack alignItems="start">
             <Box mb={6}>
               <Heading as="h4" size="md" mb={2}>Margin Example</Heading>
               <VStack bg="gray.100" p="4" borderRadius="md" alignItems="stretch" >
-                <Box bg="blue.100" p="2" borderRadius="sm" mb="4">Item 1 (mb=&quot;4&quot;)</Box> {/* Corrected */}
-                <Box bg="blue.100" p="2" borderRadius="sm" mb="8">Item 2 (mb=&quot;8&quot;)</Box> {/* Corrected */}
+                <Box bg="blue.100" p="2" borderRadius="sm" mb="4">Item 1 (mb=&quot;4&quot;)</Box>
+                <Box bg="blue.100" p="2" borderRadius="sm" mb="8">Item 2 (mb=&quot;8&quot;)</Box>
                 <Box bg="green.100" p="2" borderRadius="sm" >Item 3</Box>
               </VStack>
             </Box>
              <Box mb={6}>
               <Heading as="h4" size="md" mb={2}>Padding Example</Heading>
               <HStack >
-                <Box bg="var(--primary)" color="var(--primary-foreground)" p="1" borderRadius="sm">p=&quot;1&quot;</Box> {/* Corrected */}
-                <Box bg="var(--primary)" color="var(--primary-foreground)" p="2" borderRadius="sm" ml="4">p=&quot;2&quot;</Box> {/* Corrected */}
-                <Box bg="var(--primary)" color="var(--primary-foreground)" p="4" borderRadius="sm" ml="4">p=&quot;4&quot;</Box> {/* Corrected */}
-                <Box bg="var(--primary)" color="var(--primary-foreground)" p="6" borderRadius="sm" ml="4">p=&quot;6&quot;</Box> {/* Corrected */}
+                <Box bg="var(--primary)" color="var(--primary-foreground)" p="1" borderRadius="sm">p=&quot;1&quot;</Box>
+                <Box bg="var(--primary)" color="var(--primary-foreground)" p="2" borderRadius="sm" ml="4">p=&quot;2&quot;</Box>
+                <Box bg="var(--primary)" color="var(--primary-foreground)" p="4" borderRadius="sm" ml="4">p=&quot;4&quot;</Box>
+                <Box bg="var(--primary)" color="var(--primary-foreground)" p="6" borderRadius="sm" ml="4">p=&quot;6&quot;</Box>
               </HStack>
             </Box>
              <Box>
@@ -198,12 +187,10 @@ export default function DesignSystemPage() {
 
          <Box as="section" id="iconography" borderTopWidth="1px" pt={12} mb="16">
           <Heading as="h2" size="xl" mb={4}>Iconography</Heading>
-          <Text mb={6}>Using Lucide Icons.</Text> {/* Corrected: removed "Chakra Icon component" as it's not explicitly used here for styling the icon itself, just Icon as wrapper */}
+          <Text mb={6}>Using Lucide Icons.</Text>
            <HStack alignItems="center" mt={6} >
                <HStack><Icon as={HomeIconSvg} boxSize={4} /> <Text>Default</Text></HStack>
                <HStack ml="4"><Icon as={SettingsIconSvg} boxSize={5} /> <Text>Size 5</Text></HStack>
-               {/* If TrashIconSvg was removed from imports, this line would also need to be removed/changed */}
-               {/* <HStack ml="4"><Icon as={TrashIconSvg} boxSize={6} color="red.500" /> <Text>Size 6, Red</Text></HStack> */}
            </HStack>
          </Box>
 
@@ -213,8 +200,9 @@ export default function DesignSystemPage() {
             <Box id="buttons" mb={12}>
               <Heading as="h3" size="lg" mb={6}>Buttons</Heading>
               <HStack flexWrap="wrap" >
-                <Button colorScheme="blue">Default</Button>
-                <Button colorScheme="gray" variant="outline" ml="4">Secondary Style</Button>
+                <Button colorScheme="blue">Default Primary</Button>
+                {/* Updated to use themedOutline */}
+                <Button variant="themedOutline" ml="4">Themed Outline</Button>
               </HStack>
             </Box>
             <Box id="badges" mb={12}>

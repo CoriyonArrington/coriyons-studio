@@ -1,44 +1,87 @@
+// src/app/(auth-pages)/sign-in/page.tsx
 import { signInAction } from "@/app/actions";
 import { FormMessage, Message } from "@/src/components/form-message";
 import { SubmitButton } from "@/src/components/submit-button";
-import { Input } from "@/src/components/ui/input"; // Assuming these are your Shadcn/UI or custom components
-import { Label } from "@/src/components/ui/label"; // Assuming these are your Shadcn/UI or custom components
-import Link from "next/link";
+import {
+  Box,
+  FormControl,
+  FormLabel,
+  Heading,
+  Input,
+  Link as ChakraLink,
+  Text,
+  VStack,
+  HStack,
+  Container,
+} from "@chakra-ui/react";
+import NextLink from "next/link"; // Corrected import for Next.js Link
 
 export default async function Login(props: { searchParams: Promise<Message> }) {
   const searchParams = await props.searchParams;
+
   return (
-    <form className="flex-1 flex flex-col min-w-64">
-      <h1 className="text-2xl font-medium">Sign in</h1>
-      <p className="text-sm text-foreground">
-        Don&apos;t have an account?{" "} {/* Corrected: ' replaced with &apos; */}
-        <Link className="text-foreground font-medium underline" href="/sign-up">
-          Sign up
-        </Link>
-      </p>
-      <div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
-        <Label htmlFor="email">Email</Label>
-        <Input name="email" placeholder="you@example.com" required />
-        <div className="flex justify-between items-center">
-          <Label htmlFor="password">Password</Label>
-          <Link
-            className="text-xs text-foreground underline"
-            href="/forgot-password"
-          >
-            Forgot Password?
-          </Link>
-        </div>
-        <Input
-          type="password"
-          name="password"
-          placeholder="Your password"
-          required
-        />
-        <SubmitButton pendingText="Signing In..." formAction={signInAction}>
-          Sign in
-        </SubmitButton>
-        <FormMessage message={searchParams} />
-      </div>
-    </form>
+    <Container centerContent py={{ base: 8, md: 16 }} display="flex" flexDirection="column" flex="1">
+      <VStack
+        as="form"
+        action={signInAction}
+        spacing={6}
+        w="full"
+        maxW="sm"
+        p={8}
+        borderWidth={1}
+        borderRadius="lg"
+        boxShadow="md"
+      >
+        <Box textAlign="center" w="full">
+          <Heading as="h1" size="lg" mb={2}>
+            Sign In
+          </Heading>
+          <Text fontSize="sm" color="gray.600">
+            Don&apos;t have an account?{" "}
+            <ChakraLink as={NextLink} href="/sign-up" color="blue.500" fontWeight="medium">
+              Sign up
+            </ChakraLink>
+          </Text>
+        </Box>
+
+        <VStack spacing={4} w="full" mt={4}>
+          <FormControl id="email-signin" isRequired>
+            <FormLabel>Email address</FormLabel>
+            <Input
+              name="email"
+              type="email"
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
+          </FormControl>
+
+          <FormControl id="password-signin" isRequired>
+            <HStack justifyContent="space-between" w="full">
+              <FormLabel mb="0">Password</FormLabel>
+              <ChakraLink
+                as={NextLink}
+                href="/forgot-password"
+                fontSize="xs"
+                color="blue.500"
+                textAlign="right"
+              >
+                Forgot Password?
+              </ChakraLink>
+            </HStack>
+            <Input
+              name="password"
+              type="password"
+              placeholder="Your password"
+              autoComplete="current-password"
+            />
+          </FormControl>
+
+          <SubmitButton pendingText="Signing In..." w="full" colorScheme="blue">
+            Sign in
+          </SubmitButton>
+          <FormMessage message={searchParams} mt={2} w="full" />
+        </VStack>
+      </VStack>
+    </Container>
   );
 }

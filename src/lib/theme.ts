@@ -1,57 +1,131 @@
-// lib/theme.ts
-import {
-  createSystem,
-  defaultConfig, // This is Chakra's base theme configuration + recipes
-  type SystemContext,
-} from "@chakra-ui/react"; // Or import createSystem, SystemContext from '@chakra-ui/system'
-                           // and defaultConfig from '@chakra-ui/react'
+// src/lib/theme.ts
 
-// Your custom token definitions remain the same
-const yourFoundations = {
-  tokens: { // This 'tokens' key is part of your custom structure for organization
-    colors: {
-      border: { value: "var(--border)" }, input: { value: "var(--input)" }, ring: { value: "var(--ring)" },
-      background: { value: "var(--background)" }, foreground: { value: "var(--foreground)" },
-      primary: { "500": { value: "var(--primary)" }, foreground: { value: "var(--primary-foreground)" } },
-      secondary: { "500": { value: "var(--secondary)" }, foreground: { value: "var(--secondary-foreground)" } },
-      destructive: { "500": { value: "var(--destructive)" }, foreground: { value: "var(--destructive-foreground)" } },
-      success: { "500": { value: "var(--success)" }, foreground: { value: "var(--success-foreground)" } },
-      muted: { "500": { value: "var(--muted)" }, foreground: { value: "var(--muted-foreground)" } },
-      accent: { "500": { value: "var(--accent)" }, foreground: { value: "var(--accent-foreground)" } },
-      popover: { "500": { value: "var(--popover)" }, foreground: { value: "var(--popover-foreground)" } },
-      card: { "500": { value: "var(--card)" }, foreground: { value: "var(--card-foreground)" } },
-    },
-    fonts: {
-      body: { value: "var(--font-nunito-sans)" }, heading: { value: "var(--font-montserrat)" },
-    },
-    space: {
-      "1": { value: "0.25rem" }, "2": { value: "0.5rem" }, "3": { value: "0.75rem" }, "4": { value: "1rem" },
-      "5": { value: "1.25rem" }, "6": { value: "1.5rem" }, "7": { value: "1.75rem" }, "8": { value: "2rem" },
-      "9": { value: "2.25rem" }, "10": { value: "2.5rem" }, "11": { value: "2.75rem" }, "12": { value: "3rem" },
-      "14": { value: "3.5rem" }, "16": { value: "4rem" }, "18": { value: "4.5rem" }, "20": { value: "5rem" },
-      "22": { value: "5.5rem" }, "24": { value: "6rem" }, "26": { value: "6.5rem" }, "28": { value: "7rem" },
-      "30": { value: "7.5rem" },
-    },
-    radii: {
-      lg: { value: "var(--radius)" }, md: { value: "calc(var(--radius) - 2px)" }, sm: { value: "calc(var(--radius) - 4px)" },
-    },
-    // Add other token categories like sizes, zIndices etc. under yourFoundations.tokens if needed
+// Test Details for Menu component dark mode (2025-05-28 16:50 CDT) - ESLint unused 'props' fix (2025-05-28 17:45 CDT)
+// - Issue: ESLint warning: 'props' is defined but never used in styles.global.
+// - Solution: Renamed 'props' to '_props' in the global style function definition.
+
+import { extendTheme, type ThemeConfig } from '@chakra-ui/react';
+import { mode, type StyleFunctionProps } from '@chakra-ui/theme-tools';
+
+const colors = { // Your existing colors object...
+  background: 'hsl(var(--background))',
+  foreground: 'hsl(var(--foreground))',
+  border: 'hsl(var(--border))',
+  input: 'hsl(var(--input))',
+  ring: 'hsl(var(--ring))',
+  primary: {
+    DEFAULT: 'hsl(var(--primary))',
+    foreground: 'hsl(var(--primary-foreground))',
   },
-  // semanticTokens: { colors: { ... } } // Your semantic tokens if any
+  secondary: {
+    DEFAULT: 'hsl(var(--secondary))',
+    foreground: 'hsl(var(--secondary-foreground))',
+  },
+  muted: {
+    DEFAULT: 'hsl(var(--muted))',
+    foreground: 'hsl(var(--muted-foreground))',
+  },
+  accent: {
+    DEFAULT: 'hsl(var(--accent))',
+    foreground: 'hsl(var(--accent-foreground))',
+  },
+  popover: { 
+    DEFAULT: 'hsl(var(--popover))', 
+    foreground: 'hsl(var(--popover-foreground))', 
+  },
+  card: {
+    DEFAULT: 'hsl(var(--card))',
+    foreground: 'hsl(var(--card-foreground))',
+  },
+  chart: {
+    '1': 'hsl(var(--chart-1))', '2': 'hsl(var(--chart-2))',
+    '3': 'hsl(var(--chart-3))', '4': 'hsl(var(--chart-4))',
+    '5': 'hsl(var(--chart-5))',
+  },
 };
 
-// Create the theme using defaultConfig and structuring overrides as seen in sandboxes
-const chakraTheme: SystemContext = createSystem(defaultConfig, {
-  // The second argument to createSystem is an "extension" config.
-  // Custom tokens are nested under `theme.tokens` here.
-  theme: {
-    tokens: yourFoundations.tokens, // Your colors, fonts, space, radii
-    // semanticTokens: yourFoundations.semanticTokens, // Your semantic tokens
-    // You can also add/override other theme scales like textStyles, layerStyles here
-    // textStyles: { h1: { fontSize: '2xl', fontWeight: 'bold' } },
+const radii = { /* ...your radii... */ 
+  sm: 'calc(var(--radius) - 4px)',
+  md: 'calc(var(--radius) - 2px)',
+  lg: 'var(--radius)',
+};
+
+const config: ThemeConfig = {
+  initialColorMode: 'light', 
+  useSystemColorMode: false, 
+};
+
+const chakraTheme = extendTheme({
+  config,
+  colors,
+  radii,
+  fonts: { /* ...your fonts... */ 
+    heading: 'var(--font-montserrat), sans-serif',
+    body: 'var(--font-nunito-sans), sans-serif',
   },
-  // components: { /* Your component style overrides (recipes) if any */ },
-  // globalCss: { /* Global styles if this structure supports it, TBD */ }
+  styles: {
+    // Changed 'props' to '_props' as it's not used in this specific global style function
+    global: (_props: StyleFunctionProps) => ({ 
+      body: { /* Already handled by globals.css or can be themed here if needed */ },
+    }),
+  },
+  components: {
+    Button: { 
+      variants: {
+        "themedOutline": (props: StyleFunctionProps) => ({ // 'props' is used here by mode()
+          border: "1px solid",
+          bg: "transparent",
+          borderColor: mode(colors.border, "whiteAlpha.500")(props),
+          color: mode(colors.foreground, "whiteAlpha.900")(props), 
+          _hover: {
+            bg: mode("gray.100", "white")(props), 
+            borderColor: mode(colors.primary.DEFAULT, "gray.200")(props), 
+            color: mode(colors.primary.DEFAULT, "black")(props), 
+          },
+          _focus: {
+            borderColor: mode(colors.primary.DEFAULT, colors.primary.DEFAULT)(props),
+            boxShadow: `0 0 0 1px ${mode(colors.primary.DEFAULT, colors.primary.DEFAULT)(props)}`,
+          },
+          _active: {
+            bg: mode("gray.200", "gray.50")(props), 
+            borderColor: mode(colors.primary.DEFAULT, "gray.300")(props), 
+            color: mode(colors.primary.DEFAULT, "black")(props), 
+          }
+        }),
+      },
+    },
+    Menu: { 
+      baseStyle: (props: StyleFunctionProps) => ({ // 'props' is used here by mode()
+        list: { 
+          bg: mode(colors.popover.DEFAULT, "black")(props),
+          color: mode(colors.popover.foreground, colors.popover.foreground)(props),
+          borderWidth: "1px",
+          borderColor: mode(colors.border, colors.border)(props), 
+          boxShadow: mode("md", "dark-lg")(props),
+        },
+        item: { 
+          bg: mode("transparent", "black")(props),
+          color: mode(colors.popover.foreground, colors.popover.foreground)(props),
+          _hover: {
+            bg: mode("gray.100", "white")(props), 
+            color: mode(colors.popover.foreground, "black")(props), 
+          },
+          _focus: { 
+            bg: mode("gray.100", "white")(props),
+            color: mode(colors.popover.foreground, "black")(props),
+          },
+          _active: { 
+            bg: mode("gray.200", "gray.50")(props), 
+            color: mode(colors.popover.foreground, "black")(props),
+          },
+          _checked: { 
+             bg: mode("blue.50", "blue.700")(props), 
+             color: mode("blue.600", "white")(props), 
+          }
+        },
+      }),
+    },
+  },
 });
 
 export default chakraTheme;

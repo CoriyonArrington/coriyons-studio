@@ -1,11 +1,20 @@
-// app/providers.tsx
-'use client'
+// src/app/providers.tsx
+"use client";
 
-import { ChakraProvider } from '@chakra-ui/react'
-// Assuming chakraTheme from '@/lib/theme' is correctly typed as SystemContext
-import chakraTheme from '@/src/lib/theme'
+import { ChakraProvider } from "@chakra-ui/react";
+import chakraTheme from "@/src/lib/theme"; // Ensure this path is correct
+import { ChakraNextThemeSyncer
+  
+ } from "../components/chakra-next-theme-syncer";
+interface ProvidersProps {
+  children: React.ReactNode;
+}
 
-export function Providers({ children }: { children: React.ReactNode }) {
-  // Use the 'value' prop as defined in ChakraProviderProps
-  return <ChakraProvider value={chakraTheme}>{children}</ChakraProvider>
+export function Providers({ children }: ProvidersProps) {
+  return (
+    <ChakraProvider theme={chakraTheme}>
+      <ChakraNextThemeSyncer />
+      {children} {/* Your application content */}
+    </ChakraProvider>
+  );
 }

@@ -1,3 +1,4 @@
+// tsconfig.json
 {
   "compilerOptions": {
     "target": "ESNext",
@@ -25,8 +26,20 @@
         "./*",
         "src/*"
       ]
-    }
+    },
+    "types": [
+      "node",
+      "next",
+      "@testing-library/jest-dom",
+      "vitest/globals" // Ensures 'vi' namespace is recognized by TypeScript
+    ]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "vitest-setup.ts" // Include your Vitest setup file
+  ],
   "exclude": ["node_modules"]
 }

@@ -1,78 +1,85 @@
+// src/components/theme-switcher.tsx
 "use client";
 
-import { Button } from "@/src/components/ui/button";
+import React, { useEffect, useState } from "react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/src/components/ui/dropdown-menu";
+  Button,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuOptionGroup,
+  MenuItemOption,
+  Icon,
+  useColorModeValue,
+  Text,
+} from "@chakra-ui/react";
 import { Laptop, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 
-const ThemeSwitcher = () => {
+export const ThemeSwitcher = () => {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  // useEffect only runs on the client, so now we can safely show the UI
+  const menuButtonIconColor = useColorModeValue("gray.700", "gray.300"); // Adjusted for potentially darker header in dark mode
+  // Icon color for items within the menu will inherit from MenuList's color (popover.foreground)
+  // or can be set explicitly if needed (e.g. useColorModeValue("gray.600", "gray.400"))
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
   if (!mounted) {
-    return null;
+    return <Button variant="ghost" size={"sm"} width="40px" isLoading aria-label="Loading theme switcher" />;
   }
 
-  const ICON_SIZE = 16;
+  const ICON_SIZE = "1rem"; 
+
+  let currentIcon;
+  if (theme === "light") {
+    currentIcon = <Icon as={Sun} boxSize={ICON_SIZE} color={menuButtonIconColor} />;
+  } else if (theme === "dark") {
+    currentIcon = <Icon as={Moon} boxSize={ICON_SIZE} color={menuButtonIconColor} />;
+  } else {
+    currentIcon = <Icon as={Laptop} boxSize={ICON_SIZE} color={menuButtonIconColor} />;
+  }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size={"sm"}>
-          {theme === "light" ? (
-            <Sun
-              key="light"
-              size={ICON_SIZE}
-              className={"text-muted-foreground"}
-            />
-          ) : theme === "dark" ? (
-            <Moon
-              key="dark"
-              size={ICON_SIZE}
-              className={"text-muted-foreground"}
-            />
-          ) : (
-            <Laptop
-              key="system"
-              size={ICON_SIZE}
-              className={"text-muted-foreground"}
-            />
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-content" align="start">
-        <DropdownMenuRadioGroup
+    <Menu strategy="fixed"> 
+      <MenuButton
+        as={Button}
+        variant="ghost"
+        size={"sm"}
+        aria-label="Switch color theme"
+        px={2}
+      >
+        {currentIcon}
+      </MenuButton>
+      {/* MenuList bg and color are now controlled by the theme override in src/lib/theme.ts */}
+      <MenuList minW="150px"> 
+        <MenuOptionGroup
           value={theme}
-          onValueChange={(e) => setTheme(e)}
+          title="Theme" // Title color will inherit from MenuList
+          type="radio"
+          onChange={(value) => {
+            if (typeof value === 'string') {
+              setTheme(value);
+            }
+          }}
         >
-          <DropdownMenuRadioItem className="flex gap-2" value="light">
-            <Sun size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>Light</span>
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="dark">
-            <Moon size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>Dark</span>
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="system">
-            <Laptop size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>System</span>
-          </DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <MenuItemOption value="light" display="flex" alignItems="center">
+            <Icon as={Sun} boxSize={ICON_SIZE} mr="2" /* color will inherit or use specific if needed */ />
+            <Text as="span">Light</Text> {/* Text color should inherit */}
+          </MenuItemOption>
+          <MenuItemOption value="dark" display="flex" alignItems="center">
+            <Icon as={Moon} boxSize={ICON_SIZE} mr="2" />
+            <Text as="span">Dark</Text>
+          </MenuItemOption>
+          <MenuItemOption value="system" display="flex" alignItems="center">
+            <Icon as={Laptop} boxSize={ICON_SIZE} mr="2" />
+            <Text as="span">System</Text>
+          </MenuItemOption>
+        </MenuOptionGroup>
+      </MenuList>
+    </Menu>
   );
 };
-
-export { ThemeSwitcher };

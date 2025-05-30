@@ -1,16 +1,44 @@
-import Hero from "@/src/components/hero";
-import ConnectSupabaseSteps from "@/src/components/tutorial/connect-supabase-steps";
-import SignUpUserSteps from "@/src/components/tutorial/sign-up-user-steps";
-import { hasEnvVars } from "@/src/utils/supabase/check-env-vars";
+// src/app/page.tsx
+'use client';
 
-export default async function Home() {
+import { Box, Heading, Text, VStack, Spinner } from '@chakra-ui/react';
+
+export default function ComingSoonPage() {
   return (
-    <>
-      <Hero />
-      <main className="flex-1 flex flex-col gap-6 px-4">
-        <h2 className="font-medium text-xl mb-4">Next steps</h2>
-        {hasEnvVars ? <SignUpUserSteps /> : <ConnectSupabaseSteps />}
-      </main>
-    </>
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      justifyContent="center"
+      width="100%" // Takes full width of its container in layout.tsx
+      py={{ base: 10, md: 20 }} // Vertical padding
+      textAlign="center"
+    >
+      <VStack spacing={8}>
+        <Spinner
+          thickness="4px"
+          speed="0.65s"
+          emptyColor="border"
+          color="primary.DEFAULT"
+          size="xl"
+        />
+        <Heading
+          as="h1"
+          fontSize={{ base: '3xl', md: '4xl', lg: '5xl' }}
+          color="foreground"
+        >
+          Coming Soon!
+        </Heading>
+        <Text
+          fontSize={{ base: 'lg', md: 'xl' }}
+          color="muted.foreground"
+        >
+          {/* Corrected line below */}
+          We&apos;re working hard to bring something amazing to you.
+          <br />
+          Stay tuned for updates!
+        </Text>
+      </VStack>
+    </Box>
   );
 }

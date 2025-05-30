@@ -1,23 +1,33 @@
+// src/components/submit-button.tsx
 "use client";
 
-import { Button } from "@/src/components/ui/button";
-import { type ComponentProps } from "react";
+import React from 'react'; // Added this line
+import { Button, ButtonProps } from "@chakra-ui/react"; // Use Chakra UI Button
 import { useFormStatus } from "react-dom";
+// Removed: import { type ComponentProps } from "react"; // Not needed if extending ButtonProps from Chakra
 
-type Props = ComponentProps<typeof Button> & {
+// Extend Chakra's ButtonProps
+type Props = ButtonProps & {
   pendingText?: string;
 };
 
 export function SubmitButton({
   children,
   pendingText = "Submitting...",
-  ...props
+  ...props // These are Chakra ButtonProps
 }: Props) {
-  const { pending } = useFormStatus();
+  const { pending } = useFormStatus(); // 'data' has been removed
 
   return (
-    <Button type="submit" aria-disabled={pending} {...props}>
-      {pending ? pendingText : children}
+    <Button
+      type="submit"
+      aria-disabled={pending}
+      isLoading={pending} // Use Chakra's isLoading prop
+      loadingText={pendingText} // Chakra's prop for text during loading
+      {...props}
+    >
+      {/* Children are automatically handled by Button when not isLoading */}
+      {!pending && children}
     </Button>
   );
 }
