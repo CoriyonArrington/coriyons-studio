@@ -1,10 +1,9 @@
 // src/components/ui/toaster.tsx
-"use client"
+"use client";
 
+import React from 'react';
 import {
-  // Portal, // Removed as unused
   Spinner,
-  // Stack, // Removed as unused
   CloseButton,
   Alert,
   AlertIcon,
@@ -17,7 +16,7 @@ import type { UseToastOptions } from "@chakra-ui/react";
 
 const { toast } = createStandaloneToast({
   defaultOptions: {
-    position: "bottom-right", // Changed "bottom-end" to "bottom-right"
+    position: "bottom-right",
     duration: 5000,
     isClosable: true,
     render: (props: UseToastOptions & { id?: string; onClose: () => void }) => {
@@ -41,7 +40,8 @@ const { toast } = createStandaloneToast({
           m={2}
         >
           {status === "loading" ? (
-            <Spinner size="sm" mr={3} speed="0.65s" />
+            // Explicitly add role and a unique aria-label for testing
+            <Spinner role="status" aria-label="Processing..." size="sm" mr={3} speed="0.65s" />
           ) : (
             <AlertIcon mr={3} />
           )}
@@ -65,10 +65,3 @@ const { toast } = createStandaloneToast({
 });
 
 export { toast as toaster };
-
-/*
-// The custom <Toaster /> React component is not needed with createStandaloneToast
-export const Toaster = () => {
-  return null; 
-};
-*/

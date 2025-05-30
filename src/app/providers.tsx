@@ -5,7 +5,7 @@ import { ChakraProvider } from "@chakra-ui/react";
 import chakraTheme from "@/src/lib/theme"; // Ensure this path is correct
 import { ChakraNextThemeSyncer
   
- } from "../components/chakra-next-theme-syncer";
+ } from "../components/ui/chakra-next-theme-syncer";
 interface ProvidersProps {
   children: React.ReactNode;
 }

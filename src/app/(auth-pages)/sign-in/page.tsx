@@ -1,7 +1,7 @@
 // src/app/(auth-pages)/sign-in/page.tsx
 import { signInAction } from "@/app/actions";
-import { FormMessage, Message } from "@/src/components/form-message";
-import { SubmitButton } from "@/src/components/submit-button";
+import { FormMessage, Message } from "@/src/components/forms/form-message";
+import { SubmitButton } from "@/src/components/forms/submit-button";
 import {
   Box,
   FormControl,

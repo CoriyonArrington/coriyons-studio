@@ -1,10 +1,10 @@
-// src/components/typography/inline-code.test.tsx
-import React from 'react'; // Added React import
+// src/components/typography/__tests__/inline-code.test.tsx
+import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { axe } from 'jest-axe';
-import { TypographyInlineCode } from './inline-code';
+import { TypographyInlineCode } from '../inline-code'; // Corrected import path
 import baseTheme from '@/src/lib/theme';
 
 const renderWithChakra = (ui: React.ReactElement, colorMode: 'light' | 'dark' = 'light') => {
@@ -25,6 +25,8 @@ describe('TypographyInlineCode Accessibility', () => {
 
   it('should have no a11y violations in dark mode', async () => {
     const { container } = renderWithChakra(<TypographyInlineCode>const y = 20;</TypographyInlineCode>, 'dark');
+    // Check if it renders, then run axe
+    expect(screen.getByText('const y = 20;')).toBeInTheDocument();
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });

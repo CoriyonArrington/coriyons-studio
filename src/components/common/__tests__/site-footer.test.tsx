@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { axe } from 'jest-axe';
-import SiteFooter from './site-footer';
+import SiteFooter from '../site-footer';
 import baseTheme from '@/src/lib/theme';
 
 const renderWithChakra = (ui: React.ReactElement, colorMode: 'light' | 'dark' = 'light') => {
