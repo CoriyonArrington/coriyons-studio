@@ -13,13 +13,13 @@ create table if not exists pages (
 );
 
 -- services
-create table if not exists services (
-  id uuid primary key,
-  slug text unique not null,
-  title text not null,
-  description text,
-  content jsonb,
-  created_at timestamp default now()
+CREATE TABLE IF NOT EXISTS services (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  slug TEXT UNIQUE NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  content JSONB,
+  created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- projects

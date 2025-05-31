@@ -3,24 +3,19 @@
 
 import React from 'react';
 import { Box, Flex } from '@chakra-ui/react';
-import SiteHeader from './site-header';
-import SiteFooter from './site-footer';
-import type { User } from "@supabase/supabase-js"; // Assuming User type might be needed by SiteHeader
+// User type is not needed here as the user prop was removed in a previous step.
 
 interface LayoutProps {
   children: React.ReactNode;
-  user?: User | null; // Optional: Pass user to SiteHeader if needed by Layout context
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, user = null }) => {
+const Layout: React.FC<LayoutProps> = ({ children }) => {
+  // console.log("CLIENT DEBUG: src/components/common/layout.tsx - Rendering"); // Removed this line
   return (
-    <Flex direction="column" minH="100vh">
-      <SiteHeader user={user} /> {/* Pass user prop to SiteHeader */}
-      <Box as="main" flex="1" py={8}> {/* Added some default padding, adjust as needed */}
-        {/* Assuming content width will be handled by children or a wrapper within children */}
+    <Flex direction="column" flex="1">
+      <Box as="main" flex="1" width="full" py={{ base: 6, md: 8 }} px={{ base: 4, md: 6 }}>
         {children}
       </Box>
-      <SiteFooter />
     </Flex>
   );
 };
