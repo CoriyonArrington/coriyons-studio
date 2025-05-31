@@ -1,4 +1,3 @@
---- docs/07-reference/README.md ---
 # 📘 Reference Documentation – Coriyon’s Studio
 
 Welcome to the **07-reference** folder. This section provides templates, conventions, and reference guides to ensure consistency and efficiency in all Coriyon’s Studio projects.
@@ -15,27 +14,26 @@ Welcome to the **07-reference** folder. This section provides templates, convent
 
 ## 🗂 File Structure
 
-- `commit-message-template.md`       – Conventional commit message format  
-- `pull-request-template.md`         – Pull request guidelines and checklist  
-- `readme-template.md`               – Boilerplate for new repository or folder READMEs  
-- `file-naming-conventions.md`       – Rules for naming files, folders, and components  
-- `debugging-process.md`             – Step-by-step debugging and triage workflow  
-
-### AI Reference
-
-- `ai-developer-collaboration.md`    – Best practices for AI-assisted development  
-- `ai-powered-design-workflow.md`    – Integrating AI into design workflows  
-- `ai-project-primer-context.md`     – Context and setup for AI-driven projects  
-- `ai-prompt-template-v0-lovable.md` – Curated prompt templates for prototype generation  
+- `dev-reference.md`               – Consolidated developer workflows, templates, and conventions  
+- `ai-collaboration-guidelines.md` – AI-specific collaboration and prompt guidelines  
 
 ---
 
-## 🔗 Related Docs
+### Former Individual Templates (now merged)
+- `commit-message-template.md`       
+- `pull-request-template.md`         
+- `readme-template.md`               
+- `file-naming-conventions.md`       
+- `debugging-process.md`             
 
-* [`00-intro/how-to-use-wiki.md`](../00-intro/how-to-use-wiki.md)  
-* [`04-development/README.md`](../04-development/README.md)  
-* [`05-marketing/README.md`](../05-marketing/README.md)  
+### AI Reference (to be merged into `ai-collaboration-guidelines.md`)
+- `ai-developer-collaboration.md`    
+- `ai-powered-design-workflow.md`     
+- `ai-project-primer-context.md`      
+- `ai-prompt-template-v0-lovable.md`  
+- `ai-schema-aligned-design-loop.md`  
+- `ai-to-type-consistency.md`         
 
 ---
 
-_⏱ Last updated: May 30, 2025_
+_⏱ Last updated: May 31, 2025_

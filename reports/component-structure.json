@@ -1,0 +1,86 @@
+[
+  {
+    "name": "ContentSection",
+    "location": "@/components/common/content-section.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "Form",
+    "location": "@/components/forms/form.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "FormField",
+    "location": "@/components/forms/form-field.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "FormMessage",
+    "location": "@/components/forms/form-message.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "HeaderAuth",
+    "location": "@/components/navigation/header-auth.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "HeroCtaButton",
+    "location": "@/components/common/hero-cta-button.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "Layout",
+    "location": "@/components/common/layout.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "Section",
+    "location": "@/components/common/section.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "SiteFooter",
+    "location": "@/components/common/site-footer.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "SiteHeader",
+    "location": "@/components/common/site-header.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "SubmitButton",
+    "location": "@/components/forms/submit-button.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  },
+  {
+    "name": "ThemeSwitcher",
+    "location": "@/components/navigation/theme-switcher.tsx",
+    "status": "Needs Review",
+    "usageCount": 0,
+    "notes": ""
+  }
+]
