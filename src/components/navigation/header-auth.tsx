@@ -1,26 +1,31 @@
-// src/components/header-auth.tsx
+// src/components/navigation/header-auth.tsx
 "use client";
 
 import React from 'react';
-// This is the actual import. We'll manage its usage for the 'action' prop based on environment.
 import { signOutAction as originalSignOutAction } from "@/src/app/actions";
 import { hasEnvVars } from "@/src/utils/supabase/check-env-vars";
 import NextLink from "next/link";
-import { Badge, Button, Link as ChakraLink } from "@chakra-ui/react";
+import { Badge, Button, Link as ChakraLink, Text } from "@chakra-ui/react";
 import type { User } from "@supabase/supabase-js";
 
 interface AuthButtonProps {
   user: User | null;
 }
 
+const getFirstName = (user: User | null): string | null => {
+  if (!user) return null;
+  const fullName = user.user_metadata?.name as string || user.user_metadata?.full_name as string;
+  const firstName = user.user_metadata?.first_name as string;
+  if (firstName) return firstName;
+  if (fullName) return fullName.split(' ')[0];
+  return null;
+};
+
 export default function AuthButton({ user }: AuthButtonProps) {
-  // Determine the action prop value based on the environment
-  // This ensures that in the 'test' environment, a string is passed to the form's 'action' prop,
-  // which helps satisfy React's prop validation in JSDOM and silences the warning.
-  // In development/production, the actual server action function is used.
-  const formAction = process.env.NODE_ENV === 'test'
-    ? '/mocked-sign-out-action' // Use a valid string path for tests
-    : originalSignOutAction;      // Use the real action for dev/prod
+  const isTestAction = process.env.NODE_ENV === 'test';
+  // Use the actual server action function if not in test, otherwise use a string path
+  const actionProp = isTestAction ? '/mocked-sign-out-action' : originalSignOutAction;
+  const displayName = getFirstName(user);
 
   if (!hasEnvVars) {
     return (
@@ -50,9 +55,14 @@ export default function AuthButton({ user }: AuthButtonProps) {
 
   return user ? (
     <div className="flex items-center gap-4">
-      Hey, {user.email}!
-      {/* Use the environment-aware formAction and add method="POST" */}
-      <form action={formAction} method="POST">
+      <Text fontSize="sm">
+        Hey, {displayName || user.email}!
+      </Text>
+      {/* Conditionally set the method. 
+        If actionProp is a function (server action), method should be undefined.
+        If actionProp is a string (test environment), method can be "POST".
+      */}
+      <form action={actionProp} method={typeof actionProp === 'function' ? undefined : "POST"}>
         <Button type="submit" variant="themedOutline" size="md">
           Sign out
         </Button>

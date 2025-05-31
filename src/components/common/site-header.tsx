@@ -1,4 +1,4 @@
-// src/components/layout/site-header.tsx
+// src/components/common/site-header.tsx
 "use client";
 
 import React from 'react';
@@ -9,15 +9,20 @@ import {
 } from "@chakra-ui/react";
 import { HamburgerIcon } from "@chakra-ui/icons";
 import NextLink from "next/link";
-import { ThemeSwitcher } from "../navigation/theme-switcher"; // Assuming path from project structure
-import AuthButton from "../navigation/header-auth"; // Assuming path from project structure
+import { ThemeSwitcher } from "../navigation/theme-switcher";
+import AuthButton from "../navigation/header-auth";
 import type { User } from "@supabase/supabase-js";
 
 interface SiteHeaderProps { user: User | null; }
 
+// Updated and focused NAV_ITEMS (Option A)
 const NAV_ITEMS = [
   { label: "Home", href: "/" },
-  { label: "Protected Page", href: "/protected" },
+  { label: "Services", href: "/services" },    // Key offering
+  { label: "Studio", href: "/studio" },        // Portfolio/Work
+  { label: "Contact", href: "/contact" },      // Actionable
+  // Consider adding "Pricing" if it's a top-level actionable page for you.
+  // { label: "Pricing", href: "/pricing" },
 ];
 
 export default function SiteHeader({ user }: SiteHeaderProps) {
@@ -26,8 +31,8 @@ export default function SiteHeader({ user }: SiteHeaderProps) {
   return (
     <Box as="header" bg="background" borderBottomWidth="1px" borderColor="border" py={3} px={{ base: 4, md: 6 }}>
       <Flex align="center" maxW="container.xl" mx="auto">
-        <ChakraLink as={NextLink} href="/" _hover={{ textDecoration: 'none' }} /* passHref removed */ >
-          <Heading size="md" color="foreground">YourLogo</Heading>
+        <ChakraLink as={NextLink} href="/" _hover={{ textDecoration: 'none' }}>
+          <Heading size="md" color="foreground">Coriyon&apos;s Studio</Heading>
         </ChakraLink>
 
         <Spacer />
@@ -42,7 +47,6 @@ export default function SiteHeader({ user }: SiteHeaderProps) {
                 px={2} py={1} rounded="md"
                 _hover={{ textDecoration: "none", bg: "muted.DEFAULT" }}
                 color="foreground"
-                // passHref removed
               >
                 {item.label}
               </ChakraLink>
@@ -62,7 +66,8 @@ export default function SiteHeader({ user }: SiteHeaderProps) {
           <DrawerOverlay />
           <DrawerContent bg="background">
             <DrawerCloseButton color="foreground" />
-            <DrawerHeader borderBottomWidth="1px" borderColor="border" color="foreground">Navigation</DrawerHeader>
+            {/* Updated Drawer Header Text */}
+            <DrawerHeader borderBottomWidth="1px" borderColor="border" color="foreground">Menu</DrawerHeader>
             <DrawerBody>
               <VStack as="nav" spacing={4} align="stretch">
                 {NAV_ITEMS.map((item) => (
@@ -73,7 +78,6 @@ export default function SiteHeader({ user }: SiteHeaderProps) {
                     onClick={onClose} display="block" px={2} py={2} rounded="md"
                     _hover={{ textDecoration: "none", bg: "muted.DEFAULT" }}
                     color="foreground"
-                    // passHref removed
                   >
                     {item.label}
                   </ChakraLink>
