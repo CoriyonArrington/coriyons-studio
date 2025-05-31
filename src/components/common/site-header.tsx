@@ -1,5 +1,5 @@
 // src/components/common/site-header.tsx
-"use client";
+'use client';
 
 import React from 'react';
 import {
@@ -13,19 +13,19 @@ import { ThemeSwitcher } from "../navigation/theme-switcher";
 import AuthButton from "../navigation/header-auth";
 import type { User } from "@supabase/supabase-js";
 
-interface SiteHeaderProps { user: User | null; }
+interface SiteHeaderProps { 
+  user: User | null;
+  navAriaLabel?: string; // Added new prop
+}
 
-// Updated and focused NAV_ITEMS (Option A)
 const NAV_ITEMS = [
   { label: "Home", href: "/" },
-  { label: "Services", href: "/services" },    // Key offering
-  { label: "Studio", href: "/studio" },        // Portfolio/Work
-  { label: "Contact", href: "/contact" },      // Actionable
-  // Consider adding "Pricing" if it's a top-level actionable page for you.
-  // { label: "Pricing", href: "/pricing" },
+  { label: "Services", href: "/services" },
+  { label: "Studio", href: "/studio" },
+  { label: "Contact", href: "/contact" },
 ];
 
-export default function SiteHeader({ user }: SiteHeaderProps) {
+export default function SiteHeader({ user, navAriaLabel = "Main navigation" }: SiteHeaderProps) {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   return (
@@ -38,7 +38,7 @@ export default function SiteHeader({ user }: SiteHeaderProps) {
         <Spacer />
 
         <Hide below="md">
-          <HStack as="nav" spacing={4} alignItems="center">
+          <HStack as="nav" spacing={4} alignItems="center" aria-label={navAriaLabel}> {/* Applied aria-label */}
             {NAV_ITEMS.map((item) => (
               <ChakraLink 
                 as={NextLink} 
@@ -66,10 +66,9 @@ export default function SiteHeader({ user }: SiteHeaderProps) {
           <DrawerOverlay />
           <DrawerContent bg="background">
             <DrawerCloseButton color="foreground" />
-            {/* Updated Drawer Header Text */}
             <DrawerHeader borderBottomWidth="1px" borderColor="border" color="foreground">Menu</DrawerHeader>
             <DrawerBody>
-              <VStack as="nav" spacing={4} align="stretch">
+              <VStack as="nav" spacing={4} align="stretch" aria-label={navAriaLabel ? `${navAriaLabel} mobile` : "Mobile navigation"}> {/* Applied aria-label */}
                 {NAV_ITEMS.map((item) => (
                   <ChakraLink 
                     as={NextLink} 

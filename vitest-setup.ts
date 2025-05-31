@@ -15,8 +15,8 @@ Object.defineProperty(window, 'matchMedia', {
     matches: false,
     media: query,
     onchange: null,
-    addListener: vi.fn(), 
-    removeListener: vi.fn(), 
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
@@ -25,27 +25,62 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Props for the NextLink mock.
 type NextLinkMockProps = {
-  href: string;
+  href: string | object; // href can also be an object
   children: React.ReactElement; // Expects a single ReactElement child
-  legacyBehavior?: boolean; 
-  passHref?: boolean;      
-  [key: string]: any; 
+  legacyBehavior?: boolean;
+  passHref?: boolean;
+  // Add other Next.js Link specific props if you use them, e.g.:
+  replace?: boolean;
+  scroll?: boolean;
+  prefetch?: boolean | 'intent';
+  locale?: string | false;
+  [key: string]: any; // For any other HTML attributes or custom props
 };
 
 vi.mock('next/link', () => ({
   __esModule: true,
   default: React.forwardRef<HTMLAnchorElement, NextLinkMockProps>((props, ref) => {
-    const { href, children, ...rest } = props;
-    // This mock clones the child (e.g., ChakraLink or Button as="a") 
-    // and passes NextLink's props (like href) to it.
-    // The child component is then responsible for rendering the actual <a> tag.
-    // This avoids the mock itself creating an <a> tag, preventing nesting.
+    // Destructure Next.js specific props to prevent them from being spread
+    // onto the child DOM element.
+    const {
+      href,
+      children,
+      passHref,         // Consumed, not spread via htmlAnchorProps
+      legacyBehavior,   // Consumed, not spread via htmlAnchorProps
+      replace,          // Example: also consumed if used
+      scroll,           // Example: also consumed if used
+      prefetch,         // Example: also consumed if used
+      locale,           // Example: also consumed if used
+      ...htmlAnchorProps // Remaining props are likely intended for the anchor
+    } = props;
+
+    // The mock's job is to pass the href and other valid anchor attributes
+    // to the child, letting the child render the actual <a> tag.
+    // This is consistent with how passHref and legacyBehavior often work
+    // with component libraries.
+
     if (React.isValidElement(children)) {
-        // @ts-ignore - ref can be spread if the child accepts it
-        return React.cloneElement(children, { href, ref, ...rest });
+      const childProps: Record<string, any> = {
+        // Ensure href is a string for the DOM element,
+        // Next.js Link's href can be an object.
+        href: typeof href === 'string' ? href : String(href),
+        ...htmlAnchorProps, // Spread the remaining safe props
+      };
+      if (ref) { // Only add ref if it's provided
+        childProps.ref = ref;
+      }
+      return React.cloneElement(children, childProps);
     }
-    // Fallback, though <Link> usually has a single element child.
-    // @ts-ignore
-    return React.createElement('span', { ref, 'data-mock-href': href, ...rest }, children);
+
+    // Fallback rendering, though typically Link has a single element child.
+    // This path is less common for the patterns causing the warning.
+    const fallbackProps: Record<string, any> = {
+      'data-mock-href': typeof href === 'string' ? href : String(href),
+      ...htmlAnchorProps,
+    };
+    if (ref) {
+      fallbackProps.ref = ref;
+    }
+    return React.createElement('span', fallbackProps, children);
   }),
 }));

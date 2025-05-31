@@ -37,12 +37,12 @@ export default function AuthButton({ user }: AuthButtonProps) {
             </Badge>
           </div>
           <div className="flex gap-2">
-            <ChakraLink as={NextLink} href="/sign-in" _hover={{ textDecoration: 'none' }}>
+            <ChakraLink as={NextLink} href="/sign-in" passHref _hover={{ textDecoration: 'none' }}>
               <Button as="a" size="md" variant={"outline"} isDisabled opacity={0.75} cursor="default" pointerEvents="none">
                 Sign in
               </Button>
             </ChakraLink>
-            <ChakraLink as={NextLink} href="/sign-up" _hover={{ textDecoration: 'none' }}>
+            <ChakraLink as={NextLink} href="/sign-up" passHref _hover={{ textDecoration: 'none' }}>
               <Button as="a" size="md" variant={"solid"} colorScheme="blue" isDisabled opacity={0.75} cursor="default" pointerEvents="none">
                 Sign up
               </Button>
@@ -58,7 +58,7 @@ export default function AuthButton({ user }: AuthButtonProps) {
       <Text fontSize="sm">
         Hey, {displayName || user.email}!
       </Text>
-      {/* Conditionally set the method. 
+      {/* Conditionally set the method.
         If actionProp is a function (server action), method should be undefined.
         If actionProp is a string (test environment), method can be "POST".
       */}
@@ -70,12 +70,12 @@ export default function AuthButton({ user }: AuthButtonProps) {
     </div>
   ) : (
     <div className="flex gap-2">
-      <ChakraLink as={NextLink} href="/sign-in" _hover={{ textDecoration: 'none' }}>
+      <ChakraLink as={NextLink} href="/sign-in" passHref _hover={{ textDecoration: 'none' }}>
         <Button as="a" size="md" variant="themedOutline">
           Sign in
         </Button>
       </ChakraLink>
-      <ChakraLink as={NextLink} href="/sign-up" _hover={{ textDecoration: 'none' }}>
+      <ChakraLink as={NextLink} href="/sign-up" passHref _hover={{ textDecoration: 'none' }}>
         <Button as="a" size="md" variant="solid" colorScheme="blue">
           Sign up
         </Button>
