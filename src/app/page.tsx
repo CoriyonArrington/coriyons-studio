@@ -1,135 +1,276 @@
-// src/app/page.tsx (Final Cleaned Version)
+// src/app/page.tsx (Addressing unused var and testimonial item typing)
 // NO 'use client' - This is a Server Component
 
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import ContentSection from '@/src/components/common/content-section';
 import HeroCtaButton from '@/src/components/common/hero-cta-button';
-import { Heading, Text } from '@/src/components/typography';
-// Button import might not be needed directly here if all CTAs use HeroCtaButton or ContentSection's button
-// import Button from '@/src/components/ui/button'; 
-import { UICard, UICardHeader, UICardBody, UICardHeading, UICardText } from '@/src/components/ui/card';
-// NextLink might not be needed directly if HeroCtaButton and ContentSection handle their linking
-// import NextLink from 'next/link'; 
-import { VStack, SimpleGrid, HStack } from '@chakra-ui/react';
+import { Heading, Text, type TextAsValues } from '@/src/components/typography';
+import { UICard, UICardHeader, UICardBody, UICardHeading, UICardText, UICardFooter } from '@/src/components/ui/card';
+import { VStack, SimpleGrid, HStack, Box, Tag as ChakraTag } from '@chakra-ui/react';
 import { getFeaturedServices, type FeaturedService } from '@/src/lib/data/services';
+import { getPageContentBySlug, type PageData } from '@/src/lib/data/pages';
+// FIX: Removed ReactMarkdown import and MarkdownRenderer component as it's no longer used in this file
+// import ReactMarkdown from 'react-markdown';
 
-interface HomePageSectionData {
-  cta?: string;
-  href?: string;
-  headline: string;
-  body?: string;
-  subheadline?: string;
-}
-interface HomePageContentType {
-  hero: HomePageSectionData;
-  services: HomePageSectionData;
-  case_studies: HomePageSectionData;
-  why_ux: HomePageSectionData;
-  process: HomePageSectionData;
-  about: HomePageSectionData;
-  testimonials: Pick<HomePageSectionData, 'headline' | 'body'>;
-  blog: HomePageSectionData;
-  faqs: HomePageSectionData;
-  final_cta: HomePageSectionData;
-}
+// const MarkdownRenderer: React.FC<{ markdown: string | undefined }> = ({ markdown }) => {
+//   if (!markdown) return null;
+//   return <ReactMarkdown>{markdown}</ReactMarkdown>;
+// };
 
-const homePageContent: HomePageContentType = {
-  "hero": { "cta": "Get Free Consultation", "href": "/contact", "headline": "Good UX solves business problems. Let's solve yours.", "subheadline": "I help businesses create intuitive, engaging digital experiences that users love and competitors envy. Let's build something amazing together." },
-  "services": { "cta": "View All Services", "body": "Explore the range of UX/UI services I offer, tailored to meet your specific project needs.", "href": "/services", "headline": "My Services" },
-  "case_studies": { "cta": "Browse Featured Projects", "body": "See real-world examples of how my UX expertise has transformed products and delighted users.", "href": "/projects", "headline": "Case Studies" },
-  "why_ux": { "cta": "See the Business Value", "body": "Discover how strategic UX design drives business growth, user satisfaction, and a stronger bottom line.", "href": "/solutions", "headline": "Why Invest in UX?" },
-  "process": { "cta": "Explore the Process", "body": "Understand the steps I take to ensure a successful, collaborative design journey from start to finish.", "href": "/process", "headline": "My Design Process" },
-  "about": { "cta": "Learn More About My Journey", "body": "Deep dive into my background, skills, and passion for user-centered design.", "href": "/about", "headline": "About Me" },
-  "testimonials": { "body": "Hear directly from businesses I've partnered with.", "headline": "What Clients Say" },
-  "blog": { "cta": "View All Posts", "body": "Explore insights on UX, development, and more.", "href": "/blog", "headline": "From the Blog" },
-  "faqs": { "cta": "Read the FAQs", "body": "Find answers to common questions about my services, process, and pricing.", "href": "/faq", "headline": "Frequently Asked Questions" },
-  "final_cta": { "cta": "Start Your Project Today", "body": "Let's discuss how I can help you achieve your product goals.", "href": "/contact", "headline": "Ready to Elevate Your User Experience?" }
-};
+// FIX: Removed TestimonialItem interface as item type will be inferred in map
+// interface TestimonialItem {
+//   quote: string;
+//   author: string;
+// }
 
 export default async function HomePage() {
-  let featuredServices: FeaturedService[] = [];
+  const pageData: PageData | null = await getPageContentBySlug('home');
+
+  let featuredServicesAndBundles: FeaturedService[] = [];
   let serviceFetchError: string | null = null;
   try {
-    featuredServices = await getFeaturedServices(3);
-    if (!Array.isArray(featuredServices)) {
+    featuredServicesAndBundles = await getFeaturedServices(6); 
+    if (!Array.isArray(featuredServicesAndBundles)) {
         serviceFetchError = "Data format error for services.";
-        featuredServices = [];
+        featuredServicesAndBundles = [];
     }
   } catch (error: unknown) {
     if (error instanceof Error) { serviceFetchError = error.message; }
     else { serviceFetchError = "An unknown error occurred while fetching services."; }
-    // Optionally log critical errors to a server-side logging service in production
-    // console.error("Error fetching services:", serviceFetchError);
   }
 
-  const { hero, services, case_studies, why_ux, process, about, testimonials, blog, faqs, final_cta } = homePageContent;
+  if (!pageData || !pageData.content) {
+    return (
+      <Layout>
+        <Section id="error" py={{ base: 16, md: 24 }} textAlign="center">
+          <Heading as="h1" size="2xl">Page Content Not Found</Heading>
+          <Text>We&apos;re sorry, but the content for the homepage could not be loaded.</Text>
+        </Section>
+      </Layout>
+    );
+  }
+
+  const {
+    hero_section,
+    why_our_studio_section,
+    testimonials_section,
+    services_section, 
+    process_section,
+    case_studies_section,
+    about_section,
+    final_cta_section
+  } = pageData.content;
 
   const pageJSX = (
     <>
-      {/* Hero Section */}
-      <Section id="hero" py={{ base: 16, md: 24 }} textAlign="center">
-        <VStack spacing={6} maxW="2xl" mx="auto">
-          <Heading as="h1" size="3xl" fontWeight="extrabold" color="foreground">
-            {hero.headline}
-          </Heading>
-          <Text fontSize="xl" color="muted.foreground" maxW="xl">
-            {hero.subheadline}
-          </Text>
-          <HeroCtaButton href={hero.href || '#'}>
-            {hero.cta}
-          </HeroCtaButton>
-        </VStack>
-      </Section>
-
-      {/* Dynamic Services Section */}
-      <Section id="dynamic-services" py={{ base: 12, md: 20 }} variant="subtle">
-        <VStack spacing={4} mb={12} textAlign="center">
-          <Heading as="h2" size="2xl" color="foreground">
-            {services.headline}
-          </Heading>
-          <Text fontSize="lg" color="muted.foreground" maxW="lg" mx="auto">
-            {services.body}
-          </Text>
-        </VStack>
-        {serviceFetchError ? (
-          <Text textAlign="center" color="red.500">{serviceFetchError}</Text>
-        ) : featuredServices && featuredServices.length > 0 ? (
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={{ base: 6, md: 8 }}>
-            {featuredServices.map((service) => (
-              <UICard key={service.id} variant="outline" h="full">
-                <UICardHeader><HStack alignItems="center"><UICardHeading size="lg" as="h3">{service.title}</UICardHeading></HStack></UICardHeader>
-                <UICardBody><UICardText color="muted.foreground">{service.description || "More details coming soon."}</UICardText></UICardBody>
-              </UICard>
-            ))}
-          </SimpleGrid>
-        ) : (
-          <Text textAlign="center" color="muted.foreground">
-            Our services will be listed here soon. Please check back!
-          </Text>
-        )}
-        {services.cta && services.href && (
-          <VStack mt={12}>
-            {/* Updated to use HeroCtaButton for consistency with icon */}
-            <HeroCtaButton href={services.href} colorScheme="blue" showIcon={true}>
-              {services.cta}
-            </HeroCtaButton>
+      {hero_section && (
+        <Section id="hero" py={{ base: 16, md: 24 }} textAlign="center">
+          <VStack spacing={6} maxW="2xl" mx="auto">
+            <Heading as="h1" size="3xl" fontWeight="extrabold" color="foreground">
+              {hero_section.headline}
+            </Heading>
+            {hero_section.subheadline && (
+              <Text fontSize="xl" color="muted.foreground" maxW="xl">
+                {hero_section.subheadline}
+              </Text>
+            )}
+            {hero_section.cta && (
+              <HeroCtaButton href={hero_section.cta.href || '#'}>
+                {hero_section.cta.text}
+              </HeroCtaButton>
+            )}
           </VStack>
-        )}
-      </Section>
+        </Section>
+      )}
 
-      <ContentSection id="case_studies" {...case_studies} ctaRightIcon={true} />
-      <ContentSection id="why_ux" {...why_ux} variant="subtle" ctaRightIcon={true} />
-      <ContentSection id="process" {...process} ctaRightIcon={true} />
-      <ContentSection id="about" {...about} variant="subtle" ctaRightIcon={true} />
-      <ContentSection id="testimonials" headline={testimonials.headline} body={testimonials.body}>
-        <Text fontStyle="italic" color="muted.foreground" mt={4}>
-          (Actual client testimonials will be displayed here dynamically.)
-        </Text>
-      </ContentSection>
-      <ContentSection id="blog" {...blog} variant="subtle" ctaRightIcon={true} />
-      <ContentSection id="faqs" {...faqs} ctaRightIcon={true} />
-      <ContentSection id="final_cta" {...final_cta} variant="inverse" py={{ base: 16, md: 24 }} ctaRightIcon={true} />
+      {services_section && (
+        <Section id="dynamic-services" py={{ base: 12, md: 20 }} variant="subtle">
+          <VStack spacing={4} mb={12} textAlign="center">
+            <Heading as="h2" size="2xl" color="foreground">
+              {services_section.headline}
+            </Heading>
+            {services_section.body_intro_paragraphs?.map((paragraph: string, index: number) => (
+              <Text key={index} fontSize="lg" color="muted.foreground" maxW="lg" mx="auto">
+                {paragraph}
+              </Text>
+            ))}
+          </VStack>
+
+          {serviceFetchError ? (
+            <Text textAlign="center" color="red.500">{serviceFetchError}</Text>
+          ) : featuredServicesAndBundles && featuredServicesAndBundles.length > 0 ? (
+            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: 6, md: 8 }}>
+              {featuredServicesAndBundles.map((item) => (
+                <UICard key={item.id} variant="outline" h="full" display="flex" flexDirection="column">
+                  <UICardHeader>
+                    <HStack justifyContent="space-between" alignItems="center">
+                      <UICardHeading size="lg" as="h3">{item.title}</UICardHeading>
+                      {item.offering_type === 'BUNDLE' && <ChakraTag size="sm" colorScheme="purple">Bundle</ChakraTag>}
+                    </HStack>
+                  </UICardHeader>
+                  <UICardBody flexGrow={1}>
+                    <UICardText color="muted.foreground" mb={4}>{item.description || "More details coming soon."}</UICardText>
+                    {item.offering_type === 'BUNDLE' && item.content && (
+                      <Box fontSize="sm">
+                        {item.content.price && <Text fontWeight="bold">Price: {item.content.price}</Text>}
+                        {item.content.includes_summary && <Text mt={2}><strong>Includes:</strong> {item.content.includes_summary}</Text>}
+                        {item.content.savings_summary && <Text mt={1} color="green.600">{item.content.savings_summary}</Text>}
+                        {item.content.value_summary && <Text mt={1} color="green.600">{item.content.value_summary}</Text>}
+                        {item.content.perfect_for && <Text mt={2}><em>Perfect for: {item.content.perfect_for}</em></Text>}
+                      </Box>
+                    )}
+                    {item.offering_type === 'INDIVIDUAL' && item.content && item.content.price && (
+                       <Text mt={2} fontWeight="bold">Price: {item.content.price}</Text>
+                    )}
+                  </UICardBody>
+                  {item.content?.cta_text && (
+                    <UICardFooter>
+                       <HeroCtaButton href={item.content.cta_link || `/services/${item.slug}`} size="sm" variant="outline" width="full">
+                         {item.content.cta_text}
+                       </HeroCtaButton>
+                    </UICardFooter>
+                  )}
+                </UICard>
+              ))}
+            </SimpleGrid>
+          ) : (
+            <Text textAlign="center" color="muted.foreground">
+              Our services and packages will be listed here soon. Please check back!
+            </Text>
+          )}
+          
+          {services_section.cta && (
+            <VStack mt={12}>
+              <HeroCtaButton href={services_section.cta.href || '#'} colorScheme="blue" showIcon={true}>
+                {services_section.cta.text}
+              </HeroCtaButton>
+            </VStack>
+          )}
+        </Section>
+      )}
+
+      {why_our_studio_section && (
+        <ContentSection
+          id="why_ux_studio"
+          headline={why_our_studio_section.headline}
+          body={
+            why_our_studio_section.body_paragraphs 
+              ? why_our_studio_section.body_paragraphs.join('\n\n') 
+              : why_our_studio_section.body_paragraph
+          }
+          cta={why_our_studio_section.cta?.text}
+          href={why_our_studio_section.cta?.href}
+          variant="subtle"
+          ctaRightIcon={true}
+        />
+      )}
+      
+      {testimonials_section && (
+        <ContentSection
+          id="testimonials"
+          headline={testimonials_section.headline}
+        >
+          <VStack spacing={6} mt={8} alignItems="stretch">
+            {/* FIX: Removed explicit 'TestimonialItem' type for 'item'; type guard will handle it. */}
+            {testimonials_section.items?.map((item, index: number) => ( 
+              item && 'quote' in item && 'author' in item ? ( // Type guard narrows down 'item'
+                <UICard key={index} variant="outlineFilled">
+                  <UICardBody>
+                    <UICardText fontStyle="italic">&quot;{item.quote}&quot;</UICardText> 
+                    <UICardText textAlign="right" fontWeight="semibold" mt={2}>— {item.author}</UICardText>
+                  </UICardBody>
+                </UICard>
+              ) : null
+            ))}
+          </VStack>
+        </ContentSection>
+      )}
+
+      {process_section && (
+        <ContentSection
+          id="process"
+          headline={process_section.headline}
+          body={process_section.body_intro_paragraph}
+          cta={process_section.cta?.text}
+          href={process_section.cta?.href}
+          ctaRightIcon={true}
+        >
+          {process_section.steps && (
+            <SimpleGrid columns={{base: 1, md: process_section.steps.length > 3 ? 3 : process_section.steps.length}} spacing={6} mt={8} w="full">
+              {process_section.steps.map((step: { title: string; description: string }, index: number) => (
+                <UICard key={index} variant="subtle" h="full">
+                  <UICardHeader><UICardHeading as="h4" size="md">{step.title}</UICardHeading></UICardHeader>
+                  <UICardBody><UICardText>{step.description}</UICardText></UICardBody>
+                </UICard>
+              ))}
+            </SimpleGrid>
+          )}
+          {process_section.body_outro_paragraph && <Text mt={8}>{process_section.body_outro_paragraph}</Text>}
+        </ContentSection>
+      )}
+
+      {case_studies_section && (
+         <ContentSection
+          id="case_studies"
+          headline={case_studies_section.headline}
+          body={case_studies_section.body_intro_paragraph}
+          cta={case_studies_section.cta?.text}
+          href={case_studies_section.cta?.href}
+          variant="subtle"
+          ctaRightIcon={true}
+        >
+          <VStack spacing={4} mt={8} alignItems="stretch">
+            {case_studies_section.examples?.map((example: { summary: string }, index: number) => (
+                 <UICardText key={index} as="div" p={4} borderWidth="1px" borderRadius="md" >• {example.summary}</UICardText>
+            ))}
+          </VStack>
+          {case_studies_section.body_outro_paragraph && <Text mt={8}>{case_studies_section.body_outro_paragraph}</Text>}
+        </ContentSection>
+      )}
+
+      {about_section && (
+        <ContentSection
+          id="about"
+          headline={about_section.headline}
+          body={about_section.body_intro_paragraph}
+          cta={about_section.cta?.text}
+          href={about_section.cta?.href}
+          variant="subtle"
+          ctaRightIcon={true}
+        >
+          <VStack as="ul" spacing={2} mt={8} alignItems="flex-start" sx={{ listStyleType: 'none' }} pl={0}>
+            {about_section.points?.map((point: string, index: number) => (
+              <Text as={"li" as TextAsValues} key={index} display="flex" alignItems="center">
+                {point}
+              </Text>
+            ))}
+          </VStack>
+          {about_section.body_outro_paragraph && <Text mt={8}>{about_section.body_outro_paragraph}</Text>}
+        </ContentSection>
+      )}
+
+      {final_cta_section && (
+        <Section id="final_cta" variant="inverse" py={{ base: 16, md: 24 }} textAlign="center">
+         <VStack spacing={6} maxW="xl" mx="auto">
+            <Heading as="h2" size="2xl">
+              {final_cta_section.headline}
+            </Heading>
+            {final_cta_section.body_paragraph && ( 
+              <Text fontSize="lg" opacity={0.9}>
+                {final_cta_section.body_paragraph}
+              </Text>
+            )}
+            <HStack spacing={4} mt={4}>
+              {final_cta_section.ctas?.map((cta_item: {text: string; href: string}, index: number) => (
+                <HeroCtaButton key={index} href={cta_item.href || '#'} colorScheme="gray" variant="solid">
+                  {cta_item.text}
+                </HeroCtaButton>
+              ))}
+            </HStack>
+          </VStack>
+        </Section>
+      )}
     </>
   );
 

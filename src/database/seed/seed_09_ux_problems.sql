@@ -1,0 +1,9 @@
+-- Seed data for public.ux_problems
+-- References public.icons using icon_id.
+
+INSERT INTO public.ux_problems (id, title, slug, description, content, icon_id, featured, sort_order, created_at, updated_at) VALUES
+  ('uxprob-uuid-lowconvert', 'Low Conversion Rates', 'low-conversion-rates', 'Users are visiting key pages but failing to complete desired actions like sign-ups, purchases, or form submissions.', '{"symptoms": ["High bounce rates on landing pages", "Low click-through rates on CTAs", "Cart abandonment", "Form drop-offs"], "potential_causes": ["Confusing navigation", "Unclear value proposition", "Too many steps in a process", "Poor form design"]}', 'd4ad4325-f56b-4cf4-9b10-0003ab4fbd51', TRUE, 10, NOW(), NOW()),
+  ('uxprob-uuid-poor-engage', 'Poor User Engagement', 'poor-user-engagement', 'Users are not interacting deeply with the product, leading to low session times, few repeat visits, or underutilization of key features.', '{"symptoms": ["High churn rate", "Low daily/monthly active users (DAU/MAU)", "Features going unused", "Shallow page depth per visit"], "potential_causes": ["Lack of clear onboarding", "Features not meeting user needs", "Confusing interface", "Slow performance"]}', 'd4ad4325-f56b-4cf4-9b10-0003ab4fbd51', TRUE, 20, NOW(), NOW()),
+  ('uxprob-uuid-nav-issues', 'Navigation & Usability Issues', 'navigation-usability-issues', 'Users find it difficult to find information, understand where they are, or complete tasks efficiently due to a confusing or inconsistent interface.', '{"symptoms": ["Users getting lost", "Excessive clicks to complete tasks", "High error rates", "Negative feedback on ease of use"], "potential_causes": ["Poor information architecture", "Inconsistent UI patterns", "Lack of clear signposting", "Non-intuitive labeling"]}', 'd4ad4325-f56b-4cf4-9b10-0003ab4fbd51', FALSE, 30, NOW(), NOW());
+
+-- Add more UX problems as needed

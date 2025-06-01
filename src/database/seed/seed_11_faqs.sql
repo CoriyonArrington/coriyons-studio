@@ -1,0 +1,10 @@
+-- Seed data for public.faqs
+-- References public.faq_categories using faq_category_id.
+
+INSERT INTO public.faqs (id, question, answer, faq_category_id, sort_order, featured, created_at, updated_at) VALUES
+  ('faq-uuid-what-services', 'What specific UX services do you offer?', '{"blocks": [{"type": "paragraph", "data": {"text": "We offer a comprehensive suite of UX services including UX Audits, Design Systems development, Interactive Prototyping, User Research, Usability Testing, and more. Check our main services page for a detailed list!"}}]}', 'faqcat-uuid-services', 10, TRUE, NOW(), NOW()),
+  ('faq-uuid-process-detail', 'Can you elaborate on your design process?', '{"blocks": [{"type": "paragraph", "data": {"text": "Absolutely! Our design process is typically iterative and collaborative, involving phases like Discovery & Research, Strategy & Ideation, Design & Prototyping, Testing & Iteration, and finally Development Handoff & Support. Each phase has specific activities and deliverables tailored to the project."}}]}', 'faqcat-uuid-process', 10, TRUE, NOW(), NOW()),
+  ('faq-uuid-cost', 'How much do your services cost?', '{"blocks": [{"type": "paragraph", "data": {"text": "Service costs vary depending on the project scope, complexity, and duration. We offer project-based pricing as well as retainer options for ongoing support. Please contact us for a custom quote."}}]}', 'faqcat-uuid-general', 20, FALSE, NOW(), NOW()),
+  ('faq-uuid-timeline', 'What is a typical project timeline?', '{"blocks": [{"type": "paragraph", "data": {"text": "Timelines depend on the scope. A UX audit might take 1-2 weeks, while a full product design could span several months. We''ll provide a detailed timeline estimate after our initial consultation."}}]}', 'faqcat-uuid-general', 30, FALSE, NOW(), NOW());
+
+-- Add more FAQs as needed

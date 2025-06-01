@@ -6,7 +6,8 @@ import { Text as ChakraText, TextProps as ChakraTextProps } from '@chakra-ui/rea
 
 // Define potential 'as' prop values for semantic flexibility, if needed.
 // Chakra's Text component is quite flexible with 'as' already.
-type TextAsValues = 'p' | 'span' | 'div' | 'label' | 'caption' | 'strong' | 'em'; // Add more as needed
+// FIX: Added 'export' keyword to make this type available for import
+export type TextAsValues = 'p' | 'span' | 'div' | 'label' | 'caption' | 'strong' | 'em' | 'li'; // Add more as needed
 
 export interface TextProps extends Omit<ChakraTextProps, 'as'> {
   as?: TextAsValues; // Offer a more specific list or rely on Chakra's default 'as' typing

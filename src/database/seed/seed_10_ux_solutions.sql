@@ -1,0 +1,9 @@
+-- Seed data for public.ux_solutions
+-- References public.icons using icon_id.
+
+INSERT INTO public.ux_solutions (id, title, slug, description, content, icon_id, featured, sort_order, created_at, updated_at) VALUES
+  ('uxsol-uuid-uxaudit', 'UX Audit & Optimization Plan', 'ux-audit-optimization', 'A thorough expert review of your product to identify usability flaws and provide actionable recommendations for improvement.', '{"key_benefits": ["Clear, prioritized fixes", "Improved user satisfaction", "Increased conversion rates"], "approach_summary": "Heuristic evaluation, user journey mapping, accessibility checks, and competitive analysis.", "deliverables_summary": "Detailed report with findings and actionable steps."}', 'a1b2c3d4-e5f6-7890-1234-56789abcdef0', TRUE, 10, NOW(), NOW()),
+  ('uxsol-uuid-user-research', 'User Research & Persona Dev', 'user-research-personas', 'Gain deep insights into your target audience''s needs, motivations, and pain points to inform design and strategy.', '{"key_benefits": ["Data-driven design decisions", "Empathy for users", "Reduced guesswork"], "approach_summary": "User interviews, surveys, contextual inquiry, and persona creation.", "deliverables_summary": "Research findings, user personas, journey maps."}', 'a1b2c3d4-e5f6-7890-1234-56789abcdef0', TRUE, 20, NOW(), NOW()),
+  ('uxsol-uuid-ia-wireframing', 'IA & Wireframing', 'information-architecture-wireframing', 'Structure your content logically and design intuitive layouts with clear user flows through information architecture and wireframing.', '{"key_benefits": ["Improved findability", "Streamlined user journeys", "Solid foundation for UI design"], "approach_summary": "Card sorting, sitemap creation, user flow diagrams, low and high-fidelity wireframes.", "deliverables_summary": "Sitemap, IA diagrams, wireframe sets."}', 'a1b2c3d4-e5f6-7890-1234-56789abcdef0', FALSE, 30, NOW(), NOW());
+
+-- Add more UX solutions as needed
