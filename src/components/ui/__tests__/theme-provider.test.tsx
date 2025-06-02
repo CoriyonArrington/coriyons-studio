@@ -23,7 +23,7 @@ vi.mock('../color-mode', () => ({
   // We are mocking the 'ColorModeProvider' named export from 'ui/color-mode.tsx'
   // This 'ColorModeProvider' is an alias for next-themes' ThemeProvider.
   ColorModeProvider: ({ children }: MockColorModeProviderProps ) => ( // Used MockColorModeProviderProps
-    <div data-testid="next-themes-provider-mock">{children}</div>
+    (<div data-testid="next-themes-provider-mock">{children}</div>)
   ),
   // If ThemeProvider component under test indirectly uses other exports from 'color-mode.tsx',
   // they might need to be mocked here too (e.g., useColorMode: vi.fn(), useColorModeValue: vi.fn())

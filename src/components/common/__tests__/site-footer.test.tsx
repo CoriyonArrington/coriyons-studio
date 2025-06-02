@@ -12,7 +12,7 @@ vi.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string; }) => (
     // Simulating how ChakraLink might render with a mock href
     // Or more simply, just render children if href interaction isn't key to this specific test's assertion
-    <span data-mock-href={href}>{children}</span>
+    (<span data-mock-href={href}>{children}</span>)
   ),
 }));
 

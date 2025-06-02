@@ -1,11 +1,14 @@
 // src/components/navigation/header-auth.tsx
+// - Updated NextLink usage to modern pattern: removed legacyBehavior, passHref (where applicable),
+//   and `as="a"` from child Button components when NextLink itself provides the anchor.
+// - This aims to resolve nested <a> tag errors and legacyBehavior warnings.
 "use client";
 
 import React from 'react';
 import { signOutAction as originalSignOutAction } from "@/src/app/actions";
 import { hasEnvVars } from "@/src/utils/supabase/check-env-vars";
 import NextLink from "next/link";
-import { Badge, Button, Link as ChakraLink, Text } from "@chakra-ui/react";
+import { Badge, Button, Text } from "@chakra-ui/react";
 import type { User } from "@supabase/supabase-js";
 
 interface AuthButtonProps {
@@ -23,7 +26,6 @@ const getFirstName = (user: User | null): string | null => {
 
 export default function AuthButton({ user }: AuthButtonProps) {
   const isTestAction = process.env.NODE_ENV === 'test';
-  // Use the actual server action function if not in test, otherwise use a string path
   const actionProp = isTestAction ? '/mocked-sign-out-action' : originalSignOutAction;
   const displayName = getFirstName(user);
 
@@ -37,16 +39,16 @@ export default function AuthButton({ user }: AuthButtonProps) {
             </Badge>
           </div>
           <div className="flex gap-2">
-            <ChakraLink as={NextLink} href="/sign-in" passHref _hover={{ textDecoration: 'none' }}>
-              <Button as="a" size="md" variant={"outline"} isDisabled opacity={0.75} cursor="default" pointerEvents="none">
+            <NextLink href="/sign-in">
+              <Button size="md" variant={"outline"} isDisabled opacity={0.75} cursor="default" pointerEvents="none" _hover={{ textDecoration: 'none' }}>
                 Sign in
               </Button>
-            </ChakraLink>
-            <ChakraLink as={NextLink} href="/sign-up" passHref _hover={{ textDecoration: 'none' }}>
-              <Button as="a" size="md" variant={"solid"} colorScheme="blue" isDisabled opacity={0.75} cursor="default" pointerEvents="none">
+            </NextLink>
+            <NextLink href="/sign-up">
+              <Button size="md" variant={"solid"} colorScheme="blue" isDisabled opacity={0.75} cursor="default" pointerEvents="none" _hover={{ textDecoration: 'none' }}>
                 Sign up
               </Button>
-            </ChakraLink>
+            </NextLink>
           </div>
         </div>
       </>
@@ -58,10 +60,6 @@ export default function AuthButton({ user }: AuthButtonProps) {
       <Text fontSize="sm">
         Hey, {displayName || user.email}!
       </Text>
-      {/* Conditionally set the method.
-        If actionProp is a function (server action), method should be undefined.
-        If actionProp is a string (test environment), method can be "POST".
-      */}
       <form action={actionProp} method={typeof actionProp === 'function' ? undefined : "POST"}>
         <Button type="submit" variant="themedOutline" size="md">
           Sign out
@@ -70,16 +68,16 @@ export default function AuthButton({ user }: AuthButtonProps) {
     </div>
   ) : (
     <div className="flex gap-2">
-      <ChakraLink as={NextLink} href="/sign-in" passHref _hover={{ textDecoration: 'none' }}>
-        <Button as="a" size="md" variant="themedOutline">
+      <NextLink href="/sign-in">
+        <Button size="md" variant="themedOutline" _hover={{ textDecoration: 'none' }}>
           Sign in
         </Button>
-      </ChakraLink>
-      <ChakraLink as={NextLink} href="/sign-up" passHref _hover={{ textDecoration: 'none' }}>
-        <Button as="a" size="md" variant="solid" colorScheme="blue">
+      </NextLink>
+      <NextLink href="/sign-up">
+        <Button size="md" variant="solid" colorScheme="blue" _hover={{ textDecoration: 'none' }}>
           Sign up
         </Button>
-      </ChakraLink>
+      </NextLink>
     </div>
   );
 }
