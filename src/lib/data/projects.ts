@@ -1,21 +1,40 @@
 // src/lib/data/projects.ts
-// - Ensures all functions and interfaces are defined and exported only once.
+// - Added RelatedServiceInfo interface.
+// - Updated ProjectDetail interface to include relatedServices.
+// - Modified getProjectBySlug to fetch associated services via project_services table.
+
 import { createClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
+
+// Basic Tag interface
+export interface Tag {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+// Interface for basic service info to be displayed on project page
+export interface RelatedServiceInfo {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  offering_type: 'INDIVIDUAL' | 'BUNDLE' | null; // From services.ts
+}
 
 // For project cards on listing pages
 export interface HomepageProject {
   id: string;
   slug: string;
   title: string;
-  description: string | null; // Short summary for cards
+  description: string | null;
   featured_image_url: string | null;
   client_name: string | null;
-  // Add sort_order if you plan to sort by it on listing pages
   sort_order?: number | null;
+  tags?: Tag[];
 }
 
-// Interfaces for the structured project detail content (JSONB)
+// ... (HeroDetail, HeroContent, ActivityLink, Pullquote, ContentVisual, SectionContent, NextUpProjectInfo, ProjectDetailContent interfaces remain the same)
 export interface HeroDetail {
   Role?: string;
   Team?: string;
@@ -73,6 +92,7 @@ export interface ProjectDetailContent {
   [key: string]: any;
 }
 
+
 // Interface for the full project detail
 export interface ProjectDetail {
   id: string;
@@ -84,6 +104,8 @@ export interface ProjectDetail {
   featured_image_url: string | null;
   og_image_url: string | null;
   content: ProjectDetailContent | null;
+  tags?: Tag[];
+  relatedServices?: RelatedServiceInfo[]; // Added field for related services
 }
 
 
@@ -93,7 +115,18 @@ export async function getFeaturedProjects(limit: number = 3): Promise<HomepagePr
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('projects')
-    .select('id, slug, title, description, featured_image_url, client_name, sort_order')
+    .select(`
+      id,
+      slug,
+      title,
+      description,
+      featured_image_url,
+      client_name,
+      sort_order,
+      project_tags (
+        tags (id, name, slug)
+      )
+    `)
     .eq('featured', true)
     .order('sort_order', { ascending: true })
     .limit(limit);
@@ -102,7 +135,10 @@ export async function getFeaturedProjects(limit: number = 3): Promise<HomepagePr
     console.error('Error fetching featured projects:', error.message);
     return [];
   }
-  return data || [];
+  return data?.map(project => ({
+    ...project,
+    tags: project.project_tags.map((pt: any) => pt.tags).filter(Boolean) as Tag[],
+  })) || [];
 }
 
 // Function to get all projects for the /projects listing page
@@ -111,14 +147,28 @@ export async function getAllProjects(): Promise<HomepageProject[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('projects')
-    .select('id, slug, title, description, featured_image_url, client_name, sort_order')
+    .select(`
+      id,
+      slug,
+      title,
+      description,
+      featured_image_url,
+      client_name,
+      sort_order,
+      project_tags (
+        tags (id, name, slug)
+      )
+    `)
     .order('sort_order', { ascending: true });
 
   if (error) {
     console.error('Error fetching all projects:', error.message);
     return [];
   }
-  return data || [];
+  return data?.map(project => ({
+    ...project,
+    tags: project.project_tags.map((pt: any) => pt.tags).filter(Boolean) as Tag[],
+  })) || [];
 }
 
 // Function to get a single project by its slug for the detail page
@@ -127,12 +177,33 @@ export async function getProjectBySlug(slug: string): Promise<ProjectDetail | nu
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('projects')
-    .select('id, slug, title, client_name, project_date, description, featured_image_url, og_image_url, content')
+    .select(`
+      id,
+      slug,
+      title,
+      client_name,
+      project_date,
+      description,
+      featured_image_url,
+      og_image_url,
+      content,
+      project_tags (
+        tags (id, name, slug)
+      ),
+      project_services (
+        services (
+          id,
+          slug,
+          title,
+          description,
+          offering_type 
+        )
+      )
+    `)
     .eq('slug', slug)
     .single();
 
   if (error) {
-    // PGRST116 means "Fetched result not found" for .single()
     if (error.code === 'PGRST116') {
         console.warn(`Project with slug "${slug}" not found.`);
         return null;
@@ -143,8 +214,22 @@ export async function getProjectBySlug(slug: string): Promise<ProjectDetail | nu
   if (!data) {
     return null;
   }
+
+  const relatedServices = data.project_services?.map((ps: any) => {
+    if (!ps.services) return null;
+    return {
+      id: ps.services.id,
+      slug: ps.services.slug,
+      title: ps.services.title,
+      description: ps.services.description,
+      offering_type: ps.services.offering_type,
+    };
+  }).filter(Boolean) as RelatedServiceInfo[] || undefined; // Use undefined if empty for optional field
+
   return {
     ...data,
     content: data.content as ProjectDetailContent | null,
+    tags: data.project_tags.map((pt: any) => pt.tags).filter(Boolean) as Tag[],
+    relatedServices: relatedServices && relatedServices.length > 0 ? relatedServices : undefined,
   } as ProjectDetail;
 }

@@ -1,29 +1,23 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+// src/utils/supabase/server.ts
+import { createClient as createSupabaseClient, SupabaseClient } from "@supabase/supabase-js";
 
-export const createClient = async () => {
-  const cookieStore = await cookies();
+/**
+ * Creates a Supabase client for server‐side operations (e.g., in Actions).
+ * Uses the ANON key (public) so that auth methods (signIn, signUp, resetPassword) work correctly.
+ *
+ * Requires:
+ *   NEXT_PUBLIC_SUPABASE_URL (the Supabase project URL)
+ *   NEXT_PUBLIC_SUPABASE_ANON_KEY (the Supabase anon/public key)
+ */
+export function createClient(): SupabaseClient {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options);
-            });
-          } catch (_error) { // Changed 'error' to '_error'
-            // The `set` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
-          }
-        },
-      },
-    },
-  );
-};
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable."
+    );
+  }
+
+  return createSupabaseClient(supabaseUrl, supabaseAnonKey);
+}

@@ -1,42 +1,54 @@
 // src/app/(main)/projects/[slug]/page.tsx
-// - Corrected imports for content types from @/src/lib/data/projects.
-// - Added explicit types for map callback parameters.
-// - Used optional chaining for accessing 'detailContent.hero.details'.
-// NO 'use client' - Server Component
+// - Updated to display tags on the project detail page.
+// - Fixed TypeError for ArrowForwardIcon by using a client component (ExternalLinkIcon).
+// - Added section to display Related Services used in the project.
+// - Corrected JSX comment syntax in fallback hero.
 
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import { Heading, Text } from '@/src/components/typography';
 import {
     Box, VStack, Image, SimpleGrid, Divider, UnorderedList,
-    ListItem, HStack, Tag, Flex,
-    Link as ChakraLink, Icon // Added Icon import
+    ListItem, HStack, Tag as ChakraTag, /* Flex, */ // Flex removed
+    Link as ChakraLink
 } from '@chakra-ui/react';
-import { ArrowForwardIcon } from '@chakra-ui/icons';
+import ExternalLinkIcon from '@/src/components/ui/external-link-icon';
+
 import {
     getProjectBySlug,
     getAllProjects,
-    type ProjectDetail,
-    type HomepageProject,
-    type ProjectDetailContent, // Main content type
-    type HeroContent,          // For hero section
-    type SectionContent,       // For sections array
-    type ActivityLink,         // For activities
-    type ContentVisual,        // For visuals
-    type NextUpProjectInfo,    // For nextUp
-    type HeroDetail            // For hero.details
+    // type ProjectDetail, // Removed
+    // type HomepageProject, // Removed
+    // type ProjectDetailContent, // Removed
+    // type HeroContent, // Removed
+    type SectionContent,
+    type ActivityLink,
+    // type ContentVisual, // Removed
+    // type NextUpProjectInfo, // Removed
+    type HeroDetail,
+    type Tag
 } from '@/src/lib/data/projects';
+import { UICard, UICardHeader, UICardBody, UICardHeading, UICardText, UICardFooter } from '@/src/components/ui/card';
+import HeroCtaButton from '@/src/components/common/hero-cta-button';
 import { notFound } from 'next/navigation';
 import type { Metadata, ResolvingMetadata } from 'next';
 import NextLink from 'next/link';
 import PrevNextNavigation, { type NavLinkInfo as PrevNextNavLinkInfo } from '@/src/components/common/prev-next-navigation';
+import React from 'react';
 
 interface ProjectDetailPageProps {
   params: { slug: string };
 }
 
-// Helper function to render project details from the hero.details object
-const renderHeroDetails = (details: HeroDetail | undefined) => { // Changed type to HeroDetail | undefined
+interface RelatedServiceInfo {
+  id: string; 
+  slug: string;
+  title: string;
+  description?: string | null;
+  offering_type?: string | null;
+}
+
+const renderHeroDetails = (details: HeroDetail | undefined) => {
   if (!details) return null;
   const detailItems = [
     { label: 'Role', value: details.Role },
@@ -56,9 +68,8 @@ const renderHeroDetails = (details: HeroDetail | undefined) => { // Changed type
       {details.Tools && details.Tools.length > 0 && (
         <Box gridColumn={{sm: `span ${validDetailItemsCount > 0 ? validDetailItemsCount : 1}`}}>
           <Text fontWeight="semibold" as="span" color="muted.foreground">Tools: </Text>
-          {/* Added types for tool and index */}
           {details.Tools.map((tool: string, index: number) => (
-            <Tag key={index} size="sm" variant="subtle" colorScheme="cyan" mr={1} mb={1}>{tool}</Tag>
+            <ChakraTag key={index} size="sm" variant="subtle" colorScheme="cyan" mr={1} mb={1}>{tool}</ChakraTag>
           ))}
         </Box>
       )}
@@ -66,7 +77,6 @@ const renderHeroDetails = (details: HeroDetail | undefined) => { // Changed type
          <Box gridColumn={{sm: `span ${validDetailItemsCount > 0 ? validDetailItemsCount : 1}`}} mt={2}>
           <Text fontWeight="semibold" mb={1} color="muted.foreground">Contributions:</Text>
           <UnorderedList stylePosition="inside" spacing={0} ml={0}>
-            {/* Added types for contrib and index */}
             {details.Contributions.map((contrib: string, index: number) => (
               <ListItem key={index} fontSize="sm">{contrib}</ListItem>
             ))}
@@ -77,17 +87,28 @@ const renderHeroDetails = (details: HeroDetail | undefined) => { // Changed type
   );
 };
 
-// Helper function to render activity links
 const renderActivityLinks = (activities: ActivityLink[] | undefined) => {
   if (!activities || activities.length === 0) return null;
   return (
     <VStack alignItems="flex-start" spacing={2} mt={4}>
       <Heading as="h4" size="sm" color="muted.foreground">Activities & Outputs:</Heading>
-      {activities.map((activity: ActivityLink, index: number) => ( // Typed activity
+      {activities.map((activity: ActivityLink, index: number) => (
         activity.href ? (
-          <ChakraLink as={NextLink} key={index} href={activity.href} color="blue.500" _hover={{ textDecoration: 'underline' }} fontSize="sm" isExternal={activity.href.startsWith('http')} target={activity.href.startsWith('http') ? "_blank" : undefined} rel={activity.href.startsWith('http') ? "noopener noreferrer" : undefined}>
+          <ChakraLink
+            as={NextLink}
+            key={index}
+            href={activity.href}
+            color="blue.500"
+            _hover={{ textDecoration: 'underline' }}
+            fontSize="sm"
+            isExternal={activity.href.startsWith('http')}
+            target={activity.href.startsWith('http') ? "_blank" : undefined}
+            rel={activity.href.startsWith('http') ? "noopener noreferrer" : undefined}
+            display="inline-flex"
+            alignItems="center"
+          >
             {activity.label}
-            {activity.href.startsWith('http') && <Icon as={ArrowForwardIcon} boxSize={3} verticalAlign="middle" ml={1}/>}
+            {activity.href.startsWith('http') && <ExternalLinkIcon />}
           </ChakraLink>
         ) : (
           <Text key={index} fontSize="sm">{activity.label}</Text>
@@ -100,7 +121,7 @@ const renderActivityLinks = (activities: ActivityLink[] | undefined) => {
 function formatDate(dateString: string | null | undefined): string | null {
   if (!dateString) return null;
   try { return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }); }
-  catch (e) { return dateString; }
+  catch (_e) { return dateString; } // e renamed to _e
 }
 
 export default async function ProjectDetailPage({ params }: ProjectDetailPageProps) {
@@ -131,19 +152,38 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
     }
   }
 
-  const { title: projectTableTitle, content } = project;
-  const detailContent = content; // Already typed as ProjectDetailContent | null
+  const { title: projectTableTitle, client_name, project_date, content, tags, relatedServices } = project;
+  const detailContent = content;
 
   return (
     <Layout>
+      {/* Hero Section */}
       {detailContent?.hero && (
         <Section id="project-hero" py={{ base: 12, md: 20 }} textAlign="center" bg="gray.50" _dark={{ bg: "gray.800" }}>
           <VStack spacing={4} maxW="3xl" mx="auto">
             <Heading as="h1" size="2xl" color="foreground">
               {detailContent.hero.title || projectTableTitle}
             </Heading>
-            {detailContent.hero.problem && <Text fontSize="lg" color="muted.foreground" px={{base: 2, md: 0}}>{detailContent.hero.problem}</Text>}
-            {/* Used optional chaining for hero.details */}
+            {client_name && (
+              <Text fontSize="md" color="purple.500" _dark={{ color: "purple.300" }} fontWeight="medium">
+                Client: {client_name}
+              </Text>
+            )}
+            {project_date && (
+              <Text fontSize="sm" color="muted.foreground">
+                {formatDate(project_date)}
+              </Text>
+            )}
+            {tags && tags.length > 0 && (
+              <HStack spacing={2} wrap="wrap" justifyContent="center" mt={2}>
+                {tags.map((tag: Tag) => (
+                  <ChakraTag key={tag.id} size="sm" variant="solid" colorScheme="teal">
+                    {tag.name}
+                  </ChakraTag>
+                ))}
+              </HStack>
+            )}
+            {detailContent.hero.problem && <Text fontSize="lg" color="muted.foreground" px={{base: 2, md: 0}} mt={4}>{detailContent.hero.problem}</Text>}
             {renderHeroDetails(detailContent.hero?.details)}
             {detailContent.hero.image && (
               <Image src={detailContent.hero.image} alt={detailContent.hero.title || projectTableTitle} mt={8} borderRadius="md" maxH="400px" objectFit="contain" boxShadow="lg" />
@@ -151,10 +191,31 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           </VStack>
         </Section>
       )}
+      {/* Fallback Hero if no JSONB hero content */}
+      {!detailContent?.hero && (
+         <Section id="project-hero-fallback" py={{ base: 12, md: 20 }} textAlign="center">
+            {/* Corrected JSX Comment */}
+            <VStack spacing={3} maxW="3xl" mx="auto">
+                <Heading as="h1" size="2xl" color="foreground">{projectTableTitle}</Heading>
+                {client_name && (<Text fontSize="md" color="purple.500" _dark={{color: "purple.300"}} fontWeight="medium">Client: {client_name}</Text>)}
+                {project_date && (<Text fontSize="sm" color="muted.foreground">{formatDate(project_date)}</Text>)}
+                {tags && tags.length > 0 && (
+                  <HStack spacing={2} wrap="wrap" justifyContent="center" mt={2}>
+                    {tags.map((tag: Tag) => (
+                      <ChakraTag key={tag.id} size="sm" variant="solid" colorScheme="teal">
+                        {tag.name}
+                      </ChakraTag>
+                    ))}
+                  </HStack>
+                )}
+                {project.description && <Text fontSize="lg" color="muted.foreground" mt={4}>{project.description}</Text>}
+            </VStack>
+         </Section>
+      )}
+
 
       <Section id="project-details" py={{ base: 10, md: 16 }} px={{ base: 4, md: 8 }}>
         <VStack spacing={12} alignItems="stretch" maxW="container.md" mx="auto">
-          {/* Ensure section is typed as SectionContent */}
           {detailContent?.sections?.map((section: SectionContent, index: number) => (
             <Box key={index} as="article">
               <Heading as="h2" size="xl" mb={4} borderBottomWidth="2px" borderColor="primary.500" pb={2}>
@@ -179,7 +240,6 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
 
               {section.images && section.images.length > 0 && (
                 <SimpleGrid columns={{ base: 1, md: section.images.length > 1 ? 2 : 1 }} spacing={4} my={6}>
-                  {/* Added types for imgUrl and imgIdx */}
                   {section.images.map((imgUrl: string | null, imgIdx: number) => imgUrl ? (
                     <Image key={imgIdx} src={imgUrl} alt={`${section.heading} visual ${imgIdx + 1}`} borderRadius="md" objectFit="cover" boxShadow="sm" />
                   ) : null)}
@@ -189,24 +249,59 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
               {index < (detailContent.sections?.length || 0) -1 && <Divider my={10} />}
             </Box>
           ))}
+
+          {/* Related Services Section */}
+          {relatedServices && relatedServices.length > 0 && (
+            <Box mt={12} pt={8} borderTopWidth="1px" borderColor="border">
+              <Heading as="h2" size="xl" mb={6} textAlign="center">
+                Services Utilized
+              </Heading>
+              <SimpleGrid columns={{ base: 1, md: 2, lg: relatedServices.length > 2 ? 3 : relatedServices.length }} spacing={6}>
+                {relatedServices.map((service: RelatedServiceInfo) => (
+                  <UICard key={service.id} variant="outline" h="full" display="flex" flexDirection="column">
+                    <UICardHeader>
+                      <HStack justifyContent="space-between" alignItems="center">
+                        <UICardHeading size="md" as="h3">{service.title}</UICardHeading>
+                        {service.offering_type && (
+                           <ChakraTag size="sm" colorScheme={service.offering_type === 'BUNDLE' ? 'purple' : 'blue'} variant="subtle">
+                             {service.offering_type.charAt(0).toUpperCase() + service.offering_type.slice(1).toLowerCase()}
+                           </ChakraTag>
+                        )}
+                      </HStack>
+                    </UICardHeader>
+                    <UICardBody flexGrow={1}>
+                      <UICardText color="muted.foreground" mb={4} noOfLines={3}>
+                        {service.description || "Learn more about this service."}
+                      </UICardText>
+                    </UICardBody>
+                    <UICardFooter>
+                      <HeroCtaButton href={`/services/${service.slug}`} size="sm" variant="outline" width="full">
+                        View Service
+                      </HeroCtaButton>
+                    </UICardFooter>
+                  </UICard>
+                ))}
+              </SimpleGrid>
+            </Box>
+          )}
         </VStack>
       </Section>
 
       {detailContent?.nextUp?.project?.href && detailContent?.nextUp?.project?.title && (
-        <Section id="next-up" py={{ base: 10, md: 16 }} variant="subtle">
-          <VStack spacing={4} maxW="container.md" mx="auto" textAlign="center">
-            <Heading as="h2" size="xl">{detailContent.nextUp.heading || "Next Up"}</Heading>
-            <NextLink href={detailContent.nextUp.project.href.startsWith('/') ? detailContent.nextUp.project.href : `/projects/${detailContent.nextUp.project.href}`} passHref>
-              <Box as="a" display="block" p={6} borderWidth="1px" borderRadius="lg" _hover={{shadow: 'md', textDecoration: 'none'}} borderColor="border" w="full" maxW="lg">
-                {detailContent.nextUp.project.image && (
-                  <Image src={detailContent.nextUp.project.image} alt={detailContent.nextUp.project.title} borderRadius="md" mb={4} maxH="250px" w="full" objectFit="cover" />
-                )}
-                <Heading as="h3" size="lg" mb={2}>{detailContent.nextUp.project.title}</Heading>
-                <Text color="muted.foreground" fontSize="md">{detailContent.nextUp.project.description}</Text>
-              </Box>
-            </NextLink>
-          </VStack>
-        </Section>
+         <Section id="next-up" py={{ base: 10, md: 16 }} variant="subtle">
+         <VStack spacing={4} maxW="container.md" mx="auto" textAlign="center">
+           <Heading as="h2" size="xl">{detailContent.nextUp.heading || "Next Up"}</Heading>
+           <NextLink href={detailContent.nextUp.project.href.startsWith('/') ? detailContent.nextUp.project.href : `/projects/${detailContent.nextUp.project.href}`} passHref>
+             <Box as="a" display="block" p={6} borderWidth="1px" borderRadius="lg" _hover={{shadow: 'md', textDecoration: 'none'}} borderColor="border" w="full" maxW="lg">
+               {detailContent.nextUp.project.image && (
+                 <Image src={detailContent.nextUp.project.image} alt={detailContent.nextUp.project.title} borderRadius="md" mb={4} maxH="250px" w="full" objectFit="cover" />
+               )}
+               <Heading as="h3" size="lg" mb={2}>{detailContent.nextUp.project.title}</Heading>
+               <Text color="muted.foreground" fontSize="md">{detailContent.nextUp.project.description}</Text>
+             </Box>
+           </NextLink>
+         </VStack>
+       </Section>
       )}
 
       <PrevNextNavigation previousPage={previousProjectLink} nextPage={nextProjectLink} basePath="/projects" />
@@ -214,7 +309,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   );
 }
 
-export async function generateMetadata( { params }: ProjectDetailPageProps, parent: ResolvingMetadata ): Promise<Metadata> {
+export async function generateMetadata( { params }: ProjectDetailPageProps, _parent: ResolvingMetadata ): Promise<Metadata> { // parent renamed to _parent
   const slug = params.slug;
   const project = await getProjectBySlug(slug);
   if (!project) { return { title: 'Project Not Found' }; }
@@ -232,5 +327,6 @@ export async function generateMetadata( { params }: ProjectDetailPageProps, pare
       images: ogImage ? [{ url: ogImage }] : [],
       type: 'article',
     },
+    keywords: project.tags?.map(tag => tag.name).join(', '),
   };
 }

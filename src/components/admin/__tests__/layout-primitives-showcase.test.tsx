@@ -8,14 +8,18 @@ import { axe } from 'jest-axe';
 import LayoutPrimitivesShowcase from '../layout-primitives-showcase';
 import baseTheme from '@/src/lib/theme';
 
-// Refined NextLink Mock
+// MODIFIED NextLink Mock:
+// This version assumes that if 'children' is a React element,
+// it should handle the 'href' and render the anchor tag itself.
+// This prevents the mock from wrapping an element child (like a Button)
+// with an additional <a> tag, thus avoiding the nested <a> warning.
 vi.mock('next/link', () => ({
   default: ({
     children,
     href,
-    passHref,
-    legacyBehavior,
-    ...rest 
+    passHref, // Prop is still declared as it's part of NextLink's API
+    legacyBehavior, // Prop is still declared
+    ...rest
   }: {
     children: React.ReactNode;
     href: string;
@@ -23,12 +27,15 @@ vi.mock('next/link', () => ({
     legacyBehavior?: boolean;
     [key: string]: unknown;
   }) => {
-    if (passHref) {
-      if (React.isValidElement(children)) {
-        return React.cloneElement(children as React.ReactElement, { href, ...rest });
-      }
-      return <>{children}</>;
+    if (React.isValidElement(children)) {
+      // If the child is a React element (e.g., a Chakra Button or custom Button),
+      // clone it and pass the href. This assumes the child component
+      // (e.g., <Button as="a"> or a custom button that renders <a> with href)
+      // will correctly render the anchor tag.
+      return React.cloneElement(children as React.ReactElement, { href, ...rest });
     }
+    // If children is not a React element (e.g., a simple string),
+    // then the Link mock itself should render the <a> tag.
     return <a href={href} {...rest}>{children}</a>;
   },
 }));
@@ -69,7 +76,7 @@ describe('LayoutPrimitivesShowcase Component', () => {
   it('should display examples for ContentSection component with different configurations', () => {
     renderWithChakra(<LayoutPrimitivesShowcase />);
     expect(screen.getByRole('heading', {name: /Default ContentSection/i})).toBeInTheDocument();
-    expect(screen.getByRole('link', {name: /Learn More/i})).toBeInTheDocument();
+    expect(screen.getByRole('link', {name: /Learn More/i})).toBeInTheDocument(); // This link should now render correctly
     expect(screen.getByRole('heading', {name: /Subtle & Customized ContentSection/i})).toBeInTheDocument();
     expect(screen.getByRole('heading', {name: /Inverse ContentSection with Children/i})).toBeInTheDocument();
     expect(screen.getByText(/This is custom child content/i)).toBeInTheDocument();

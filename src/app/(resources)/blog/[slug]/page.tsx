@@ -1,13 +1,20 @@
 // src/app/(resources)/blog/[slug]/page.tsx
-// - Corrected variable name from 'previousPageLink' to 'previousPostLink'
-//   when passing props to PrevNextNavigation component.
+// - Updated to display tags on the blog post detail page.
+// - Added tags to metadata keywords.
 // NO 'use client' - Server Component
 
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import { Heading, Text } from '@/src/components/typography';
-import { Box, VStack, Image, UnorderedList, ListItem, OrderedList, Code, Divider, chakra } from '@chakra-ui/react';
-import { getPostBySlug, getAllPublishedPosts, type PostDetail, type PostCardItem, type PostContentJson } from '@/src/lib/data/posts';
+import { Box, VStack, Image, UnorderedList, ListItem, OrderedList, Code, Divider, chakra, HStack, Tag as ChakraTag } from '@chakra-ui/react'; 
+import {
+    getPostBySlug,
+    getAllPublishedPosts, 
+    // type PostDetail, // PostDetail removed
+    // type PostCardItem, // PostCardItem removed
+    // type PostContentJson, // PostContentJson removed
+    type Tag 
+} from '@/src/lib/data/posts'; 
 import { notFound } from 'next/navigation';
 import type { Metadata, ResolvingMetadata } from 'next';
 import ReactMarkdown from 'react-markdown';
@@ -85,14 +92,14 @@ function formatDate(dateString: string | null | undefined): string | null {
   if (!dateString) return null;
   try {
     return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  } catch (e) { return dateString; }
+  } catch (_e) { return dateString; } // e renamed to _e
 }
 
 export default async function PostDetailPage({ params }: PostDetailPageProps) {
   const slug = params.slug;
   const [post, allPostsForNav] = await Promise.all([
-    getPostBySlug(slug),
-    getAllPublishedPosts(1000) // Fetching all posts for sequencing
+    getPostBySlug(slug), 
+    getAllPublishedPosts(1000) 
   ]);
 
   if (!post) {
@@ -104,50 +111,45 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
 
   if (allPostsForNav && allPostsForNav.length > 0) {
     const currentIndex = allPostsForNav.findIndex(p => p.slug === post.slug);
-
     if (currentIndex !== -1) {
-      // Previous post in UI (older chronologically because list is newest first)
-      if (currentIndex + 1 < allPostsForNav.length) {
+      if (currentIndex + 1 < allPostsForNav.length) { // Older posts are typically at higher indices if sorted by newest first
         const olderPost = allPostsForNav[currentIndex + 1];
-        // console.log('DEBUG: Determined OLDER post for link. Slug:', `"${olderPost.slug}"`, 'Title:', olderPost.title);
-        previousPostLink = { // Variable name is previousPostLink
+        previousPostLink = { 
           slug: olderPost.slug,
           title: olderPost.title,
           categoryLabel: "Older Post"
         };
-      } else {
-        // console.log('DEBUG: No older post found.');
       }
-
-      // Next post in UI (newer chronologically)
       if (currentIndex > 0) {
         const newerPost = allPostsForNav[currentIndex - 1];
-        // console.log('DEBUG: Determined NEWER post for link. Slug:', `"${newerPost.slug}"`, 'Title:', newerPost.title);
-        nextPostLink = { // Variable name is nextPostLink
+        nextPostLink = { 
           slug: newerPost.slug,
           title: newerPost.title,
           categoryLabel: "Newer Post"
         };
-      } else {
-        // console.log('DEBUG: No newer post found.');
       }
-    } else {
-      // console.log('DEBUG: Current post slug not found in allPostsForNav list. Slug:', `"${post.slug}"`);
     }
-  } else {
-    // console.log('DEBUG: allPostsForNav list is empty or undefined.');
   }
 
-  const { title, published_at, featured_image_url, content } = post;
+  const { title, published_at, featured_image_url, content, tags } = post; 
   const blocks = content?.blocks;
 
   return (
     <Layout>
       <Section as="article" py={{ base: 10, md: 16 }} px={{ base: 4, md: 8 }}>
         <VStack spacing={6} alignItems="stretch" maxW="container.md" mx="auto">
-          <VStack spacing={2} alignItems="center" textAlign="center" mb={6}>
+          <VStack spacing={2} alignItems="center" textAlign="center" mb={2}> 
             <Heading as="h1" size="2xl" color="foreground">{title}</Heading>
             {published_at && (<Text fontSize="sm" color="muted.foreground">Published on {formatDate(published_at)}</Text>)}
+            {tags && tags.length > 0 && (
+              <HStack spacing={2} wrap="wrap" justifyContent="center" mt={3}>
+                {tags.map((tag: Tag) => (
+                  <ChakraTag key={tag.id} size="sm" variant="subtle" colorScheme="purple">
+                    {tag.name}
+                  </ChakraTag>
+                ))}
+              </HStack>
+            )}
           </VStack>
 
           {featured_image_url && (
@@ -166,7 +168,6 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
           )}
         </VStack>
       </Section>
-      {/* Corrected: Use declared variable names 'previousPostLink' and 'nextPostLink' */}
       <PrevNextNavigation 
         previousPage={previousPostLink} 
         nextPage={nextPostLink} 
@@ -178,10 +179,10 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
 
 export async function generateMetadata(
   { params }: PostDetailPageProps,
-  parent: ResolvingMetadata
+  _parent: ResolvingMetadata // parent renamed to _parent
 ): Promise<Metadata> {
   const slug = params.slug;
-  const post = await getPostBySlug(slug);
+  const post = await getPostBySlug(slug); 
   if (!post) { return { title: 'Blog Post Not Found' }; }
   return {
     title: `${post.title} | Blog | Coriyon's Studio`,
@@ -193,5 +194,6 @@ export async function generateMetadata(
       type: 'article',
       publishedTime: post.published_at || undefined,
     },
+    keywords: post.tags?.map(tag => tag.name).join(', '), 
   };
 }

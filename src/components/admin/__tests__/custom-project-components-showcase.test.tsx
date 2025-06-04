@@ -1,8 +1,8 @@
 // src/components/admin/__tests__/custom-project-components-showcase.test.tsx
 // FINAL: Addresses unused MockedFunction and ensures robust NextLink mock.
+// ADDED: Mock for SiteFooter to prevent "cookies()" error during showcase rendering.
 import React from 'react';
-// MockedFunction import removed as vi.mocked should infer it. If TS still errors, it can be re-added.
-import { describe, it, expect, vi, beforeEach } from 'vitest'; 
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { axe } from 'jest-axe';
@@ -10,6 +10,7 @@ import CustomProjectComponentsShowcase from '../custom-project-components-showca
 import baseTheme from '@/src/lib/theme';
 // Import useFormStatus (which will be the mocked version) and FormStatus for types
 import { useFormStatus, type FormStatus } from 'react-dom';
+import SiteFooter from '@/src/components/common/site-footer';
 
 // Define the simplified signature our mock for useFormStatus will adhere to
 type UseFormStatusMockSignature = () => Pick<FormStatus, "pending">;
@@ -19,7 +20,7 @@ vi.mock('react-dom', async (importActual) => {
   const actual = await importActual<typeof import('react-dom')>();
   return {
     ...actual,
-    useFormStatus: vi.fn(), 
+    useFormStatus: vi.fn(),
   };
 });
 
@@ -29,8 +30,8 @@ vi.mock('next/link', () => ({
     children,
     href,
     passHref,
-    legacyBehavior, 
-    ...rest 
+    legacyBehavior,
+    ...rest
   }: {
     children: React.ReactNode;
     href: string;
@@ -38,17 +39,15 @@ vi.mock('next/link', () => ({
     legacyBehavior?: boolean;
     [key: string]: unknown;
   }) => {
-    if (passHref) {
-      if (React.isValidElement(children)) {
-        return React.cloneElement(children as React.ReactElement, { href, ...rest });
-      }
-      return <>{children}</>; 
-    }
-    // passHref is false or undefined, NextLink renders its own <a>
-    // legacyBehavior is not directly used here but captured.
-    // 'rest' contains other valid anchor attributes.
+    // Simulate modern NextLink behavior where it renders its own <a>
+    // Children are passed through. passHref and legacyBehavior are noted but not primary drivers here.
     return <a href={href} {...rest}>{children}</a>;
   },
+}));
+
+// Mock SiteFooter to prevent it from calling getCategorizedFooterPages (which uses cookies)
+vi.mock('@/src/components/common/site-footer', () => ({
+  default: vi.fn(() => <div data-testid="mock-site-footer">Mocked SiteFooter</div>),
 }));
 
 vi.mock('@/src/components/navigation/theme-switcher', () => ({
@@ -77,19 +76,11 @@ const renderWithChakra = (ui: React.ReactElement) => {
 
 describe('CustomProjectComponentsShowcase Component', () => {
   beforeEach(() => {
-    // Use vi.mocked to get a type-safe reference to the mocked useFormStatus.
-    // Cast the original import to the simplified signature for vi.mocked.
-    // vi.mocked itself will return the fully typed MockedFunction.
-    vi.mocked(useFormStatus as UseFormStatusMockSignature).mockReturnValue({ 
+    vi.mocked(useFormStatus as UseFormStatusMockSignature).mockReturnValue({
         pending: false,
-        // Ensure the return value satisfies the *original* FormStatus if vi.mocked infers that,
-        // OR ensure the cast `as UseFormStatusMockSignature` is what `vi.mocked` uses for its return type.
-        // Since SubmitButton only uses `pending`, a Pick is fine if the cast is effective.
-        // If type errors arise here, it means the return value must fully match FormStatus.
-        // For now, assuming UseFormStatusMockSignature (Pick) is sufficient for mockReturnValue.
-        // To be absolutely safe and match original FormStatus which useFormStatus returns:
-        // data: null, method: null, action: null 
-    }); 
+    });
+    // Reset SiteFooter mock calls if needed, though it's a simple render mock here
+    vi.mocked(SiteFooter).mockClear();
   });
 
   it('should render the main "Custom Project Components" heading', () => {
@@ -103,12 +94,14 @@ describe('CustomProjectComponentsShowcase Component', () => {
     expect(screen.getByText(/SiteHeader \(Logged In - Mocked\):/i)).toBeInTheDocument();
   });
 
-  it('should render SiteFooter showcase', () => {
+  it('should render SiteFooter showcase (mocked)', async () => {
     renderWithChakra(<CustomProjectComponentsShowcase />);
     expect(screen.getByRole('heading', { name: /SiteFooter/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByText(/© \d{4} Coriyon's Studio. All rights reserved./i)).toBeInTheDocument();
+    // Check for the mock's content
+    expect(await screen.findByTestId('mock-site-footer')).toBeInTheDocument();
+    expect(screen.getByText('Mocked SiteFooter')).toBeInTheDocument();
   });
-  
+
   it('should render Form (Custom Wrapper) showcase', () => {
     renderWithChakra(<CustomProjectComponentsShowcase />);
     expect(screen.getByRole('heading', { name: /Form \(Custom Wrapper\)/i, level: 3 })).toBeInTheDocument();
@@ -132,7 +125,7 @@ describe('CustomProjectComponentsShowcase Component', () => {
     expect(screen.getByRole('heading', { name: /SubmitButton/i, level: 3 })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Default Submit/i })).toBeInTheDocument();
   });
-  
+
   it('should render HeaderAuth showcase', () => {
     renderWithChakra(<CustomProjectComponentsShowcase />);
     expect(screen.getByRole('heading', { name: /HeaderAuth \(AuthButton\)/i, level: 3 })).toBeInTheDocument();
@@ -150,11 +143,14 @@ describe('CustomProjectComponentsShowcase Component', () => {
     expect(screen.getByRole('heading', { name: /Button \(Custom UI Primitive\)/i, level: 3 })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Primary Action/i })).toBeInTheDocument();
   });
-  
+
   it('should render HeroCtaButton showcase', () => {
     renderWithChakra(<CustomProjectComponentsShowcase />);
     expect(screen.getByRole('heading', { name: /HeroCtaButton/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Get Free Consultation/i })).toBeInTheDocument();
+    // Updated to check for the link role and the text content
+    const heroCtaLink = screen.getByRole('link', { name: /Get Free Consultation/i });
+    expect(heroCtaLink).toBeInTheDocument();
+    expect(heroCtaLink).toHaveAttribute('href', '/contact');
   });
 
   it('should render Card (Custom UI Primitive) showcase', () => {
@@ -185,7 +181,7 @@ describe('CustomProjectComponentsShowcase Component', () => {
     const defaultSpinner = spinners.find(spinner => spinner.getAttribute('aria-label') === 'Loading...');
     expect(defaultSpinner).toBeInTheDocument();
   });
-  
+
   it('should render Toaster showcase', () => {
     renderWithChakra(<CustomProjectComponentsShowcase />);
     expect(screen.getByRole('heading', { name: /Toaster \(Toast Utility\)/i, level: 3 })).toBeInTheDocument();
@@ -195,13 +191,15 @@ describe('CustomProjectComponentsShowcase Component', () => {
   it('should render ChakraNextThemeSyncer and ThemeProvider conceptual showcases', () => {
     renderWithChakra(<CustomProjectComponentsShowcase />);
     expect(screen.getByRole('heading', { name: /ChakraNextThemeSyncer/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByText(/This component synchronizes Chakra UI's theme with Next.js/i)).toBeInTheDocument();
+    expect(screen.getByText(/This component synchronizes Chakra UI’s theme with Next.js/i)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /ThemeProvider \(App Provider\)/i, level: 3 })).toBeInTheDocument();
     expect(screen.getByText(/This component wraps the application to provide Chakra UI and Next-Themes context/i)).toBeInTheDocument();
   });
 
   it('should have no a11y violations', async () => {
     const { container } = renderWithChakra(<CustomProjectComponentsShowcase />);
+    // Wait for any async operations within the showcase, like the mocked SiteFooter, to settle
+    await screen.findByTestId('mock-site-footer');
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });

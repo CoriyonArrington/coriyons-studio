@@ -2,112 +2,53 @@
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import { Heading, Text } from '@/src/components/typography';
-import { Box, VStack, Image, UnorderedList, ListItem, SimpleGrid, Divider, HStack, chakra, Code, OrderedList } from '@chakra-ui/react';
+import { 
+    Box, VStack, Image, UnorderedList, ListItem, SimpleGrid, Divider, HStack, 
+    // chakra, // chakra removed
+    // Code, // Code removed (was for BlockRenderer)
+    // OrderedList // OrderedList removed (was for BlockRenderer)
+} from '@chakra-ui/react';
 import {
     getProcessStepBySlug,
     getAllProcessSteps,
-    type ProcessStepDetail,
-    // type ProcessStepItem, // ProcessStepItem is used in generateMetadata via ProcessStepDetail
+    // type ProcessStepDetail, // ProcessStepDetail removed
     type ContentPoint,
     type ContentVisual,
 } from '@/src/lib/data/process';
 import { notFound } from 'next/navigation';
 import type { Metadata, ResolvingMetadata } from 'next';
 import PrevNextNavigation, { type NavLinkInfo as PrevNextNavLinkInfo } from '@/src/components/common/prev-next-navigation';
-// import { mapPageTypeToCategoryLabel } from '@/src/lib/utils'; // Not used in this snippet
 import React from 'react';
 import * as LucideIcons from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+// ReactMarkdown and remarkGfm removed as BlockRenderer is removed
 
-interface ContentBlock {
-  type: string;
-  data: any;
-  id?: string;
-}
+// ContentBlock interface removed as BlockRenderer is removed
+// BlockRenderer function removed
 
-const BlockRenderer: React.FC<{ block: ContentBlock }> = ({ block }) => {
-  switch (block.type) {
-    case 'header':
-      const level = block.data.level && block.data.level >= 1 && block.data.level <= 6
-                    ? `h${block.data.level}`
-                    : 'h2';
-      return <Heading as={level as any} size={level === 'h1' ? 'xl' : level === 'h2' ? 'lg' : 'md'} my={4}>{block.data.text}</Heading>;
-    case 'paragraph':
-      return <Text my={4} lineHeight="tall">{block.data.text}</Text>;
-    case 'list':
-      const ListComponent = block.data.style === 'ordered' ? OrderedList : UnorderedList;
-      return (
-        <ListComponent spacing={2} my={4} pl={5}>
-          {block.data.items.map((item: string, index: number) => (
-            <ListItem key={index}>{item}</ListItem>
-          ))}
-        </ListComponent>
-      );
-    case 'image':
-      return (
-        <VStack my={6} alignItems="center">
-          <Image src={block.data.file?.url || block.data.url} alt={block.data.caption || 'Blog image'} maxW="full" borderRadius="md" />
-          {block.data.caption && <Text as="caption" fontSize="sm" color="muted.foreground" mt={2}>{block.data.caption}</Text>}
-        </VStack>
-      );
-    case 'code':
-      return <Code display="block" whiteSpace="pre-wrap" p={4} borderRadius="md" my={4}>{block.data.code}</Code>;
-    case 'markdown':
-      return (
-        <Box className="prose" maxW="full" my={4}>
-            <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm]}>
-                {block.data.text || block.data.markdown || ''}
-            </ReactMarkdown>
-        </Box>
-      );
-    default:
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(`Unsupported block type in process/[slug]: ${block.type}`, block.data);
-        return <Box as="pre" p={3} borderWidth="1px" my={2} borderRadius="md" fontSize="xs" overflowX="auto" bg="gray.50"><code>{JSON.stringify(block, null, 2)}</code></Box>;
-      }
-      return null;
-  }
-};
+// MarkdownComponents removed as BlockRenderer is removed
 
-// Ensure you have the actual implementation for MarkdownComponents
-const MarkdownComponents = { /* ... your Markdown components configuration ... */ };
 interface ProcessStepDetailPageProps { params: { slug: string }; }
 
-// Ensure you have the actual implementation for formatDate if used, or remove if not
-// function formatDate(dateString: string | null | undefined): string | null { /* ... your date formatting logic ... */ }
-
-// Corrected DynamicLucideIcon implementation (should be around line 85 if other functions are minimal)
 const DynamicLucideIcon: React.FC<{ name: string | undefined | null; } & Omit<LucideProps, 'ref' | 'children'>> = ({ name, ...props }) => {
-  // Path 1: Handle null or undefined name
   if (!name) {
     return null;
   }
-
-  // Path 2: Try to render the specified icon
   if (Object.prototype.hasOwnProperty.call(LucideIcons, name)) {
     const IconComponent = (LucideIcons as any)[name];
-    // Check if IconComponent is a valid React component (function or forwardRef)
     if (IconComponent && (typeof IconComponent === 'function' || (typeof IconComponent === 'object' && IconComponent.$$typeof === Symbol.for('react.forward_ref')))) {
       return React.createElement(IconComponent as React.ComponentType<LucideProps>, props);
     }
   }
-
-  // Path 3: Fallback logic (if icon not found or not a valid component)
   if (process.env.NODE_ENV === 'development') {
     console.warn(`Lucide icon "${name}" not found or invalid in [slug]/page.tsx. Rendering fallback 'Shapes'.`);
   }
-  const FallbackIcon = (LucideIcons as any)['Shapes']; // Ensure 'Shapes' is a valid key
-
+  const FallbackIcon = (LucideIcons as any)['Shapes']; 
   if (FallbackIcon && (typeof FallbackIcon === 'function' || (typeof FallbackIcon === 'object' && FallbackIcon.$$typeof === Symbol.for('react.forward_ref')))) {
     return React.createElement(FallbackIcon as React.ComponentType<LucideProps>, props);
   }
-  
-  // Path 4: Ultimate fallback if 'Shapes' also isn't found/valid
   return null; 
 };
-
 
 export default async function ProcessStepDetailPage(props: ProcessStepDetailPageProps) {
   const { params } = props;
@@ -115,7 +56,7 @@ export default async function ProcessStepDetailPage(props: ProcessStepDetailPage
 
   const [step, allProcessStepsForNav] = await Promise.all([
     getProcessStepBySlug(slug),
-    getAllProcessSteps() // Fetches ProcessStepItem[]
+    getAllProcessSteps() 
   ]);
 
   if (!step) {
@@ -139,7 +80,7 @@ export default async function ProcessStepDetailPage(props: ProcessStepDetailPage
     }
   }
 
-  const { title, description, content, icon } = step; // step is ProcessStepDetail
+  const { title, description, content, icon } = step; 
   const detailContent = content;
 
   return (
@@ -212,10 +153,10 @@ export default async function ProcessStepDetailPage(props: ProcessStepDetailPage
   );
 }
 
-export async function generateMetadata( props: ProcessStepDetailPageProps, parent: ResolvingMetadata ): Promise<Metadata> {
+export async function generateMetadata( props: ProcessStepDetailPageProps, _parent: ResolvingMetadata ): Promise<Metadata> { // parent renamed to _parent
   const { params } = props;
   const { slug } = params;
-  const step = await getProcessStepBySlug(slug); // step is ProcessStepDetail | null
+  const step = await getProcessStepBySlug(slug); 
 
   if (!step) { 
     return { 
@@ -230,9 +171,10 @@ export async function generateMetadata( props: ProcessStepDetailPageProps, paren
   // Example: Populate openGraphImages if you have logic for it
   // if (step.content?.visuals && step.content.visuals.length > 0 && step.content.visuals[0].url) {
   //   openGraphImages.push({ url: step.content.visuals[0].url, alt: step.content.visuals[0].alt || step.title });
-  // } else if (step.someOtherImageUrl) { // Hypothetical property for a dedicated OG image
-  //   openGraphImages.push({ url: step.someOtherImageUrl, alt: step.title });
+  // } else if (step.icon?.url) { // Assuming icon might have a direct URL for OG
+  //   openGraphImages.push({ url: step.icon.url, alt: step.title });
   // }
+
 
   return {
     title: `${step.title} | Our Process | Coriyon's Studio`,
@@ -242,7 +184,7 @@ export async function generateMetadata( props: ProcessStepDetailPageProps, paren
       description: description,
       type: 'article',
       url: `/process/${slug}`,
-      images: openGraphImages.length > 0 ? openGraphImages : undefined,
-    }, // No trailing comma if this is the last property.
+      images: openGraphImages.length > 0 ? openGraphImages : undefined, // Ensure it's undefined if empty
+    }, 
   };
 }

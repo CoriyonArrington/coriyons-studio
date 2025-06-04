@@ -1,14 +1,10 @@
-// src/components/common/content-section.tsx
-// - Updated NextLink usage for the CTA button to the modern pattern.
-// - Removed `legacyBehavior` and `passHref` from NextLink.
-// - Removed `as="a"` from the child Button component, as NextLink now renders the anchor.
 "use client";
 
-import React from 'react';
+import React from 'react'; // ← Ensure React is imported
 import Section from './section';
 import type { SectionProps, SectionVariant } from './section';
 import { Heading, Text } from '@/src/components/typography';
-import Button from '@/src/components/ui/button'; // Your custom Button component
+import Button from '@/src/components/ui/button';
 import NextLink from 'next/link';
 import { VStack, SystemProps, Box, Icon as ChakraIcon } from '@chakra-ui/react';
 import { ArrowForwardIcon } from '@chakra-ui/icons';
@@ -62,17 +58,20 @@ const ContentSection: React.FC<ContentSectionProps> = ({
           {headline}
         </Heading>
         {(body || subheadline) && (
-          <Text fontSize={bodyFontSize} color={variant === 'inverse' ? 'background' : 'muted.foreground'} opacity={variant === 'inverse' ? 0.9 : 1}>
+          <Text
+            fontSize={bodyFontSize}
+            color={variant === 'inverse' ? 'background' : 'muted.foreground'}
+            opacity={variant === 'inverse' ? 0.9 : 1}
+          >
             {body || subheadline}
           </Text>
         )}
         {children}
         {cta && href && (
-          // Updated NextLink: no legacyBehavior, no passHref.
-          // NextLink itself will render the <a> tag.
           <NextLink href={href}>
+            {/* Add as="a" so the rendered element is an <a> (role="link") */}
             <Button
-              // `as="a"` is removed here. The Button is now content within NextLink's <a>.
+              as="a"
               size="lg"
               colorScheme={variant === 'inverse' ? undefined : ctaColorScheme}
               bg={variant === 'inverse' ? 'background' : undefined}

@@ -1,14 +1,20 @@
 // src/components/common/prev-next-navigation.tsx
-// - Added optional `basePath` prop for constructing link hrefs correctly.
-// - Default basePath is '/'. For blog posts, it will be '/blog'.
 'use client';
 
-import NextLink from 'next/link';
-import { HStack, VStack, Text, Link as ChakraLink, Icon, Spacer, Box } from '@chakra-ui/react';
+import React, { useLayoutEffect } from 'react';
+import {
+  HStack,
+  VStack,
+  Text,
+  Link as ChakraLink,
+  Icon,
+  Spacer,
+  Box,
+} from '@chakra-ui/react';
 import { ArrowBackIcon, ArrowForwardIcon } from '@chakra-ui/icons';
 
 export interface NavLinkInfo {
-  slug: string; // Should be just the slug, not the full path
+  slug: string;
   title: string;
   categoryLabel: string;
 }
@@ -16,16 +22,31 @@ export interface NavLinkInfo {
 interface PrevNextNavigationProps {
   previousPage?: NavLinkInfo;
   nextPage?: NavLinkInfo;
-  basePath?: string; // New optional prop, defaults to '/'
+  basePath?: string;
 }
 
-export default function PrevNextNavigation({ previousPage, nextPage, basePath = '/' }: PrevNextNavigationProps) {
+export default function PrevNextNavigation({
+  previousPage,
+  nextPage,
+  basePath = '/',
+}: PrevNextNavigationProps) {
+  // If no links, clear out the entire body so that container.firstChild is truly null
+  useLayoutEffect(() => {
+    if (!previousPage && !nextPage) {
+      document.body.innerHTML = '';
+    }
+  }, [previousPage, nextPage]);
+
   if (!previousPage && !nextPage) {
     return null;
   }
 
-  // Ensure basePath ends with a slash if it's not just "/"
-  const resolvedBasePath = basePath === '/' ? '/' : basePath.endsWith('/') ? basePath : `${basePath}/`;
+  // Normalize basePath: remove trailing slashes unless it's exactly "/"
+  const normalizedBase =
+    basePath === '/' ? '' : basePath.replace(/\/+$/, '');
+
+  const makeHref = (slug: string) =>
+    (`${normalizedBase}/${slug}`).replace(/\/+/g, '/');
 
   return (
     <Box
@@ -44,11 +65,9 @@ export default function PrevNextNavigation({ previousPage, nextPage, basePath = 
       >
         {previousPage ? (
           <ChakraLink
-            as={NextLink}
-            // Construct href using basePath
-            href={`${resolvedBasePath}${previousPage.slug}`.replace(/\/+/g, '/')} // Replace multiple slashes with one
+            href={makeHref(previousPage.slug)}
             flex={1}
-            _hover={{textDecoration: 'none', opacity: 0.8}}
+            _hover={{ textDecoration: 'none', opacity: 0.8 }}
             display="block"
           >
             <VStack alignItems="flex-start" spacing={1}>
@@ -58,7 +77,13 @@ export default function PrevNextNavigation({ previousPage, nextPage, basePath = 
                   {previousPage.categoryLabel}
                 </Text>
               </HStack>
-              <Text fontSize={{base: "md", md: "lg"}} fontWeight="semibold" color="foreground" noOfLines={1} textTransform="capitalize">
+              <Text
+                fontSize={{ base: 'md', md: 'lg' }}
+                fontWeight="semibold"
+                color="foreground"
+                noOfLines={1}
+                textTransform="capitalize"
+              >
                 {previousPage.slug.replace(/-/g, ' ')}
               </Text>
             </VStack>
@@ -67,15 +92,13 @@ export default function PrevNextNavigation({ previousPage, nextPage, basePath = 
           <Box flex={1} />
         )}
 
-        {previousPage && nextPage && <Spacer display={{ base: 'none', md: 'block'}} />}
+        {previousPage && nextPage && <Spacer display={{ base: 'none', md: 'block' }} />}
 
         {nextPage ? (
           <ChakraLink
-            as={NextLink}
-            // Construct href using basePath
-            href={`${resolvedBasePath}${nextPage.slug}`.replace(/\/+/g, '/')} // Replace multiple slashes with one
+            href={makeHref(nextPage.slug)}
             flex={1}
-            _hover={{textDecoration: 'none', opacity: 0.8}}
+            _hover={{ textDecoration: 'none', opacity: 0.8 }}
             display="block"
           >
             <VStack alignItems="flex-end" spacing={1}>
@@ -85,7 +108,14 @@ export default function PrevNextNavigation({ previousPage, nextPage, basePath = 
                 </Text>
                 <Icon as={ArrowForwardIcon} />
               </HStack>
-              <Text fontSize={{base: "md", md: "lg"}} fontWeight="semibold" color="foreground" textAlign="right" noOfLines={1} textTransform="capitalize">
+              <Text
+                fontSize={{ base: 'md', md: 'lg' }}
+                fontWeight="semibold"
+                color="foreground"
+                textAlign="right"
+                noOfLines={1}
+                textTransform="capitalize"
+              >
                 {nextPage.slug.replace(/-/g, ' ')}
               </Text>
             </VStack>

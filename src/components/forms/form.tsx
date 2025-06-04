@@ -2,20 +2,21 @@
 "use client";
 
 import React from 'react';
-// 'Box' import removed from here
 import { chakra, HTMLChakraProps } from '@chakra-ui/react';
 
 interface FormProps extends HTMLChakraProps<'form'> {
   children: React.ReactNode;
-  // onSubmit is already correctly typed in HTMLChakraProps<'form'>
 }
 
-const Form: React.FC<FormProps> = ({ children, ...rest }) => {
+// Use React.forwardRef to correctly pass the ref
+const Form = React.forwardRef<HTMLFormElement, FormProps>(({ children, ...rest }, ref) => {
   return (
-    <chakra.form {...rest}>
+    <chakra.form ref={ref} {...rest}>
       {children}
     </chakra.form>
   );
-};
+});
+
+Form.displayName = 'Form'; // Good practice for components created with forwardRef
 
 export default Form;
