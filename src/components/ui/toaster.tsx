@@ -41,7 +41,7 @@ const { toast } = createStandaloneToast({
         >
           {status === "loading" ? (
             // Explicitly add role and a unique aria-label for testing
-            <Spinner role="status" aria-label="Processing..." size="sm" mr={3} speed="0.65s" />
+            (<Spinner role="status" aria-label="Processing..." size="sm" mr={3} speed="0.65s" />)
           ) : (
             <AlertIcon mr={3} />
           )}

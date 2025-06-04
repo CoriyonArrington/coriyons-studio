@@ -1,4 +1,6 @@
 // src/components/common/site-header.tsx
+// - Manually reordered NAV_ITEMS to match the new desired global sort order:
+//   Home, Services, Projects, About, Contact.
 'use client';
 
 import React from 'react';
@@ -13,16 +15,18 @@ import { ThemeSwitcher } from "../navigation/theme-switcher";
 import AuthButton from "../navigation/header-auth";
 import type { User } from "@supabase/supabase-js";
 
-interface SiteHeaderProps { 
+interface SiteHeaderProps {
   user: User | null;
-  navAriaLabel?: string; // Added new prop
+  navAriaLabel?: string;
 }
 
+// Updated NAV_ITEMS order to match your specified sort_order
 const NAV_ITEMS = [
-  { label: "Home", href: "/" },
-  { label: "Services", href: "/services" },
-  { label: "Studio", href: "/studio" },
-  { label: "Contact", href: "/contact" },
+  { label: "Home", href: "/" },              // Sort Order 1
+  { label: "Projects", href: "/projects" },  // Sort Order 2
+  { label: "Services", href: "/services" },  // Sort Order 3
+  { label: "About", href: "/about" },        // Sort Order 4
+  { label: "Contact", href: "/contact" },    // Sort Order 5
 ];
 
 export default function SiteHeader({ user, navAriaLabel = "Main navigation" }: SiteHeaderProps) {
@@ -38,12 +42,12 @@ export default function SiteHeader({ user, navAriaLabel = "Main navigation" }: S
         <Spacer />
 
         <Hide below="md">
-          <HStack as="nav" spacing={4} alignItems="center" aria-label={navAriaLabel}> {/* Applied aria-label */}
+          <HStack as="nav" spacing={4} alignItems="center" aria-label={navAriaLabel}>
             {NAV_ITEMS.map((item) => (
-              <ChakraLink 
-                as={NextLink} 
-                key={item.label} 
-                href={item.href} 
+              <ChakraLink
+                as={NextLink}
+                key={item.label}
+                href={item.href}
                 px={2} py={1} rounded="md"
                 _hover={{ textDecoration: "none", bg: "muted.DEFAULT" }}
                 color="foreground"
@@ -68,12 +72,12 @@ export default function SiteHeader({ user, navAriaLabel = "Main navigation" }: S
             <DrawerCloseButton color="foreground" />
             <DrawerHeader borderBottomWidth="1px" borderColor="border" color="foreground">Menu</DrawerHeader>
             <DrawerBody>
-              <VStack as="nav" spacing={4} align="stretch" aria-label={navAriaLabel ? `${navAriaLabel} mobile` : "Mobile navigation"}> {/* Applied aria-label */}
+              <VStack as="nav" spacing={4} align="stretch" aria-label={navAriaLabel ? `${navAriaLabel} mobile` : "Mobile navigation"}>
                 {NAV_ITEMS.map((item) => (
-                  <ChakraLink 
-                    as={NextLink} 
-                    key={item.label} 
-                    href={item.href} 
+                  <ChakraLink
+                    as={NextLink}
+                    key={item.label}
+                    href={item.href}
                     onClick={onClose} display="block" px={2} py={2} rounded="md"
                     _hover={{ textDecoration: "none", bg: "muted.DEFAULT" }}
                     color="foreground"
@@ -82,7 +86,9 @@ export default function SiteHeader({ user, navAriaLabel = "Main navigation" }: S
                   </ChakraLink>
                 ))}
                 <Box pt={4} mt={4} borderTopWidth="1px" borderColor="border"><ThemeSwitcher /></Box>
-                <Box pt={4} mt={2} borderTopWidth="1px" borderColor="border"><AuthButton user={user} /></Box>
+                <Box pt={4} mt={2} borderTopWidth="1px" borderColor="border">
+                  <AuthButton user={user} />
+                </Box>
               </VStack>
             </DrawerBody>
           </DrawerContent>

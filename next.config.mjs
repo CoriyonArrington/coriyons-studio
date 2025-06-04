@@ -1,24 +1,23 @@
+// next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // App Router is enabled by default if you have an 'app' directory.
-  // The 'experimental.appDir' option is no longer needed.
   compiler: {
     // This turns on Emotion's optimized SWC transform for Chakra UI
     emotion: true,
   },
-  experimental: { // Added this section as per Chakra UI docs
+  experimental: {
+    // Optimize Chakra imports as before
     optimizePackageImports: ["@chakra-ui/react"],
   },
-  // You can add other Next.js configurations here if needed
-  // For example:
-  // images: {
-  //   remotePatterns: [
-  //     {
-  //       protocol: 'https',
-  //       hostname: 'example.com',
-  //     },
-  //   ],
-  // },
+  webpack(config, { dev, isServer }) {
+    // Silently ignore the “Critical dependency” warning from @supabase/realtime-js
+    config.ignoreWarnings = config.ignoreWarnings || [];
+    config.ignoreWarnings.push({
+      message: /Critical dependency: the request of a dependency is an expression/,
+    });
+    return config;
+  },
 };
 
 export default nextConfig;

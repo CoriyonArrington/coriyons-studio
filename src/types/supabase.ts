@@ -316,6 +316,7 @@ export type Database = {
           created_at: string | null
           id: string
           meta_description: string | null
+          nav_title: string | null
           og_image_url: string | null
           page_type: Database["public"]["Enums"]["page_type_enum"]
           published_at: string | null
@@ -331,6 +332,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           meta_description?: string | null
+          nav_title?: string | null
           og_image_url?: string | null
           page_type?: Database["public"]["Enums"]["page_type_enum"]
           published_at?: string | null
@@ -346,6 +348,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           meta_description?: string | null
+          nav_title?: string | null
           og_image_url?: string | null
           page_type?: Database["public"]["Enums"]["page_type_enum"]
           published_at?: string | null
@@ -937,6 +940,7 @@ export type Database = {
         | "CONTENT_HUB"
         | "STANDARD"
         | "OTHER"
+        | "SUPPORT"
       post_status: "draft" | "pending_review" | "published" | "archived"
       service_offering_type: "INDIVIDUAL" | "BUNDLE"
     }
@@ -1064,6 +1068,7 @@ export const Constants = {
         "CONTENT_HUB",
         "STANDARD",
         "OTHER",
+        "SUPPORT",
       ],
       post_status: ["draft", "pending_review", "published", "archived"],
       service_offering_type: ["INDIVIDUAL", "BUNDLE"],

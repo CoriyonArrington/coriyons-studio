@@ -1,7 +1,6 @@
-// src/components/common/content-section.tsx
 "use client";
 
-import React from 'react';
+import React from 'react'; // ← Ensure React is imported
 import Section from './section';
 import type { SectionProps, SectionVariant } from './section';
 import { Heading, Text } from '@/src/components/typography';
@@ -47,7 +46,6 @@ const ContentSection: React.FC<ContentSectionProps> = ({
   maxW = "xl",
   children,
 }) => {
-  // console.log(`CLIENT DEBUG: ContentSection (Rebuild 4 - with Icon as Child) ID: ${id}`); // <--- REMOVED
   return (
     <Section
       id={id}
@@ -60,13 +58,18 @@ const ContentSection: React.FC<ContentSectionProps> = ({
           {headline}
         </Heading>
         {(body || subheadline) && (
-          <Text fontSize={bodyFontSize} color={variant === 'inverse' ? 'background' : 'muted.foreground'} opacity={variant === 'inverse' ? 0.9 : 1}>
+          <Text
+            fontSize={bodyFontSize}
+            color={variant === 'inverse' ? 'background' : 'muted.foreground'}
+            opacity={variant === 'inverse' ? 0.9 : 1}
+          >
             {body || subheadline}
           </Text>
         )}
         {children}
         {cta && href && (
-          <NextLink href={href} passHref>
+          <NextLink href={href}>
+            {/* Add as="a" so the rendered element is an <a> (role="link") */}
             <Button
               as="a"
               size="lg"
