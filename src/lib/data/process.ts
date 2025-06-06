@@ -1,7 +1,7 @@
 // src/lib/data/process.ts
 // - Ensuring ProcessStepDetailContent includes all expected fields.
 // - Corrected icon data mapping from Supabase join.
-import { createClient } from '@/src/utils/supabase/server';
+import { createClient } from '@/src/utils/supabase/client';
 import { unstable_noStore as noStore } from 'next/cache';
 
 export interface IconData {

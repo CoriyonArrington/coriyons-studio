@@ -3,7 +3,7 @@
 // - Updated ProjectDetail interface to include relatedServices.
 // - Modified getProjectBySlug to fetch associated services via project_services table.
 
-import { createClient } from '@/src/utils/supabase/server';
+import { createClient } from '@/src/utils/supabase/client';
 import { unstable_noStore as noStore } from 'next/cache';
 
 // Basic Tag interface

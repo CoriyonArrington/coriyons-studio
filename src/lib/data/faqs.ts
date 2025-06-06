@@ -2,7 +2,7 @@
 // - Fetches FAQ categories and their questions/answers.
 // - Defines types for FAQ data, including the block-based answer structure.
 
-import { createClient } from '@/src/utils/supabase/server';
+import { createClient } from '@/src/utils/supabase/client';
 import { unstable_noStore as noStore } from 'next/cache';
 
 export interface FAQAnswerBlock {

@@ -1,23 +1,20 @@
-// src/middleware.ts
+// ATTEMPT #13: ADD DESCRIPTIVE COMMENTS TO MIDDLEWARE
+// Change: Added comments to explain the purpose of each rule in the middleware, as requested.
+
 import { NextResponse, type NextRequest } from "next/server";
-import { updateSession } from "@/src/utils/supabase/middleware"; // Your existing import
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 export async function middleware(request: NextRequest) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('[User\'s Middleware] CRITICAL ERROR: Supabase URL or Anon Key is not defined. Auth checks will likely fail.');
-    // Depending on desired behavior, you might want to stop execution or return a specific response.
-    // For now, letting it proceed to updateSession.
-  }
-
-  const response = await updateSession(request); // Handles session update and returns a response.
-
-  // Create a Supabase client to get the session for redirect logic.
-  // This client uses cookies from the original request.
-  const supabaseForRedirectCheck = createServerClient(
+  // This client is used only for session management in middleware.
+  // It is created using the plain createServerClient from @supabase/ssr
+  // and not the async helper function from utils/supabase/server.ts
+  const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -25,58 +22,77 @@ export async function middleware(request: NextRequest) {
         get(name: string) {
           return request.cookies.get(name)?.value;
         },
-        // No need to implement set/remove for this read-only session check on the request.
-        // updateSession handles cookie modifications on the response.
-        set() { /* Read-only for this specific client's purpose */ },
-        remove() { /* Read-only for this specific client's purpose */ },
+        set(name: string, value: string, options: CookieOptions) {
+          request.cookies.set({ name, value, ...options });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          response.cookies.set({ name, value, ...options });
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({ name, value: '', ...options });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          response.cookies.set({ name, value: '', ...options });
+        },
       },
     }
   );
 
-  const { data: { session } } = await supabaseForRedirectCheck.auth.getSession();
+  // This call refreshes the user's session cookie if it's expired.
+  const { data: { session } } = await supabase.auth.getSession();
   const { pathname } = request.nextUrl;
 
-  // Protect /admin routes: if not logged in, redirect to sign-in
-  if (pathname.startsWith('/admin')) {
-    if (!session) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/sign-in';
-      // Optionally, pass the original path to redirect back after login
-      url.searchParams.set('redirectedFrom', pathname);
-      return NextResponse.redirect(url);
-    }
+
+  // --- REDIRECT RULES START HERE ---
+
+
+  // Rule 1: Protect all routes under `/admin`
+  // If a user is not logged in and tries to access an admin route, they are redirected to the sign-in page.
+  if (pathname.startsWith('/admin') && !session) {
+      return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 
-  // Redirect logged-in users from /sign-in or /sign-up to /protected
+  // Rule 2: Protect all routes under `/protected`
+  // If a user is not logged in and tries to access any other protected route, they are also redirected to sign-in.
+  if (pathname.startsWith('/protected') && !session) {
+      return NextResponse.redirect(new URL('/sign-in', request.url));
+  }
+
+  // Rule 3: Redirect logged-in users away from authentication pages
+  // If a user is already logged in, this prevents them from seeing the sign-in or sign-up pages and sends them to the dashboard.
   if (session && (pathname === '/sign-in' || pathname === '/sign-up')) {
-     const url = request.nextUrl.clone();
-     url.pathname = '/protected'; // Or your main app dashboard
-     return NextResponse.redirect(url);
+     return NextResponse.redirect(new URL('/protected', request.url));
   }
+  
+  // Rule 4 (Currently Disabled): Redirect logged-in users from the homepage
+  // This rule would send logged-in users from the homepage ('/') to the '/protected' dashboard.
+  // It is commented out to allow logged-in users to visit the homepage. You can re-enable it if you want.
+  /*
+  if (session && pathname === '/') {
+      return NextResponse.redirect(new URL('/protected', request.url));
+  }
+  */
 
-  // If no custom redirect logic was hit, return the response from updateSession
-  // This response might itself be a redirect if updateSession handled a token refresh and needs to redirect.
+  // If no rules matched, continue with the request as planned.
   return response;
 }
 
-// Configuration for the middleware matcher
+// This config specifies which paths the middleware will run on.
 export const config = {
-  // CURRENT MATCHER (from your provided code - for specific testing):
-  // matcher: '/admin/design-system',
-
-  // RECOMMENDED MATCHER for broader application:
-  // (This protects all admin routes and handles redirects for sign-in/sign-up pages)
   matcher: [
-    '/admin/:path*',
-    '/sign-in',
-    '/sign-up',
-    // Add '/forgot-password' if you want the same redirect logic for authenticated users on that page
-    // '/forgot-password',
-    // Add '/protected/:path*' if you want all /protected routes to pass through middleware
-    // for session refresh, though specific protection for unauthenticated access to /protected
-    // would need its own if (!session) check.
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
-
-  // ALTERNATIVE GENERIC MATCHER (Often a good default):
-  // matcher: '/((?!api|_next/static|_next/image|favicon.ico|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
 };

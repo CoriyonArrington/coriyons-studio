@@ -1,7 +1,9 @@
 // src/components/common/prev-next-navigation.tsx
+// FINAL FIX: Removed the problematic useLayoutEffect that was wiping out the DOM.
+
 'use client';
 
-import React, { useLayoutEffect } from 'react';
+import React from 'react'; // Removed useLayoutEffect from imports
 import {
   HStack,
   VStack,
@@ -30,13 +32,18 @@ export default function PrevNextNavigation({
   nextPage,
   basePath = '/',
 }: PrevNextNavigationProps) {
-  // If no links, clear out the entire body so that container.firstChild is truly null
+
+  // This entire effect was causing the 'removeChild' error and has been removed.
+  /*
   useLayoutEffect(() => {
     if (!previousPage && !nextPage) {
       document.body.innerHTML = '';
     }
   }, [previousPage, nextPage]);
+  */
 
+  // If there are no links to render, just return null.
+  // This is the correct way to render nothing in React without side effects.
   if (!previousPage && !nextPage) {
     return null;
   }

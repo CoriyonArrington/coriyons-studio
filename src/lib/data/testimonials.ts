@@ -1,6 +1,6 @@
 // src/lib/data/testimonials.ts
 // - Added getAllTestimonials function to fetch all testimonials.
-import { createClient } from '@/src/utils/supabase/server';
+import { createClient } from '@/src/utils/supabase/client';
 import { unstable_noStore as noStore } from 'next/cache';
 
 export interface HomepageTestimonial {
