@@ -5,84 +5,115 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%; /* Your CSS variables */
-    --primary-foreground: 0 0% 98%; /* Your CSS variables */
-    --secondary: 0 0% 96.1%; /* Your CSS variables */
-    --secondary-foreground: 0 0% 9%; /* Your CSS variables */
-    --muted: 0 0% 96.1%; /* Your CSS variables */
-    --muted-foreground: 0 0% 45.1%; /* Your CSS variables */
-    --accent: 0 0% 96.1%; /* Your CSS variables */
-    --accent-foreground: 0 0% 9%; /* Your CSS variables */
-    --destructive: 0 84.2% 60.2%; /* Your CSS variables */
-    --destructive-foreground: 0 0% 98%; /* Your CSS variables */
-    --border: 0 0% 89.8%; /* Your CSS variables */
-    --input: 0 0% 89.8%; /* Your CSS variables */
-    --ring: 0 0% 3.9%; /* Your CSS variables */
-    --radius: 0.5rem; /* Your CSS variables */
-    --chart-1: 12 76% 61%; /* Your CSS variables */
-    --chart-2: 173 58% 39%; /* Your CSS variables */
-    --chart-3: 197 37% 24%; /* Your CSS variables */
-    --chart-4: 43 74% 66%; /* Your CSS variables */
-    --chart-5: 27 87% 67%; /* Your CSS variables */
+    /* 🎨 Base Layers & Typography */
+    --background: 0 0% 100%;           /* Figma: white — page background */
+    --foreground: 0 0% 3.9%;           /* Figma: near-black — primary text */
+
+    /* 🧩 Card & Popover Surfaces */
+    --card: 0 0% 100%;                 /* Card background — same as background in light */
+    --card-foreground: 0 0% 3.9%;      /* Card text color */
+    --popover: 0 0% 100%;              /* Popover (menu, tooltip) background */
+    --popover-foreground: 0 0% 3.9%;   /* Popover text color */
+
+    /* ✅ Brand Colors */
+    --primary: 0 0% 9%;                /* Figma: brand dark (can override with green #2FB67C) */
+    --primary-foreground: 0 0% 98%;    /* Figma: white text on primary button */
+
+    /* ⚙️ Secondary & Muted UI */
+    --secondary: 0 0% 96.1%;           /* Light gray — neutral surface (e.g. tags) */
+    --secondary-foreground: 0 0% 9%;   /* Dark gray — text on secondary */
+    --muted: 0 0% 96.1%;               /* Pale muted background */
+    --muted-foreground: 0 0% 45.1%;    /* Medium gray — muted text */
+
+    /* ✨ Accent & Interactive UI */
+    --accent: 0 0% 96.1%;              /* Used for hoverable tokens, accents */
+    --accent-foreground: 0 0% 9%;      /* Text on accent */
+
+    /* ❌ Destructive Tokens */
+    --destructive: 0 84.2% 60.2%;      /* Red for errors, destructive actions */
+    --destructive-foreground: 0 0% 98%;/* White text on red bg */
+
+    /* 🎯 Form Styling Tokens */
+    --border: 0 0% 89.8%;              /* Field border color (light gray) */
+    --input: 0 0% 89.8%;               /* Input background color */
+    --ring: 0 0% 3.9%;                 /* Focus ring color */
+
+    /* 🟢 Radius for all components */
+    --radius: 0.5rem;                  /* Figma: rounded-md = 8px */
+
+    /* 📊 Chart Color Palette (light mode) */
+    --chart-1: 12 76% 61%;             /* Orange / Coral */
+    --chart-2: 173 58% 39%;            /* Teal / Green */
+    --chart-3: 197 37% 24%;            /* Navy / Blue-gray */
+    --chart-4: 43 74% 66%;             /* Yellow-gold */
+    --chart-5: 27 87% 67%;             /* Apricot / Warm orange */
   }
 
   .dark {
-    --background: 0 0% 3.9%; /* Your CSS variables */
-    --foreground: 0 0% 98%; /* Your CSS variables */
-    --card: 0 0% 3.9%; /* Your CSS variables */
-    --card-foreground: 0 0% 98%; /* Your CSS variables */
-    --popover: 0 0% 3.9%; /* Your CSS variables */
-    --popover-foreground: 0 0% 98%; /* Your CSS variables */
-    --primary: 0 0% 98%; /* Your CSS variables */
-    --primary-foreground: 0 0% 9%; /* Your CSS variables */
-    --secondary: 0 0% 14.9%; /* Your CSS variables */
-    --secondary-foreground: 0 0% 98%; /* Your CSS variables */
-    --muted: 0 0% 14.9%; /* Your CSS variables */
-    --muted-foreground: 0 0% 63.9%; /* Your CSS variables */
-    --accent: 0 0% 14.9%; /* Your CSS variables */
-    --accent-foreground: 0 0% 98%; /* Your CSS variables */
-    --destructive: 0 62.8% 30.6%; /* Your CSS variables */
-    --destructive-foreground: 0 0% 98%; /* Your CSS variables */
-    --border: 0 0% 14.9%; /* Your CSS variables */
-    --input: 0 0% 14.9%; /* Your CSS variables */
-    --ring: 0 0% 83.1%; /* Your CSS variables */
-    --chart-1: 220 70% 50%; /* Your CSS variables */
-    --chart-2: 160 60% 45%; /* Your CSS variables */
-    --chart-3: 30 80% 55%; /* Your CSS variables */
-    --chart-4: 280 65% 60%; /* Your CSS variables */
-    --chart-5: 340 75% 55%; /* Your CSS variables */
+    /* 🎨 Dark Mode Layers */
+    --background: 0 0% 3.9%;           /* Very dark gray (main bg) */
+    --foreground: 0 0% 98%;            /* Light text for dark backgrounds */
+
+    /* 🧩 Card & Popover Surfaces (dark) */
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    /* ✅ Brand Colors Inverted */
+    --primary: 0 0% 98%;               /* Light primary bg (inverted) */
+    --primary-foreground: 0 0% 9%;     /* Dark text on light bg */
+
+    /* ⚙️ Secondary UI Inverted */
+    --secondary: 0 0% 14.9%;           /* Darker gray bg */
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+
+    /* ✨ Accent Colors in Dark */
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+
+    /* ❌ Destructive Actions Dark Mode */
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* 🎯 Forms & Inputs Dark Mode */
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;                /* Bright ring for focus visibility */
+
+    /* 📊 Chart Palette (dark mode) */
+    --chart-1: 220 70% 50%;            /* Blue */
+    --chart-2: 160 60% 45%;            /* Green */
+    --chart-3: 30 80% 55%;             /* Orange */
+    --chart-4: 280 65% 60%;            /* Purple */
+    --chart-5: 340 75% 55%;            /* Pink-red */
   }
 }
 
 @layer base {
-  /* Add the smooth scroll behavior for the html element */
+  /* 🔄 Smooth scrolling behavior */
   html {
-    scroll-behavior: smooth; /* Your CSS variables */
+    scroll-behavior: smooth;
   }
 
   /*
-  REMOVED THE FOLLOWING RULE AS IT CONFLICTS WITH CHAKRA UI COMPONENT STYLING:
+  ⚠️ Removed border-border reset to preserve Chakra component styling:
   * {
     @apply border-border;
   }
   */
 
+  /* 🧾 Body background and text color from tokens */
   body {
-    @apply bg-background text-foreground; /* Your CSS variables */
-    /* Any other global body styles can be added here if needed */
+    @apply bg-background text-foreground;
   }
 }
 
-/* Added keyframes for the pulse animation */
+/* 💫 Keyframes: Used for custom pulse animation */
 @keyframes pulseAnimation {
-  0%,
-  100% {
+  0%, 100% {
     opacity: 1;
     transform: scale(1);
   }

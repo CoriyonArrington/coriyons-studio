@@ -3,46 +3,40 @@
 
 import React from 'react';
 import {
-  Card as ChakraUICard, // Aliased to avoid potential naming conflicts if Card was also imported directly
+  Card as ChakraUICard,               // Chakra UI’s Card
   CardProps as ChakraCardProps,
-  CardHeader as ChakraCardHeader, // Aliased
+  CardHeader as ChakraCardHeader,
   CardHeaderProps as ChakraCardHeaderProps,
-  CardBody as ChakraCardBody,     // Aliased
+  CardBody as ChakraCardBody,
   CardBodyProps as ChakraCardBodyProps,
-  CardFooter as ChakraCardFooter, // Aliased
+  CardFooter as ChakraCardFooter,
   CardFooterProps as ChakraCardFooterProps,
-  Heading, // For CardHeader convenience
-  Text    // For CardBody/Footer convenience
+  Heading,
+  Text,
 } from '@chakra-ui/react';
 
-// Props type alias (correctly fixed the empty interface error)
+// Re-exported types
 export type UICardProps = ChakraCardProps;
+export type UICardHeaderProps = ChakraCardHeaderProps;
+export type UICardBodyProps = ChakraCardBodyProps;
+export type UICardFooterProps = ChakraCardFooterProps;
 
-const UICard: React.FC<UICardProps> = ({ children, ...props }) => {
+// Component wrappers around Chakra’s primitives
+export const UICard: React.FC<UICardProps> = ({ children, ...props }) => {
   return <ChakraUICard {...props}>{children}</ChakraUICard>;
 };
 
-// Props type alias
-export type UICardHeaderProps = ChakraCardHeaderProps;
-
-const UICardHeader: React.FC<UICardHeaderProps> = ({ children, ...props }) => {
+export const UICardHeader: React.FC<UICardHeaderProps> = ({ children, ...props }) => {
   return <ChakraCardHeader {...props}>{children}</ChakraCardHeader>;
 };
 
-// Props type alias
-export type UICardBodyProps = ChakraCardBodyProps;
-
-const UICardBody: React.FC<UICardBodyProps> = ({ children, ...props }) => {
+export const UICardBody: React.FC<UICardBodyProps> = ({ children, ...props }) => {
   return <ChakraCardBody {...props}>{children}</ChakraCardBody>;
 };
 
-// Props type alias
-export type UICardFooterProps = ChakraCardFooterProps;
-
-const UICardFooter: React.FC<UICardFooterProps> = ({ children, ...props }) => {
+export const UICardFooter: React.FC<UICardFooterProps> = ({ children, ...props }) => {
   return <ChakraCardFooter {...props}>{children}</ChakraCardFooter>;
 };
 
-// Re-exporting Chakra's Heading and Text aliased for specific use within cards if desired,
-// or consumers can import them directly from Chakra or your typography components.
-export { UICard, UICardHeader, UICardBody, UICardFooter, Heading as UICardHeading, Text as UICardText };
+// Aliases for consistency
+export { Heading as UICardHeading, Text as UICardText };

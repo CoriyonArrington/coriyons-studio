@@ -2,7 +2,7 @@
 // - Updated ServiceData interface to include relatedTestimonials.
 // - Modified getServiceBySlug to fetch associated testimonials via testimonial_services table.
 
-import { createClient } from '@/src/utils/supabase/server';
+import { createClient } from '@/src/utils/supabase/client';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { HomepageTestimonial } from './testimonials'; // Import for related testimonials
 

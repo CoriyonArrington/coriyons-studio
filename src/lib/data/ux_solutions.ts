@@ -1,5 +1,5 @@
 // src/lib/data/ux_solutions.ts
-import { createClient } from '@/src/utils/supabase/server';
+import { createClient } from '@/src/utils/supabase/client';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { UxProblemCardItem } from './ux_problems'; // Import for related problems
 

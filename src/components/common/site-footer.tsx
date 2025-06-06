@@ -1,34 +1,52 @@
-// src/components/common/site-footer.tsx
+// ATTEMPT #11: FINAL FIX FOR CLIENT/SERVER ARCHITECTURE
+// Change: Converted this to a Client Component ("use client"). It no longer fetches its own data but receives `footerPages` as a prop from its parent Server Component (layout.tsx).
 
-import React from 'react';
-import { Box, Container, Stack, Text, Link as ChakraLink, Heading, SimpleGrid } from "@chakra-ui/react";
+"use client"; // <-- ADD THIS DIRECTIVE to mark as a Client Component
+
+import React from "react";
+import {
+  Box,
+  Container,
+  Stack,
+  Text,
+  Link as ChakraLink,
+  Heading,
+  SimpleGrid,
+} from "@chakra-ui/react";
 import NextLink from "next/link";
 import {
-  getCategorizedFooterPages,
   type FooterLink,
   type CategorizedFooterPages,
-  type FooterCategory
-} from '@/src/lib/data/pages';
+  type FooterCategory,
+} from "@/src/lib/data/pages";
 
 // Define the order and titles for your dynamic columns
-// Use the imported FooterCategory for type safety on categoryKey
 const footerLinkColumns: Array<{ title: string; categoryKey: FooterCategory }> = [
   { title: "Main", categoryKey: "MAIN" },
   { title: "Resources", categoryKey: "RESOURCES" },
   { title: "Support", categoryKey: "SUPPORT" },
 ];
 
-export default async function SiteFooter() {
+// The component now accepts props
+export default function SiteFooter({
+  footerPages,
+}: {
+  footerPages: CategorizedFooterPages;
+}) {
   const currentYear = new Date().getFullYear();
-  const categorizedPages: CategorizedFooterPages = (await getCategorizedFooterPages()) || {
+  // We no longer fetch data here. We use the prop that was passed down.
+  const categorizedPages = footerPages || {
     MAIN: [],
     RESOURCES: [],
     SUPPORT: [],
-    LEGAL: []
+    LEGAL: [],
   };
 
   // Helper function to render a link column
-  const renderLinkColumn = (title: string, links: FooterLink[] | undefined) => {
+  const renderLinkColumn = (
+    title: string,
+    links: FooterLink[] | undefined
+  ) => {
     const actualLinks = links || []; // Default to empty array if undefined
 
     if (actualLinks.length === 0 && title.toLowerCase() !== "support") {
@@ -36,11 +54,17 @@ export default async function SiteFooter() {
     }
 
     return (
-      <Stack align={{ base: 'center', md: 'flex-start' }}>
-        <Heading size="sm" color="whiteAlpha.900" mb={3} textTransform="uppercase" letterSpacing="wider">
+      <Stack align={{ base: "center", md: "flex-start" }}>
+        <Heading
+          size="sm"
+          color="whiteAlpha.900"
+          mb={3}
+          textTransform="uppercase"
+          letterSpacing="wider"
+        >
           {title}
         </Heading>
-        {actualLinks.map((link: FooterLink) => (
+        {actualLinks.map((link: FooterLink) =>
           link.href && link.title ? (
             <ChakraLink
               as={NextLink}
@@ -52,9 +76,11 @@ export default async function SiteFooter() {
               {link.title}
             </ChakraLink>
           ) : null
-        ))}
+        )}
         {title.toLowerCase() === "support" && actualLinks.length === 0 && (
-          <Text fontSize="sm" fontStyle="italic">(No support links yet)</Text>
+          <Text fontSize="sm" fontStyle="italic">
+            (No support links yet)
+          </Text>
         )}
       </Stack>
     );
@@ -65,32 +91,64 @@ export default async function SiteFooter() {
   return (
     <Box as="footer" bg="gray.800" color="gray.400">
       <Container maxW="container.xl" py={{ base: 10, md: 16 }}>
-        <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} spacing={{ base: 8, md: 10 }}>
+        <SimpleGrid
+          columns={{ base: 1, sm: 2, md: 4 }}
+          spacing={{ base: 8, md: 10 }}
+        >
           {/* Column 1: Coriyon's Studio Info (Static) */}
-          <Stack spacing={4} align={{ base: 'center', md: 'flex-start' }}>
-            <ChakraLink as={NextLink} href="/" _hover={{ textDecoration: 'none' }}>
-              <Heading size="md" color="whiteAlpha.900">Coriyon&apos;s Studio</Heading>
+          <Stack spacing={4} align={{ base: "center", md: "flex-start" }}>
+            <ChakraLink as={NextLink} href="/" _hover={{ textDecoration: "none" }}>
+              <Heading size="md" color="whiteAlpha.900">
+                Coriyon&apos;s Studio
+              </Heading>
             </ChakraLink>
-            <Text fontSize="sm" textAlign={{ base: 'center', md: 'left' }} maxW="280px">
-              Senior Product Designer with a biomedical engineering background. I specialize in creating seamless customer experiences for tech startups and enterprises.
+            <Text
+              fontSize="sm"
+              textAlign={{ base: "center", md: "left" }}
+              maxW="280px"
+            >
+              Senior Product Designer with a biomedical engineering background. I
+              specialize in creating seamless customer experiences for tech
+              startups and enterprises.
             </Text>
           </Stack>
 
           {/* Dynamically generated columns */}
-          {footerLinkColumns.map(column => {
-            const columnElement = renderLinkColumn(column.title, categorizedPages[column.categoryKey]);
-            return columnElement ? React.cloneElement(columnElement, { key: column.categoryKey }) : null;
+          {footerLinkColumns.map((column) => {
+            const columnElement = renderLinkColumn(
+              column.title,
+              categorizedPages[column.categoryKey]
+            );
+            return columnElement
+              ? React.cloneElement(columnElement, { key: column.categoryKey })
+              : null;
           })}
 
           {/* Column 4: Contact Info (Static) */}
-          <Stack align={{ base: 'center', md: 'flex-start' }}>
-            <Heading size="sm" color="whiteAlpha.900" mb={3} textTransform="uppercase" letterSpacing="wider">
+          <Stack align={{ base: "center", md: "flex-start" }}>
+            <Heading
+              size="sm"
+              color="whiteAlpha.900"
+              mb={3}
+              textTransform="uppercase"
+              letterSpacing="wider"
+            >
               Contact
             </Heading>
-            <ChakraLink href="mailto:coriyonarrington@gmail.com" fontSize="sm" _hover={{ color: "whiteAlpha.800", textDecoration: "underline" }} isExternal>
+            <ChakraLink
+              href="mailto:coriyonarrington@gmail.com"
+              fontSize="sm"
+              _hover={{ color: "whiteAlpha.800", textDecoration: "underline" }}
+              isExternal
+            >
               coriyonarrington@gmail.com
             </ChakraLink>
-            <ChakraLink href="https://www.linkedin.com/in/coriyonarrington/" fontSize="sm" _hover={{ color: "whiteAlpha.800", textDecoration: "underline" }} isExternal>
+            <ChakraLink
+              href="https://www.linkedin.com/in/coriyonarrington/"
+              fontSize="sm"
+              _hover={{ color: "whiteAlpha.800", textDecoration: "underline" }}
+              isExternal
+            >
               LinkedIn
             </ChakraLink>
             <Text fontSize="sm">Minneapolis, MN</Text>
@@ -113,20 +171,28 @@ export default async function SiteFooter() {
           </Text>
           {/* Dynamically rendered legal links */}
           {legalLinks.length > 0 && (
-            <Stack direction={"row"} spacing={4} flexWrap="wrap" justify="center">
-              {legalLinks.map((link: FooterLink) => (
+            <Stack
+              direction={"row"}
+              spacing={4}
+              flexWrap="wrap"
+              justify="center"
+            >
+              {legalLinks.map((link: FooterLink) =>
                 link.href && link.title ? (
                   <ChakraLink
                     as={NextLink}
                     key={link.title}
                     href={link.href}
                     fontSize="xs"
-                    _hover={{ textDecoration: "underline", color: "whiteAlpha.800" }}
+                    _hover={{
+                      textDecoration: "underline",
+                      color: "whiteAlpha.800",
+                    }}
                   >
                     {link.title}
                   </ChakraLink>
                 ) : null
-              ))}
+              )}
             </Stack>
           )}
         </Container>

@@ -18,13 +18,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { PageRow } from '@/src/lib/data/minimal_pages_schema';
 
-interface LegalPageProps {
-  params: {};
-}
-
 const SLUG = 'accessibility-statement';
 
-export default async function AccessibilityStatementPage({}: LegalPageProps) {
+export default async function AccessibilityStatementPage() {
   // Cast the returned data to our PageRow type so TS knows the exact shape:
   const pageData = (await getPageContentBySlug(SLUG)) as PageRow | null;
   const navigablePages = (await getNavigablePages()) as NavigablePageInfo[];

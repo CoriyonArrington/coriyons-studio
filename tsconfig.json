@@ -1,4 +1,3 @@
-// tsconfig.json
 {
   "compilerOptions": {
     "target": "ESNext",
@@ -15,31 +14,38 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*", "src/*"]
+    },
+
+    "types": [
+      "node",
+      "next",
+      "@storybook/react",              // ✅ Storybook 9 component types
+      "@storybook/testing-library",    // ✅ For play() interaction functions
+      "@testing-library/jest-dom",     // ✅ Matchers like toBeInTheDocument()
+      "vitest/globals"                 // ✅ Enables global vi/test/expect types
+    ],
+
     "plugins": [
       {
         "name": "next"
       }
-    ],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./*",
-        "src/*"
-      ]
-    },
-    "types": [
-      "node",
-      "next",
-      "@testing-library/jest-dom",
-      "vitest/globals" // Ensures 'vi' namespace is recognized by TypeScript
     ]
   },
+
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "vitest-setup.ts" // Include your Vitest setup file
+    "vitest-setup.ts",
+    ".storybook" // ✅ Include Storybook config and decorators
   ],
-  "exclude": ["node_modules"]
+
+  "exclude": [
+    "node_modules"
+  ]
 }

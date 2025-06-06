@@ -14,18 +14,18 @@ import PrevNextNavigation, {
 import { mapPageTypeToCategoryLabel } from '@/src/lib/utils';
 import type { Metadata } from 'next';
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import ReactMarkdown from 'react-markdown'; //
+import remarkGfm from 'remark-gfm'; //
 import type { PageRow } from '@/src/lib/data/minimal_pages_schema';
 
-interface LegalPageProps {
-  params: {};
+interface PageProps {
+  params: Record<string, never>;
+  searchParams?: { [key: string]: string | string | string[] | undefined };
 }
 
 const SLUG = 'privacy-policy';
 
-export default async function PrivacyPolicyPage({}: LegalPageProps) {
-  // Cast the fetched data so TypeScript knows the fields are strings
+export default async function PrivacyPolicyPage({ params, searchParams }: PageProps) {
   const pageData = (await getPageContentBySlug(SLUG)) as PageRow | null;
   const navigablePages = (await getNavigablePages()) as NavigablePageInfo[];
 
@@ -54,8 +54,7 @@ export default async function PrivacyPolicyPage({}: LegalPageProps) {
     }
   }
 
-  // Narrow down content to a string before passing into ReactMarkdown
-  const content = pageData?.content;
+  const content = pageData?.content; // Type: string | null | undefined
 
   return (
     <Layout>
@@ -68,10 +67,13 @@ export default async function PrivacyPolicyPage({}: LegalPageProps) {
           {pageData?.title ?? 'Privacy Policy'}
         </Heading>
 
+        {/* Conditionally render ReactMarkdown, explicitly passing the 'children' prop */}
         {typeof content === 'string' && (
-          <ReactMarkdown components={{}} remarkPlugins={[remarkGfm]}>
-            {content}
-          </ReactMarkdown>
+          <ReactMarkdown
+            components={{}}
+            remarkPlugins={[remarkGfm]}
+            children={content} // Explicitly pass 'content' to the 'children' prop
+          />
         )}
       </Section>
 

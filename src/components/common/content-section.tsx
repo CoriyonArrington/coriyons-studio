@@ -1,3 +1,4 @@
+// src/components/common/content-section.tsx
 "use client";
 
 import React from 'react'; // ← Ensure React is imported
@@ -68,10 +69,9 @@ const ContentSection: React.FC<ContentSectionProps> = ({
         )}
         {children}
         {cta && href && (
-          <NextLink href={href}>
-            {/* Add as="a" so the rendered element is an <a> (role="link") */}
+          <NextLink href={href} passHref>
             <Button
-              as="a"
+              // as="a" // This line is removed to prevent nested <a> tags
               size="lg"
               colorScheme={variant === 'inverse' ? undefined : ctaColorScheme}
               bg={variant === 'inverse' ? 'background' : undefined}

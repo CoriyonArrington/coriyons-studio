@@ -3,7 +3,7 @@
 // - Updated PostCardItem and PostDetail interfaces to include tags.
 // - Modified getAllPublishedPosts, getFeaturedPosts, and getPostBySlug to fetch associated tags.
 
-import { createClient } from '@/src/utils/supabase/server';
+import { createClient } from '@/src/utils/supabase/client';
 import { unstable_noStore as noStore } from 'next/cache';
 
 // Basic Tag interface (consistent with projects.ts)

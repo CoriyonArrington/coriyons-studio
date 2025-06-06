@@ -40,7 +40,6 @@ import PrevNextNavigation, {
 } from '@/src/components/common/prev-next-navigation';
 import { mapPageTypeToCategoryLabel } from '@/src/lib/utils';
 import type { Metadata } from 'next';
-import NextLink from 'next/link';
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -114,7 +113,6 @@ const BlockRenderer: React.FC<{ block: FAQAnswerBlock }> = ({ block }) => {
 const MarkdownComponents: React.ComponentProps<typeof ReactMarkdown>['components'] = {};
 
 export default async function ProjectsPage({ params: _params }: ProjectsPageProps) {
-  // Cast so TS knows fields are strings
   const pageCmsData = (await getPageContentBySlug(SLUG)) as PageRow | null;
   const allProjects = (await getAllProjects()) as HomepageProject[];
   const navigablePages = (await getNavigablePages()) as NavigablePageInfo[];
@@ -146,20 +144,14 @@ export default async function ProjectsPage({ params: _params }: ProjectsPageProp
     }
   }
 
-  // Cast JSONB content into our shape
   const cmsContent = pageCmsData?.content as ProjectsPageCmsContent | null;
   const relatedFaqs: FAQItem[] | undefined = cmsContent?.relatedFaqs;
-
   const pageTitle = (pageCmsData?.title as string) || 'Our Work & Case Studies';
 
-  // Build intro section if CMS provides it
   let introContent: React.ReactNode = null;
   if (cmsContent) {
     const parts: React.ReactNode[] = [];
-    if (
-      cmsContent.hero?.headline &&
-      cmsContent.hero.headline !== pageTitle
-    ) {
+    if (cmsContent.hero?.headline && cmsContent.hero.headline !== pageTitle) {
       parts.push(
         <Heading
           key="hero-headline"
@@ -189,7 +181,11 @@ export default async function ProjectsPage({ params: _params }: ProjectsPageProp
       );
     }
     if (parts.length > 0) {
-      introContent = <VStack spacing={4} alignItems="center" mt={4}>{parts}</VStack>;
+      introContent = (
+        <VStack spacing={4} alignItems="center" mt={4}>
+          {parts}
+        </VStack>
+      );
     }
   }
 
@@ -236,74 +232,71 @@ export default async function ProjectsPage({ params: _params }: ProjectsPageProp
               mt={introContent ? 0 : 8}
             >
               {allProjects.map((project: HomepageProject) => (
-                <NextLink
+                <UICard
                   key={project.id}
-                  href={`/projects/${project.slug}`}
-                  style={{ textDecoration: 'none', display: 'flex', height: '100%' }}
+                  variant="outline"
+                  h="full"
+                  display="flex"
+                  flexDirection="column"
+                  _hover={{ shadow: 'lg', transform: 'translateY(-2px)' }}
+                  transition="all 0.2s"
                 >
-                  <UICard
-                    variant="outline"
-                    h="full"
-                    display="flex"
-                    flexDirection="column"
-                    _hover={{ shadow: 'lg', transform: 'translateY(-2px)' }}
-                    transition="all 0.2s"
-                    cursor="pointer"
-                  >
-                    {project.featured_image_url && (
-                      <Image
-                        src={project.featured_image_url}
-                        alt={project.title}
-                        borderTopRadius="md"
-                        objectFit="cover"
-                        h="200px"
-                        w="full"
-                      />
+                  {project.featured_image_url && (
+                    <Image
+                      src={project.featured_image_url}
+                      alt={project.title}
+                      borderTopRadius="md"
+                      objectFit="cover"
+                      h="200px"
+                      w="full"
+                    />
+                  )}
+
+                  <UICardHeader>
+                    <UICardHeading size="lg" as="h3">
+                      {project.title}
+                    </UICardHeading>
+                    {project.client_name && (
+                      <Text fontSize="sm" color="muted.foreground" mt={1}>
+                        Client: {project.client_name}
+                      </Text>
                     )}
-                    <UICardHeader>
-                      <UICardHeading size="lg" as="h3">
-                        {project.title}
-                      </UICardHeading>
-                      {project.client_name && (
-                        <Text fontSize="sm" color="muted.foreground" mt={1}>
-                          Client: {project.client_name}
-                        </Text>
-                      )}
-                    </UICardHeader>
-                    <UICardBody flexGrow={1}>
-                      <UICardText color="muted.foreground" mb={3} noOfLines={4}>
-                        {project.description || 'Read more about this project.'}
-                      </UICardText>
-                      {project.tags && project.tags.length > 0 && (
-                        <Box>
-                          <HStack spacing={2} wrap="wrap">
-                            {project.tags.map((tag: Tag) => (
-                              <ChakraTag
-                                key={tag.id}
-                                size="sm"
-                                variant="subtle"
-                                colorScheme="blue"
-                                mb={1}
-                              >
-                                {tag.name}
-                              </ChakraTag>
-                            ))}
-                          </HStack>
-                        </Box>
-                      )}
-                    </UICardBody>
-                    <UICardFooter>
-                      <HeroCtaButton
-                        href={`/projects/${project.slug}`}
-                        size="sm"
-                        variant="themedSolid"
-                        width="full"
-                      >
-                        View Project Details
-                      </HeroCtaButton>
-                    </UICardFooter>
-                  </UICard>
-                </NextLink>
+                  </UICardHeader>
+
+                  <UICardBody flexGrow={1}>
+                    <UICardText color="muted.foreground" mb={3} noOfLines={4}>
+                      {project.description || 'Read more about this project.'}
+                    </UICardText>
+                    {project.tags && project.tags.length > 0 && (
+                      <Box>
+                        <HStack spacing={2} wrap="wrap">
+                          {project.tags.map((tag: Tag) => (
+                            <ChakraTag
+                              key={tag.id}
+                              size="sm"
+                              variant="subtle"
+                              colorScheme="blue"
+                              mb={1}
+                            >
+                              {tag.name}
+                            </ChakraTag>
+                          ))}
+                        </HStack>
+                      </Box>
+                    )}
+                  </UICardBody>
+
+                  <UICardFooter>
+                    <HeroCtaButton
+                      href={`/projects/${project.slug}`}
+                      size="sm"
+                      variant="themedSolid"
+                      width="full"
+                    >
+                      View Project Details
+                    </HeroCtaButton>
+                  </UICardFooter>
+                </UICard>
               ))}
             </SimpleGrid>
           ) : (
@@ -370,6 +363,7 @@ export default async function ProjectsPage({ params: _params }: ProjectsPageProp
           ) : null}
         </VStack>
       </Section>
+
       <PrevNextNavigation
         previousPage={previousPageLink}
         nextPage={nextPageLink}
@@ -381,7 +375,6 @@ export default async function ProjectsPage({ params: _params }: ProjectsPageProp
 export async function generateMetadata({
   params: _params,
 }: ProjectsPageProps): Promise<Metadata> {
-  // Cast so TS knows title/description are strings
   const pageData = (await getPageContentBySlug(SLUG)) as PageRow | null;
   const title = (pageData?.title as string) || "Projects & Case Studies | Coriyon's Studio";
   const description =
