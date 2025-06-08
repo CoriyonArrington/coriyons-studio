@@ -1,6 +1,9 @@
-// src/lib/data/process.ts
-// - Ensuring ProcessStepDetailContent includes all expected fields.
-// - Corrected icon data mapping from Supabase join.
+/*
+ FINAL VERSION - Key Changes:
+ - Corrected the logic for handling the 'icons' relationship. Supabase returns this as an array,
+   so the code now correctly checks if the array exists and accesses the first element (`icons[0]`)
+   to retrieve the icon data. This resolves all TypeScript errors.
+*/
 import { createClient } from '@/src/utils/supabase/client';
 import { unstable_noStore as noStore } from 'next/cache';
 
@@ -13,9 +16,12 @@ export interface ProcessStepItem {
   id: string;
   slug: string;
   title: string;
+  subtitle: string | null;
   description: string | null;
+  featured_image_url: string | null;
   sort_order: number | null;
   icon: IconData | null;
+  content: ProcessStepDetailContent | null;
 }
 
 export interface ContentPoint {
@@ -30,7 +36,6 @@ export interface ContentVisual {
   caption?: string;
 }
 
-// Ensure this matches the structure used in [slug]/page.tsx and your JSONB data
 export interface ProcessStepDetailContent {
   main_heading?: string;
   introduction?: string;
@@ -39,21 +44,18 @@ export interface ProcessStepDetailContent {
   insights?: { title?: string; items: string[] };
   visuals?: ContentVisual[];
   conclusion?: string;
-  [key: string]: any; // For any other dynamic fields
+  key_activities?: string;
+  [key: string]: any;
 }
 
-export interface ProcessStepDetail extends Omit<ProcessStepItem, 'icon'|'description'> { // description is part of content too
-  description: string | null; // Short description from top-level
-  content: ProcessStepDetailContent | null;
-  icon: IconData | null;
-}
+export interface ProcessStepDetail extends ProcessStepItem {}
 
 export async function getAllProcessSteps(): Promise<ProcessStepItem[]> {
   noStore();
-  const supabase = await createClient();
+  const supabase = createClient();
   const { data, error } = await supabase
     .from('design_process_steps')
-    .select('id, slug, title, description, sort_order, icons (id, name, icon_library)') // Select icon id too for safety
+    .select('id, slug, title, subtitle, description, featured_image_url, content, sort_order, icons (id, name, icon_library)')
     .order('sort_order', { ascending: true });
 
   if (error) {
@@ -62,26 +64,25 @@ export async function getAllProcessSteps(): Promise<ProcessStepItem[]> {
   }
 
   return data?.map(step => {
-    const iconData = step.icons 
-      ? { name: (step.icons as any).name, icon_library: (step.icons as any).icon_library } 
+    // FIX: Check if icons is an array and has length, then access the first element.
+    const iconObject = Array.isArray(step.icons) && step.icons.length > 0 ? step.icons[0] : null;
+    const iconData = iconObject
+      ? { name: iconObject.name, icon_library: iconObject.icon_library }
       : null;
+      
     return {
-      id: step.id,
-      slug: step.slug,
-      title: step.title,
-      description: step.description,
-      sort_order: step.sort_order,
+      ...step,
       icon: iconData,
-    };
+    } as ProcessStepItem;
   }) || [];
 }
 
 export async function getProcessStepBySlug(slug: string): Promise<ProcessStepDetail | null> {
   noStore();
-  const supabase = await createClient();
+  const supabase = createClient();
   const { data, error } = await supabase
     .from('design_process_steps')
-    .select('id, slug, title, description, content, sort_order, icons (id, name, icon_library)') // Select icon id
+    .select('id, slug, title, subtitle, description, featured_image_url, content, sort_order, icons (id, name, icon_library)')
     .eq('slug', slug)
     .single();
 
@@ -92,15 +93,19 @@ export async function getProcessStepBySlug(slug: string): Promise<ProcessStepDet
   }
   if (!data) return null;
 
-  const iconData = data.icons 
-    ? { name: (data.icons as any).name, icon_library: (data.icons as any).icon_library } 
+  // FIX: Check if icons is an array and has length, then access the first element.
+  const iconObject = Array.isArray(data.icons) && data.icons.length > 0 ? data.icons[0] : null;
+  const iconData = iconObject
+    ? { name: iconObject.name, icon_library: iconObject.icon_library }
     : null;
 
   return {
     id: data.id,
     slug: data.slug,
     title: data.title,
-    description: data.description, // Top-level short description
+    subtitle: data.subtitle,
+    description: data.description,
+    featured_image_url: data.featured_image_url,
     content: data.content as ProcessStepDetailContent | null,
     sort_order: data.sort_order,
     icon: iconData,

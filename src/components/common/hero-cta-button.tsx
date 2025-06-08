@@ -2,11 +2,11 @@
 "use client";
 
 import React from 'react';
-import Button from '@/src/components/ui/button'; // Your custom Button component
+import { Button } from '@chakra-ui/react';
 import NextLink, { type LinkProps } from 'next/link';
 import { ArrowForwardIcon } from '@chakra-ui/icons';
 import { Box } from '@chakra-ui/react';
-import type { ButtonProps } from '@/src/components/ui/button';
+import type { ButtonProps } from '@chakra-ui/react'
 
 interface HeroCtaButtonProps extends Omit<ButtonProps, 'children' | 'rightIcon' | 'as'> {
   href: LinkProps['href'];
@@ -24,7 +24,7 @@ const HeroCtaButton: React.FC<HeroCtaButtonProps> = ({
     <NextLink href={href}>
       <Button
         size="lg"
-        colorScheme="blue"
+        colorScheme="primary"
         {...buttonProps}
         // We intentionally do NOT set `as="a"` here.
       >

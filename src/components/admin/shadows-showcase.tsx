@@ -1,42 +1,45 @@
-// src/components/admin/shadows-showcase.tsx
+/*
+ FINAL VERSION - Key Changes:
+ - Updated imports to use `Heading` and `Text` directly from '@chakra-ui/react',
+   removing references to the old typography folder.
+*/
 'use client';
 
 import React from 'react';
 import {
   Box,
   SimpleGrid,
-  // Code, // Removed
+  Heading,
+  Text,
 } from '@chakra-ui/react';
-import { default as CustomHeading } from '@/src/components/typography/heading';
-import { default as CustomText } from '@/src/components/typography/text';
 
 export default function ShadowsShowcase() {
   return (
     <Box as="section" id="shadows" borderTopWidth="1px" borderColor="border" pt={10}>
-      <CustomHeading as="h2" size="xl" mb={6}>
+      <Heading as="h2" size="xl" mb={6}>
         Shadows
-      </CustomHeading>
-      <CustomText mb={6}>
+      </Heading>
+      <Text mb={6}>
         Chakra UI provides a default shadow scale. These can be customized in the theme.
-      </CustomText>
+      </Text>
       <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} spacing={6}>
         <Box p={6} borderWidth="1px" borderRadius="md" shadow="sm" borderColor="border">
-          <CustomText>shadow=&quot;sm&quot;</CustomText>
+          <Text>shadow=&quot;sm&quot;</Text>
         </Box>
         <Box p={6} borderWidth="1px" borderRadius="md" shadow="md" borderColor="border">
-          <CustomText>shadow=&quot;md&quot;</CustomText>
+          <Text>shadow=&quot;md&quot;</Text>
         </Box>
         <Box p={6} borderWidth="1px" borderRadius="md" shadow="lg" borderColor="border">
-          <CustomText>shadow=&quot;lg&quot;</CustomText>
+          <Text>shadow=&quot;lg&quot;</Text>
         </Box>
         <Box p={6} borderWidth="1px" borderRadius="md" shadow="xl" borderColor="border">
-          <CustomText>shadow=&quot;xl&quot;</CustomText>
+          <Text>shadow=&quot;xl&quot;</Text>
         </Box>
         <Box p={6} borderWidth="1px" borderRadius="md" shadow="2xl" borderColor="border">
-          <CustomText>shadow=&quot;2xl&quot;</CustomText>
+          <Text>shadow=&quot;2xl&quot;</Text>
         </Box>
         <Box p={6} borderWidth="1px" borderRadius="md" shadow="inner" borderColor="border">
-          <CustomText>shadow=&quot;inner&quot;</CustomText>
+          <Text>shadow=&quot;inner&quot;</Text>
         </Box>
       </SimpleGrid>
     </Box>

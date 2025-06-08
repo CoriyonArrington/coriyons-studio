@@ -1,16 +1,18 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { userEvent, within } from '@storybook/testing-library';
-import Button from './button';
+// 👇 Change this import
+import { Button } from '@chakra-ui/react';
 
 // 📘 Storybook metadata for the Button component
 const meta: Meta<typeof Button> = {
-  title: 'UI/Button',
+  title: 'UI/Themed Button', // Renamed for clarity
   component: Button,
   tags: ['autodocs'],
   argTypes: {
     colorScheme: {
       control: 'select',
-      options: ['primary', 'secondary', 'accent', 'destructive'],
+      // These should match your theme's color schemes
+      options: ['primary', 'secondary', 'accent', 'destructive', 'blue', 'green', 'red', 'purple'],
     },
     variant: {
       control: 'select',
@@ -50,8 +52,6 @@ export const Default: Story = {
 export const Disabled: Story = {
   args: {
     children: 'Disabled',
-    colorScheme: 'primary',
-    variant: 'solid',
     isDisabled: true,
   },
 };
@@ -59,9 +59,8 @@ export const Disabled: Story = {
 // ⏳ Loading spinner state
 export const Loading: Story = {
   args: {
-    children: 'Loading...',
-    colorScheme: 'primary',
-    variant: 'solid',
+    children: 'Submitting', // Children are often ignored when loading
+    loadingText: 'Loading...', // This text is shown with the spinner
     isLoading: true,
   },
 };
@@ -72,6 +71,5 @@ export const ThemedOutline: Story = {
     children: 'Outline CTA',
     colorScheme: 'primary',
     variant: 'themedOutline',
-    size: 'md',
   },
 };

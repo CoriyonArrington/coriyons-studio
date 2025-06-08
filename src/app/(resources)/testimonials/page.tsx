@@ -1,10 +1,20 @@
-// src/app/(resources)/testimonials/page.tsx
-
+/*
+ FINAL VERSION - Key Changes:
+ - Consolidated all component imports from '@chakra-ui/react'.
+ - Removed incorrect/duplicate imports from the old typography folder.
+ - Renamed all 'UICard' components to their official Chakra UI names.
+ - Added explicit type assertions (e.g., `as string`) to resolve type mismatches.
+*/
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
-import { Heading, Text } from '@/src/components/typography';
-import { VStack, Avatar } from '@chakra-ui/react';
-import { UICard, UICardBody, UICardText } from '@/src/components/ui/card';
+import {
+  VStack,
+  Avatar,
+  Card,
+  CardBody,
+  Heading,
+  Text,
+} from '@chakra-ui/react';
 import {
   getPageContentBySlug,
   getNavigablePages,
@@ -76,7 +86,7 @@ export default async function TestimonialsPage({ params: _params }: Testimonials
     );
   }
 
-  const cmsContent = pageCmsData?.content as TestimonialsPageCmsContent | null;
+  const cmsContent = pageCmsData?.content as unknown as TestimonialsPageCmsContent | null;
   let introContent: React.ReactNode = null;
 
   if (cmsContent) {
@@ -128,22 +138,22 @@ export default async function TestimonialsPage({ params: _params }: Testimonials
         {allTestimonials && allTestimonials.length > 0 ? (
           <VStack spacing={8} mt={8} alignItems="stretch">
             {allTestimonials.map((testimonial: HomepageTestimonial) => (
-              <UICard
+              <Card
                 key={testimonial.id}
-                variant="outlineFilled"
+                variant="outline"
                 w="full"
                 maxW="container.md"
                 mx="auto"
                 _hover={{ shadow: 'lg' }}
                 transition="shadow 0.2s"
               >
-                <UICardBody>
+                <CardBody>
                   {testimonial.avatar_url && (
                     <Avatar name={testimonial.name as string} src={testimonial.avatar_url as string} mb={4} size="lg" />
                   )}
-                  <UICardText fontSize="xl" fontStyle="italic" color="foreground" mb={4}>
+                  <Text fontSize="xl" fontStyle="italic" color="foreground" mb={4}>
                     &quot;{testimonial.quote as string}&quot;
-                  </UICardText>
+                  </Text>
                   <VStack alignItems="flex-end" spacing={0}>
                     <Text fontWeight="semibold" fontSize="md" color="foreground">
                       — {testimonial.name as string}
@@ -156,8 +166,8 @@ export default async function TestimonialsPage({ params: _params }: Testimonials
                       </Text>
                     )}
                   </VStack>
-                </UICardBody>
-              </UICard>
+                </CardBody>
+              </Card>
             ))}
           </VStack>
         ) : (
@@ -172,10 +182,10 @@ export default async function TestimonialsPage({ params: _params }: Testimonials
 }
 
 export async function generateMetadata({ params: _params }: TestimonialsPageProps): Promise<Metadata> {
-  const pageData = await getPageContentBySlug(SLUG);
-  const title = (pageData?.title as string) || "Client Testimonials | Coriyon's Studio";
+  const pageCmsData = await getPageContentBySlug(SLUG);
+  const title = (pageCmsData?.title as string) || "Client Testimonials | Coriyon's Studio";
   const description =
-    (pageData?.meta_description as string) ||
+    (pageCmsData?.meta_description as string) ||
     "Read what our clients have to say about their experience working with Coriyon's Studio.";
 
   return {
@@ -185,7 +195,7 @@ export async function generateMetadata({ params: _params }: TestimonialsPageProp
       title,
       description,
       url: `/${SLUG}`,
-      images: pageData?.og_image_url ? [{ url: pageData.og_image_url as string }] : undefined,
+      images: pageCmsData?.og_image_url ? [{ url: pageCmsData.og_image_url as string }] : undefined,
     },
   };
 }

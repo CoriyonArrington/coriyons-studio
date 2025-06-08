@@ -1,17 +1,24 @@
-// src/app/(resources)/ux-problems/page.tsx
-
+/*
+ FINAL VERSION - Key Changes:
+ - Consolidated all component imports from '@chakra-ui/react'.
+ - Removed incorrect/duplicate imports from the old typography folder.
+ - Renamed all 'UICard' components to their official Chakra UI names (e.g., 'Card', 'CardHeader').
+ - Added explicit type assertions where necessary to satisfy the TypeScript compiler.
+*/
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
-import { Heading, Text } from '@/src/components/typography';
-import { VStack, SimpleGrid, HStack } from '@chakra-ui/react';
 import {
-  UICard,
-  UICardHeader,
-  UICardBody,
-  UICardHeading,
-  UICardText,
-  UICardFooter,
-} from '@/src/components/ui/card';
+  VStack,
+  SimpleGrid,
+  HStack,
+  Box,
+  Card,
+  CardHeader,
+  CardBody,
+  Heading,
+  Text,
+  CardFooter,
+} from '@chakra-ui/react';
 import HeroCtaButton from '@/src/components/common/hero-cta-button';
 import {
   getPageContentBySlug,
@@ -45,7 +52,7 @@ const DynamicLucideIcon: React.FC<
   if (
     IconComponent &&
     (typeof IconComponent === 'function' ||
-      (typeof IconComponent === 'object' && IconComponent.$$typeof === Symbol.for('react.forward_ref')))
+      (typeof IconComponent === 'object' && (IconComponent as any).$$typeof === Symbol.for('react.forward_ref')))
   ) {
     return React.createElement(IconComponent as React.ComponentType<LucideProps>, props);
   }
@@ -58,17 +65,16 @@ const DynamicLucideIcon: React.FC<
 };
 
 export default async function UxProblemsLandingPage() {
-  // Cast to ensure TS knows slug is string
-  const pageCmsData = (await getPageContentBySlug(SLUG)) as PageRow | null;
-  const uxProblems = (await getAllUxProblems()) as UxProblemCardItem[];
-  const navigablePages = (await getNavigablePages()) as NavigablePageInfo[];
+  const pageCmsData = await getPageContentBySlug(SLUG) as PageRow | null;
+  const uxProblems = await getAllUxProblems();
+  const navigablePages = await getNavigablePages();
 
   let previousPageLink: PrevNextNavLinkInfo | undefined;
   let nextPageLink: PrevNextNavLinkInfo | undefined;
 
   if (pageCmsData) {
     const currentPageIndex = navigablePages.findIndex(
-      (p: NavigablePageInfo) => p.slug === (pageCmsData.slug as string),
+      (p: NavigablePageInfo) => p.slug === pageCmsData.slug,
     );
     if (currentPageIndex !== -1) {
       if (currentPageIndex > 0) {
@@ -90,7 +96,7 @@ export default async function UxProblemsLandingPage() {
     }
   }
 
-  const cmsContent = (pageCmsData?.content as unknown) as UxProblemsPageCmsContent | null;
+  const cmsContent = pageCmsData?.content as unknown as UxProblemsPageCmsContent | null;
   let introContent: React.ReactNode = null;
 
   if (cmsContent) {
@@ -163,7 +169,7 @@ export default async function UxProblemsLandingPage() {
         {uxProblems && uxProblems.length > 0 ? (
           <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: 6, md: 8 }} mt={8}>
             {uxProblems.map((problem: UxProblemCardItem) => (
-              <UICard
+              <Card
                 key={problem.id}
                 variant="outline"
                 h="full"
@@ -172,41 +178,37 @@ export default async function UxProblemsLandingPage() {
                 _hover={{ shadow: 'lg', transform: 'translateY(-2px)' }}
                 transition="all 0.2s"
               >
-                <UICardHeader>
+                <CardHeader>
                   <HStack spacing={3} alignItems="center">
-                    {problem.icon && problem.icon.name && (
+                    {problem.icon?.name && (
                       <DynamicLucideIcon
-                        name={
-                          problem.icon.icon_library === 'lucide-react'
-                            ? problem.icon.name
-                            : undefined
-                        }
+                        name={problem.icon.name}
                         size={24}
                         color="var(--chakra-colors-primary-500)"
                         strokeWidth={2.5}
                       />
                     )}
-                    <UICardHeading size="lg" as="h3">
-                      {problem.title as string}
-                    </UICardHeading>
+                    <Heading size="lg" as="h3">
+                      {problem.title}
+                    </Heading>
                   </HStack>
-                </UICardHeader>
-                <UICardBody flexGrow={1}>
-                  <UICardText color="muted.foreground" mb={4} noOfLines={4}>
-                    {problem.description as string || 'More details about this UX problem.'}
-                  </UICardText>
-                </UICardBody>
-                <UICardFooter>
+                </CardHeader>
+                <CardBody flexGrow={1}>
+                  <Text color="muted.foreground" mb={4} noOfLines={4}>
+                    {problem.description || 'More details about this UX problem.'}
+                  </Text>
+                </CardBody>
+                <CardFooter>
                   <HeroCtaButton
-                    href={`/ux-problems/${problem.slug as string}`}
+                    href={`/ux-problems/${problem.slug}`}
                     size="sm"
-                    variant="themedSolid"
+                    variant="solid"
                     width="full"
                   >
                     Learn More
                   </HeroCtaButton>
-                </UICardFooter>
-              </UICard>
+                </CardFooter>
+              </Card>
             ))}
           </SimpleGrid>
         ) : (

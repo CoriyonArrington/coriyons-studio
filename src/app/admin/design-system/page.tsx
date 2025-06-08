@@ -1,23 +1,27 @@
-// src/app/admin/design-system/page.tsx
-// REFACTOR STATUS: All sections refactored.
+/*
+ FINAL VERSION - Key Changes:
+ - The horizontal padding (`px`) on the main <Section> components has been updated
+   to use responsive values, providing more breathing room on larger screens.
+   - Mobile: 24px (theme value `6`)
+   - Tablet: 32px (theme value `8`)
+   - Desktop: 64px (theme value `16`)
+*/
 'use client';
 
 import React from 'react';
 import {
   Box,
-  Container,
   Link as ChakraLink,
   VStack,
   List,
   ListItem,
   useColorModeValue,
+  Heading,
+  Text,
 } from '@chakra-ui/react';
+import Section from '@/src/components/common/section';
 
-// Typography components are still needed for page title/description
-import { default as CustomHeading } from '@/src/components/typography/heading';
-import { default as CustomText } from '@/src/components/typography/text';
-
-// Import all refactored showcase components
+// Import all showcase components
 import ColorSystemShowcase from '@/src/components/admin/color-system-showcase';
 import TypographyShowcase from '@/src/components/admin/typography-showcase';
 import SpacingLayoutShowcase from '@/src/components/admin/spacing-layout-showcase';
@@ -34,110 +38,70 @@ interface SectionLink { href: string; text: string; }
 interface SectionType { id: string; title: string; componentLinks?: SectionLink[]; }
 
 const sections: SectionType[] = [
-  { id: "colors", title: "Color System" },
-  { id: "typography", title: "Typography" },
-  { id: "spacing", title: "Spacing & Layout" },
-  { id: "breakpoints", title: "Breakpoints" },
-  { id: "borderradius", title: "Border Radius" },
-  { id: "shadows", title: "Shadows" },
-  { id: "animations", title: "Animations & Motion" },
-  { id: "iconography", title: "Iconography" },
-  {
-    id: "layout-primitives",
-    title: "Layout & Sectioning",
-    componentLinks: [
-      { href: "#section-component-showcase", text: "Section Component" },
-      { href: "#content-section-component-showcase", text: "ContentSection Component" },
-    ]
-  },
-  {
-    id: "components", title: "Chakra Components",
-    componentLinks: [
-       { href: "#chakra-buttons", text: "Buttons"},
-       { href: "#chakra-badges", text: "Badges"},
-       { href: "#chakra-forms", text: "Form Elements"},
-       { href: "#chakra-loading-states", text: "Loading States"},
-    ]
-  },
-  {
-    id: "custom-components", title: "Custom Project Components",
-    componentLinks: [
-      { href: "#custom-layout", text: "Layout" },
-      { href: "#custom-site-header", text: "SiteHeader" },
-      { href: "#custom-site-footer", text: "SiteFooter" },
-      { href: "#custom-form", text: "Form (Custom)" },
-      { href: "#custom-form-field", text: "FormField (Custom)" },
-      { href: "#custom-form-message", text: "FormMessage" },
-      { href: "#custom-submit-button", text: "SubmitButton" },
-      { href: "#custom-header-auth", text: "HeaderAuth" },
-      { href: "#custom-theme-switcher", text: "ThemeSwitcher" },
-      { href: "#custom-button-primitive", text: "Button (Primitive)" },
-      { href: "#hero-cta-button-component-showcase", text: "HeroCtaButton" },
-      { href: "#custom-card-primitive", text: "Card (Primitive)" },
-      { href: "#custom-input-primitive", text: "Input (Primitive)" },
-      { href: "#custom-modal-primitive", text: "Modal (Primitive)" },
-      { href: "#custom-spinner-primitive", text: "Spinner (Primitive)" },
-      { href: "#custom-theme-syncer", text: "ChakraNextThemeSyncer" },
-      { href: "#custom-toaster", text: "Toaster" },
-      { href: "#custom-theme-provider", text: "ThemeProvider" },
-    ]
-  },
+    { id: "colors", title: "Color System" },
+    { id: "typography", title: "Typography" },
+    { id: "spacing", title: "Spacing & Layout" },
+    { id: "breakpoints", title: "Breakpoints" },
+    { id: "borderradius", title: "Border Radius" },
+    { id: "shadows", title: "Shadows" },
+    { id: "animations", title: "Animations & Motion" },
+    { id: "iconography", title: "Iconography" },
+    { id: "layout-primitives", title: "Layout & Sectioning" },
+    { id: "components", title: "Chakra Components" },
+    { id: "custom-components", title: "Custom Project Components" },
 ];
+
 
 export default function DesignSystemPage() {
   const listItemHoverBg = useColorModeValue("gray.50", "gray.700");
 
   return (
-    <Container maxW="container.xl" py={10}>
-      <Box as="header" mb={12}>
-        <CustomHeading as="h1" size="2xl" mb={4}>Design System - Chakra UI</CustomHeading>
-        <CustomText fontSize="xl" color="gray.600">
-          Visual guide to project tokens and components using Chakra UI.
-        </CustomText>
-      </Box>
+    <Box>
+      {/* Top content is contained with updated responsive padding */}
+      <Section py={10} px={{ base: 6, md: 8, lg: 16 }} containerMaxWidth="container.lg">
+        <Box as="header" mb={12}>
+          <Heading as="h1" size="2xl" mb={4}>Design System</Heading>
+          <Text fontSize="xl" color="muted.foreground">
+            A visual guide to the project's tokens, components, and brand standards.
+          </Text>
+        </Box>
 
-      <Box as="nav" mb={16} p={4} borderWidth="1px" borderRadius="lg" borderColor="border">
-        <CustomHeading as="h4" size="md" mb={3}>On This Page</CustomHeading>
-        <List>
-          {sections.map((section) => (
-            <ListItem
-              key={section.id}
-              _hover={{ bg: listItemHoverBg }} 
-              py={1} px={2}
-              borderRadius="md"
-            >
-              <ChakraLink href={`#${section.id}`} _hover={{ textDecoration: 'none', color: "primary.DEFAULT" }} fontWeight="medium">
-                {section.title}
-              </ChakraLink>
-              {section.componentLinks && (
-                <List pl={4} mt={1.5} >
-                   {section.componentLinks.map(link => (
-                     <ListItem key={link.href} py={0.5}>
-                       <ChakraLink href={link.href} fontSize="sm" _hover={{ textDecoration: 'underline', color: "primary.DEFAULT" }}>
-                         {link.text}
-                       </ChakraLink>
-                     </ListItem>
-                   ))}
-                </List>
-              )}
-            </ListItem>
-          ))}
-        </List>
-      </Box>
-
-      <VStack alignItems="stretch" spacing={16}>
-        <ColorSystemShowcase />
-        <TypographyShowcase />
-        <SpacingLayoutShowcase />
-        <BreakpointsShowcase />
-        <BorderRadiusShowcase />
-        <ShadowsShowcase />
-        <AnimationsMotionShowcase />
-        <IconographyShowcase />
+        <Box as="nav" mb={16} p={4} borderWidth="1px" borderRadius="lg" borderColor="border">
+          <Heading as="h4" size="md" mb={3}>On This Page</Heading>
+          <List>
+            {sections.map((section) => (
+              <ListItem
+                key={section.id}
+                _hover={{ bg: listItemHoverBg }} 
+                py={1} px={2}
+                borderRadius="md"
+              >
+                <ChakraLink href={`#${section.id}`} _hover={{ textDecoration: 'none' }} fontWeight="medium">
+                  {section.title}
+                </ChakraLink>
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </Section>
+      
+      {/* Each showcase component now controls its own padding via the Section component */}
+      <VStack alignItems="stretch" spacing={0} divider={<Box as="hr" borderColor="border" />}>
+        <Section px={{ base: 6, md: 8, lg: 16 }}><ColorSystemShowcase /></Section>
+        <Section px={{ base: 6, md: 8, lg: 16 }}><TypographyShowcase /></Section>
+        <Section px={{ base: 6, md: 8, lg: 16 }}><SpacingLayoutShowcase /></Section>
+        <Section px={{ base: 6, md: 8, lg: 16 }}><BreakpointsShowcase /></Section>
+        <Section px={{ base: 6, md: 8, lg: 16 }}><BorderRadiusShowcase /></Section>
+        <Section px={{ base: 6, md: 8, lg: 16 }}><ShadowsShowcase /></Section>
+        <Section px={{ base: 6, md: 8, lg: 16 }}><AnimationsMotionShowcase /></Section>
+        <Section px={{ base: 6, md: 8, lg: 16 }}><IconographyShowcase /></Section>
+        
+        {/* This showcase handles its own sections/containers internally, so it doesn't get wrapped */}
         <LayoutPrimitivesShowcase />
-        <ChakraComponentsShowcase />
-        <CustomProjectComponentsShowcase />
+
+        <Section px={{ base: 6, md: 8, lg: 16 }}><ChakraComponentsShowcase /></Section>
+        <Section px={{ base: 6, md: 8, lg: 16 }}><CustomProjectComponentsShowcase /></Section>
       </VStack>
-    </Container>
+    </Box>
   );
 }

@@ -1,4 +1,9 @@
-// src/components/theme-switcher.tsx
+/*
+ FINAL VERSION - Key Changes:
+ - Added the `sx` prop directly to the MenuList and MenuItemOption components.
+ - This applies the theme tokens with the highest priority to override any conflicting
+   default styles, definitively fixing the theming issue.
+*/
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -20,9 +25,10 @@ export const ThemeSwitcher = () => {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  const menuButtonIconColor = useColorModeValue("gray.700", "gray.300"); // Adjusted for potentially darker header in dark mode
-  // Icon color for items within the menu will inherit from MenuList's color (popover.foreground)
-  // or can be set explicitly if needed (e.g. useColorModeValue("gray.600", "gray.400"))
+  const menuButtonIconColor = useColorModeValue("gray.700", "gray.300");
+  const menuListBg = useColorModeValue('popover.DEFAULT', 'card.DEFAULT');
+  const hoverBg = useColorModeValue('blackAlpha.50', 'whiteAlpha.50');
+  const checkedBg = useColorModeValue('primary.50', 'green.900');
 
   useEffect(() => {
     setMounted(true);
@@ -54,11 +60,19 @@ export const ThemeSwitcher = () => {
       >
         {currentIcon}
       </MenuButton>
-      {/* MenuList bg and color are now controlled by the theme override in src/lib/theme.ts */}
-      <MenuList minW="150px"> 
+      <MenuList
+        minW="150px"
+        sx={{
+          bg: menuListBg,
+          color: 'popover.foreground',
+          borderWidth: '1px',
+          borderColor: 'border',
+          shadow: 'lg',
+        }}
+      >
         <MenuOptionGroup
           value={theme}
-          title="Theme" // Title color will inherit from MenuList
+          title="Theme"
           type="radio"
           onChange={(value) => {
             if (typeof value === 'string') {
@@ -66,15 +80,30 @@ export const ThemeSwitcher = () => {
             }
           }}
         >
-          <MenuItemOption value="light" display="flex" alignItems="center">
-            <Icon as={Sun} boxSize={ICON_SIZE} mr="2" /* color will inherit or use specific if needed */ />
-            <Text as="span">Light</Text> {/* Text color should inherit */}
+          <MenuItemOption 
+            value="light" 
+            display="flex" 
+            alignItems="center"
+            sx={{ _hover: { bg: hoverBg }, _focus: { bg: hoverBg }, _checked: { bg: checkedBg, '.chakra-menu__icon-wrapper': { color: 'primary.500' } } }}
+          >
+            <Icon as={Sun} boxSize={ICON_SIZE} mr="2" />
+            <Text as="span">Light</Text>
           </MenuItemOption>
-          <MenuItemOption value="dark" display="flex" alignItems="center">
+          <MenuItemOption 
+            value="dark" 
+            display="flex" 
+            alignItems="center"
+            sx={{ _hover: { bg: hoverBg }, _focus: { bg: hoverBg }, _checked: { bg: checkedBg, '.chakra-menu__icon-wrapper': { color: 'primary.500' } } }}
+          >
             <Icon as={Moon} boxSize={ICON_SIZE} mr="2" />
             <Text as="span">Dark</Text>
           </MenuItemOption>
-          <MenuItemOption value="system" display="flex" alignItems="center">
+          <MenuItemOption 
+            value="system" 
+            display="flex" 
+            alignItems="center"
+            sx={{ _hover: { bg: hoverBg }, _focus: { bg: hoverBg }, _checked: { bg: checkedBg, '.chakra-menu__icon-wrapper': { color: 'primary.500' } } }}
+          >
             <Icon as={Laptop} boxSize={ICON_SIZE} mr="2" />
             <Text as="span">System</Text>
           </MenuItemOption>

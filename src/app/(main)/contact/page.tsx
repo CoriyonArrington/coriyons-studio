@@ -1,11 +1,14 @@
-// src/app/(main)/contact/page.tsx
+/*
+ FINAL VERSION - Key Changes:
+ - Removed incorrect imports from the old typography folder.
+ - Consolidated all component imports from '@chakra-ui/react'.
+*/
 "use client";
 
 import React, { useState, FormEvent } from 'react';
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
-import { Heading, Text } from '@/src/components/typography';
-import { VStack, Box, FormControl, FormLabel, Input, Textarea, Button } from '@chakra-ui/react';
+import { VStack, Box, FormControl, FormLabel, Input, Textarea, Button, Heading, Text } from '@chakra-ui/react';
 import PrevNextNavigation, { type NavLinkInfo as PrevNextNavLinkInfo } from '@/src/components/common/prev-next-navigation';
 
 interface ContactFormData {
@@ -65,7 +68,7 @@ export default function ContactPage() {
             Have a question, project inquiry, or just want to say hello? Fill out the form below and I’ll get back to you as soon as I can.
           </Text>
 
-          <Box as="form" onSubmit={handleSubmit} w="100%" maxW="container.sm">
+          <Box as="form" onSubmit={handleSubmit} w="100%" maxW="container.sm" mt={8}>
             <FormControl id="name" mb={4} isRequired>
               <FormLabel>Name</FormLabel>
               <Input

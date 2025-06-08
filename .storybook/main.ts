@@ -6,11 +6,7 @@ const config: StorybookConfig = {
     '../src/**/*.mdx',
     '../src/**/*.stories.@(js|jsx|ts|tsx)',
   ],
-  addons: [
-    '@storybook/addon-essentials',  // ✅ Adds Docs, Controls, Actions, Viewport, Backgrounds, Toolbars
-    '@storybook/addon-a11y',        // ✅ Adds Accessibility tab
-    '@storybook/addon-interactions' // ✅ Enables interaction testing if you add later
-  ],
+  addons: ['@storybook/addon-a11y', '@storybook/addon-docs'],
   framework: {
     name: '@storybook/nextjs',
     options: {},

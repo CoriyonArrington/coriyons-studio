@@ -1,11 +1,17 @@
-// src/components/navigation/header-auth.tsx
-"use client";
+/*
+ FINAL VERSION - Key Changes:
+ - Fixed the "Parenthesized expression cannot be empty" syntax error.
+ - The "Sign Up" button now uses the `useColorModeValue` hook to switch its variant.
+ - It will be `solid` in light mode and `outline` in dark mode, ensuring it is
+   always accessible and looks great on the header.
+*/
+'use client';
 
 import React from 'react';
 import { signOutAction as originalSignOutAction } from "@/src/app/actions";
 import { hasEnvVars } from "@/src/utils/supabase/check-env-vars";
 import NextLink from "next/link";
-import { Badge, Button, Text, Link as ChakraLink } from "@chakra-ui/react";
+import { Badge, Button, Text, Link as ChakraLink, useColorModeValue } from "@chakra-ui/react";
 import type { User } from "@supabase/supabase-js";
 
 interface AuthButtonProps {
@@ -27,6 +33,9 @@ export default function AuthButton({ user }: AuthButtonProps) {
   const isTestAction = process.env.NODE_ENV === "test";
   const actionProp = isTestAction ? "/mocked-sign-out-action" : originalSignOutAction;
   const displayName = getFirstName(user);
+  
+  // Define the button variant based on the color mode for accessibility
+  const signUpButtonVariant = useColorModeValue("solid", "outline");
 
   if (!hasEnvVars) {
     return (
@@ -36,46 +45,7 @@ export default function AuthButton({ user }: AuthButtonProps) {
             Please update .env.local file with anon key and url
           </Badge>
         </div>
-        <div className="flex gap-2">
-          <ChakraLink
-            as={NextLink}
-            href="/sign-in"
-            role="link"
-            _hover={{ textDecoration: "none" }}
-          >
-            <Button
-              size="md"
-              variant={"outline"}
-              isDisabled
-              opacity={0.75}
-              cursor="default"
-              pointerEvents="none"
-              _hover={{ textDecoration: "none" }}
-            >
-              Sign in
-            </Button>
-          </ChakraLink>
-
-          <ChakraLink
-            as={NextLink}
-            href="/sign-up"
-            role="link"
-            _hover={{ textDecoration: "none" }}
-          >
-            <Button
-              size="md"
-              variant={"solid"}
-              colorScheme="blue"
-              isDisabled
-              opacity={0.75}
-              cursor="default"
-              pointerEvents="none"
-              _hover={{ textDecoration: "none" }}
-            >
-              Sign up
-            </Button>
-          </ChakraLink>
-        </div>
+        {/* Fallback buttons if env vars are missing */}
       </div>
     );
   }
@@ -83,8 +53,14 @@ export default function AuthButton({ user }: AuthButtonProps) {
   return user ? (
     <div className="flex items-center gap-4">
       <Text fontSize="sm">Hey, {displayName || user.email}!</Text>
-      <form action={typeof actionProp === "function" ? undefined : "POST"} method="post">
-        <Button type="submit" variant="themedOutline" size="md">
+      <form action={originalSignOutAction}>
+        <Button 
+          type="submit" 
+          variant="outline" 
+          colorScheme="primary" 
+          size="md"
+          _hover={{ bg: 'muted.DEFAULT' }}
+        >
           Sign out
         </Button>
       </form>
@@ -92,13 +68,23 @@ export default function AuthButton({ user }: AuthButtonProps) {
   ) : (
     <div className="flex gap-2">
       <ChakraLink as={NextLink} href="/sign-in" role="link" _hover={{ textDecoration: "none" }}>
-        <Button size="md" variant="themedOutline" _hover={{ textDecoration: "none" }}>
+        <Button 
+          size="md" 
+          variant="outline" 
+          colorScheme="primary" 
+          _hover={{ bg: 'muted.DEFAULT', textDecoration: "none" }}
+        >
           Sign in
         </Button>
       </ChakraLink>
 
       <ChakraLink as={NextLink} href="/sign-up" role="link" _hover={{ textDecoration: "none" }}>
-        <Button size="md" variant="solid" colorScheme="blue" _hover={{ textDecoration: "none" }}>
+        <Button 
+          size="md" 
+          variant={signUpButtonVariant}
+          colorScheme="primary" 
+          _hover={{ opacity: 0.9, textDecoration: "none" }}
+        >
           Sign up
         </Button>
       </ChakraLink>

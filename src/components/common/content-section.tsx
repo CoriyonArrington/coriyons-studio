@@ -4,8 +4,8 @@
 import React from 'react'; // ← Ensure React is imported
 import Section from './section';
 import type { SectionProps, SectionVariant } from './section';
-import { Heading, Text } from '@/src/components/typography';
-import Button from '@/src/components/ui/button';
+import { Heading, Text } from '@chakra-ui/react';
+import { Button } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import { VStack, SystemProps, Box, Icon as ChakraIcon } from '@chakra-ui/react';
 import { ArrowForwardIcon } from '@chakra-ui/icons';

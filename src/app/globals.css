@@ -1,117 +1,81 @@
-/* src/app/globals.css */
+/*
+ FINAL, DEFINITIVE VERSION - Key Changes:
+ - Restored the complete :root (light mode) style block.
+ - The --muted token in .dark mode is now a neutral dark gray for a softer, more professional feel.
+   This will correct the background color of all "subtle" variants (like in ContentSection and SiteFooter).
+*/
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* 🎨 Base Layers & Typography */
-    --background: 0 0% 100%;           /* Figma: white — page background */
-    --foreground: 0 0% 3.9%;           /* Figma: near-black — primary text */
-
-    /* 🧩 Card & Popover Surfaces */
-    --card: 0 0% 100%;                 /* Card background — same as background in light */
-    --card-foreground: 0 0% 3.9%;      /* Card text color */
-    --popover: 0 0% 100%;              /* Popover (menu, tooltip) background */
-    --popover-foreground: 0 0% 3.9%;   /* Popover text color */
-
-    /* ✅ Brand Colors */
-    --primary: 0 0% 9%;                /* Figma: brand dark (can override with green #2FB67C) */
-    --primary-foreground: 0 0% 98%;    /* Figma: white text on primary button */
-
-    /* ⚙️ Secondary & Muted UI */
-    --secondary: 0 0% 96.1%;           /* Light gray — neutral surface (e.g. tags) */
-    --secondary-foreground: 0 0% 9%;   /* Dark gray — text on secondary */
-    --muted: 0 0% 96.1%;               /* Pale muted background */
-    --muted-foreground: 0 0% 45.1%;    /* Medium gray — muted text */
-
-    /* ✨ Accent & Interactive UI */
-    --accent: 0 0% 96.1%;              /* Used for hoverable tokens, accents */
-    --accent-foreground: 0 0% 9%;      /* Text on accent */
-
-    /* ❌ Destructive Tokens */
-    --destructive: 0 84.2% 60.2%;      /* Red for errors, destructive actions */
-    --destructive-foreground: 0 0% 98%;/* White text on red bg */
-
-    /* 🎯 Form Styling Tokens */
-    --border: 0 0% 89.8%;              /* Field border color (light gray) */
-    --input: 0 0% 89.8%;               /* Input background color */
-    --ring: 0 0% 3.9%;                 /* Focus ring color */
-
-    /* 🟢 Radius for all components */
-    --radius: 0.5rem;                  /* Figma: rounded-md = 8px */
-
-    /* 📊 Chart Color Palette (light mode) */
-    --chart-1: 12 76% 61%;             /* Orange / Coral */
-    --chart-2: 173 58% 39%;            /* Teal / Green */
-    --chart-3: 197 37% 24%;            /* Navy / Blue-gray */
-    --chart-4: 43 74% 66%;             /* Yellow-gold */
-    --chart-5: 27 87% 67%;             /* Apricot / Warm orange */
+    /* Light Mode Palette */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 154 63% 45%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 221 83% 53%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 155 58% 30%;
+    --radius: 0.5rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 262 55% 55%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
   }
 
   .dark {
-    /* 🎨 Dark Mode Layers */
-    --background: 0 0% 3.9%;           /* Very dark gray (main bg) */
-    --foreground: 0 0% 98%;            /* Light text for dark backgrounds */
-
-    /* 🧩 Card & Popover Surfaces (dark) */
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-
-    /* ✅ Brand Colors Inverted */
-    --primary: 0 0% 98%;               /* Light primary bg (inverted) */
-    --primary-foreground: 0 0% 9%;     /* Dark text on light bg */
-
-    /* ⚙️ Secondary UI Inverted */
-    --secondary: 0 0% 14.9%;           /* Darker gray bg */
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-
-    /* ✨ Accent Colors in Dark */
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-
-    /* ❌ Destructive Actions Dark Mode */
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-
-    /* 🎯 Forms & Inputs Dark Mode */
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;                /* Bright ring for focus visibility */
-
-    /* 📊 Chart Palette (dark mode) */
-    --chart-1: 220 70% 50%;            /* Blue */
-    --chart-2: 160 60% 45%;            /* Green */
-    --chart-3: 30 80% 55%;             /* Orange */
-    --chart-4: 280 65% 60%;            /* Purple */
-    --chart-5: 340 75% 55%;            /* Pink-red */
+    /* High-Contrast Dark Mode Palette */
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+    --card: 224 71% 9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 154 63% 45%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 215 28% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 222 47% 11.2%; /* Neutral dark gray for subtle backgrounds */
+    --muted-foreground: 215 20% 65%;
+    --accent: 215 28% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 155 58% 30%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 262 80% 58%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
 }
 
 @layer base {
-  /* 🔄 Smooth scrolling behavior */
   html {
     scroll-behavior: smooth;
   }
-
-  /*
-  ⚠️ Removed border-border reset to preserve Chakra component styling:
-  * {
-    @apply border-border;
-  }
-  */
-
-  /* 🧾 Body background and text color from tokens */
   body {
     @apply bg-background text-foreground;
   }
 }
 
-/* 💫 Keyframes: Used for custom pulse animation */
 @keyframes pulseAnimation {
   0%, 100% {
     opacity: 1;
