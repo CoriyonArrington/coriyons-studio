@@ -1,7 +1,7 @@
 // src/components/common/content-section.tsx
 "use client";
 
-import React from 'react'; // ← Ensure React is imported
+import React from 'react';
 import Section from './section';
 import type { SectionProps, SectionVariant } from './section';
 import { Heading, Text } from '@chakra-ui/react';
@@ -69,9 +69,9 @@ const ContentSection: React.FC<ContentSectionProps> = ({
         )}
         {children}
         {cta && href && (
-          <NextLink href={href} passHref>
+          <NextLink href={href} passHref legacyBehavior>
             <Button
-              // as="a" // This line is removed to prevent nested <a> tags
+              as="a"
               size="lg"
               colorScheme={variant === 'inverse' ? undefined : ctaColorScheme}
               bg={variant === 'inverse' ? 'background' : undefined}

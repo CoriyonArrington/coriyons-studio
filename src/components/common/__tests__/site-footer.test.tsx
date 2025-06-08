@@ -1,7 +1,7 @@
 // src/components/common/__tests__/site-footer.test.tsx
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, type MockedFunction } from 'vitest'; 
-import { render, screen /*, waitFor*/ } from '@testing-library/react'; // waitFor removed
+import { render, screen } from '@testing-library/react';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { axe } from 'jest-axe';
 import SiteFooter from '../site-footer';
@@ -15,12 +15,13 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-// Mock the getCategorizedFooterPages function from the pages data module
+// NOTE: This mock is not used by the SiteFooter component as it receives props directly.
+// It is left here in case it's intended for other tests or future refactors.
 vi.mock('@/src/lib/data/pages', async (importOriginal) => {
   const originalModule = await importOriginal<typeof import('@/src/lib/data/pages')>();
   return {
     ...originalModule,
-    getCategorizedFooterPages: vi.fn(), // Create a Vitest mock function
+    getCategorizedFooterPages: vi.fn(), 
   };
 });
 
@@ -50,13 +51,13 @@ describe('SiteFooter Accessibility and Content', () => {
     LEGAL: [],
   };
 
+  // Although the mock is set, the component under test uses props, not this function.
   beforeEach(() => {
     mockedGetCategorizedFooterPages.mockResolvedValue(sampleFooterData);
   });
 
   it('should have no a11y violations in light mode and render dynamic links', async () => {
-    const SiteFooterComponent = await SiteFooter(); 
-    const { container } = renderWithChakra(SiteFooterComponent, 'light');
+    const { container } = renderWithChakra(<SiteFooter footerPages={sampleFooterData} />, 'light');
 
     expect(screen.getByText(/coriyon's studio. all rights reserved./i)).toBeInTheDocument();
 
@@ -70,8 +71,7 @@ describe('SiteFooter Accessibility and Content', () => {
   });
 
   it('should have no a11y violations in dark mode and render dynamic links', async () => {
-    const SiteFooterComponent = await SiteFooter(); 
-    const { container } = renderWithChakra(SiteFooterComponent, 'dark');
+    const { container } = renderWithChakra(<SiteFooter footerPages={sampleFooterData} />, 'dark');
 
     expect(screen.getByText(/coriyon's studio. all rights reserved./i)).toBeInTheDocument();
     expect(await screen.findByText('Home Test')).toBeInTheDocument();
@@ -82,12 +82,11 @@ describe('SiteFooter Accessibility and Content', () => {
   });
 
   it('should handle cases where some link categories are empty', async () => {
-    mockedGetCategorizedFooterPages.mockResolvedValue({
+    const partialData = {
       ...sampleFooterData,
       RESOURCES: [], 
-    });
-    const SiteFooterComponent = await SiteFooter();
-    renderWithChakra(SiteFooterComponent, 'light');
+    };
+    renderWithChakra(<SiteFooter footerPages={partialData} />, 'light');
 
     expect(screen.getByText('Home Test')).toBeInTheDocument();
     expect(screen.queryByText('Blog Test')).not.toBeInTheDocument();
@@ -95,12 +94,11 @@ describe('SiteFooter Accessibility and Content', () => {
   });
 
   it('should render support column with placeholder if no support links', async () => {
-    mockedGetCategorizedFooterPages.mockResolvedValue({
+    const noSupportData = {
         ...emptyFooterData,
         SUPPORT: [] 
-    });
-    const SiteFooterComponent = await SiteFooter();
-    renderWithChakra(SiteFooterComponent, 'light');
+    };
+    renderWithChakra(<SiteFooter footerPages={noSupportData} />, 'light');
     expect(screen.getByText('Support')).toBeInTheDocument(); 
     expect(screen.getByText('(No support links yet)')).toBeInTheDocument();
   });

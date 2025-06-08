@@ -3,6 +3,7 @@
  - The explicit `bg="foreground"` prop has been removed.
  - The footer will now correctly use the main `background` token, making it white in light mode
    and pure black in dark mode, ensuring it matches the main page content area.
+ - Adds a placeholder text for the "Support" column when no links are available.
 */
 "use client";
 
@@ -40,6 +41,7 @@ export default function SiteFooter({
     title: string,
     links: FooterLink[] | undefined
   ) => {
+    const hasLinks = links && links.length > 0;
     return (
       <Stack align={{ base: "center", md: "flex-start" }}>
         <Heading
@@ -51,18 +53,24 @@ export default function SiteFooter({
         >
           {title}
         </Heading>
-        {links?.map((link: FooterLink) => (
-          <ChakraLink
-            as={NextLink}
-            key={link.title}
-            href={link.href}
-            fontSize="sm"
-            _hover={{ color: "primary.500", textDecoration: "underline" }}
-            color="muted.foreground"
-          >
-            {link.title}
-          </ChakraLink>
-        ))}
+        {hasLinks ? (
+          links.map((link: FooterLink) => (
+            <ChakraLink
+              as={NextLink}
+              key={link.title}
+              href={link.href}
+              fontSize="sm"
+              _hover={{ color: "primary.500", textDecoration: "underline" }}
+              color="muted.foreground"
+            >
+              {link.title}
+            </ChakraLink>
+          ))
+        ) : title === "Support" ? (
+          <Text fontSize="sm" color="muted.foreground">
+            (No support links yet)
+          </Text>
+        ) : null}
       </Stack>
     );
   };

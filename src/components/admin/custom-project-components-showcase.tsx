@@ -3,10 +3,12 @@
  - The "Toaster (Toast Utility)" showcase has been restored and expanded to include buttons
    that trigger all the primary toast variants, as originally intended.
  - A <Wrap> component is used to ensure the buttons display nicely on all screen sizes.
+ - Added <WrapItem> to fix accessibility violations for list elements.
+ - Added explicit `id` props to Inputs inside FormFields to correctly link them with their labels.
 */
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Heading,
   Box,
@@ -14,21 +16,12 @@ import {
   useDisclosure,
   VStack,
   Input,
-  Spinner,
   Button,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
   Card,
-  CardHeader,
   CardBody,
-  CardFooter,
   HStack,
-  Wrap, // Added Wrap for button layout
+  Wrap,
+  WrapItem,
 } from '@chakra-ui/react';
 
 // Import local custom components
@@ -78,7 +71,7 @@ export default function CustomProjectComponentsShowcase() {
               <Form onSubmit={(e) => e.preventDefault()}>
                 <VStack spacing={4}>
                   <FormField id="showcase-name" label="Your Name">
-                    <Input placeholder="Jane Doe" />
+                    <Input placeholder="Jane Doe" id="showcase-name" />
                   </FormField>
                   <FormField 
                     id="showcase-email" 
@@ -86,7 +79,7 @@ export default function CustomProjectComponentsShowcase() {
                     error="This is an example error message."
                     helperText="This helper text is hidden when an error is present."
                   >
-                    <Input placeholder="you@example.com" />
+                    <Input placeholder="you@example.com" id="showcase-email" />
                   </FormField>
                   <HStack>
                     <SubmitButton colorScheme="primary">Submit</SubmitButton>
@@ -169,21 +162,31 @@ export default function CustomProjectComponentsShowcase() {
                 <Box id="custom-toaster">
                     <Heading as="h4" size="md" mb={2}>Toaster (Toast Utility)</Heading>
                     <Wrap spacing={4}>
-                        <Button onClick={() => toaster({ title: 'Info', description: 'This is an informational message.', status: 'info' })}>
-                            Show Info Toast
-                        </Button>
-                        <Button colorScheme='green' onClick={() => toaster({ title: 'Success!', description: 'Your action was completed successfully.', status: 'success' })}>
-                            Show Success Toast
-                        </Button>
-                        <Button colorScheme='red' onClick={() => toaster({ title: 'Error', description: 'Something went wrong, please try again.', status: 'error' })}>
-                            Show Error Toast
-                        </Button>
-                        <Button colorScheme='orange' onClick={() => toaster({ title: 'Warning', description: 'Please be aware of this warning.', status: 'warning' })}>
-                            Show Warning Toast
-                        </Button>
-                        <Button colorScheme='gray' onClick={() => toaster({ title: 'Loading...', description: 'Processing your request.', status: 'loading' })}>
-                            Show Loading Toast
-                        </Button>
+                        <WrapItem>
+                            <Button onClick={() => toaster({ title: 'Info', description: 'This is an informational message.', status: 'info' })}>
+                                Show Info Toast
+                            </Button>
+                        </WrapItem>
+                        <WrapItem>
+                            <Button colorScheme='green' onClick={() => toaster({ title: 'Success!', description: 'Your action was completed successfully.', status: 'success' })}>
+                                Show Success Toast
+                            </Button>
+                        </WrapItem>
+                        <WrapItem>
+                            <Button colorScheme='red' onClick={() => toaster({ title: 'Error', description: 'Something went wrong, please try again.', status: 'error' })}>
+                                Show Error Toast
+                            </Button>
+                        </WrapItem>
+                        <WrapItem>
+                            <Button colorScheme='orange' onClick={() => toaster({ title: 'Warning', description: 'Please be aware of this warning.', status: 'warning' })}>
+                                Show Warning Toast
+                            </Button>
+                        </WrapItem>
+                        <WrapItem>
+                            <Button colorScheme='gray' onClick={() => toaster({ title: 'Loading...', description: 'Processing your request.', status: 'loading' })}>
+                                Show Loading Toast
+                            </Button>
+                        </WrapItem>
                     </Wrap>
                 </Box>
             </VStack>

@@ -5,6 +5,7 @@
    is at or above that breakpoint's width.
  - This creates a showcase that is both a static reference on large screens and a
    live demonstration of responsive behavior when the window is resized.
+ - Corrected heading levels to pass accessibility checks.
 */
 'use client';
 
@@ -42,7 +43,7 @@ export default function BreakpointsShowcase() {
       </Text>
       
       <Box mb={8} p={4} borderWidth="1px" borderRadius="lg" bg="blackAlpha.50" _dark={{ bg: "whiteAlpha.50" }}>
-        <Heading as="h4" size="md" mb={3}>Breakpoint Key</Heading>
+        <Heading as="h3" size="md" mb={3}>Breakpoint Key</Heading>
         <SimpleGrid columns={{ base: 2, sm: 3, md: 6 }} spacing={2}>
             <Text fontSize="sm"><Code>base</Code>: 0px+</Text>
             {breakpointData.map(bp => (
@@ -55,7 +56,7 @@ export default function BreakpointsShowcase() {
         
         {/* Mobile Example (Always shows) */}
         <Box>
-          <Heading size="md" mb={2}>Mobile View (`base`)</Heading>
+          <Heading as="h3" size="md" mb={2}>Mobile View (`base`)</Heading>
           <Box borderWidth="1px" borderRadius="lg" p={4} maxW="full">
             <Box bg="red.100" color="red.800" p={4} borderRadius="md" textAlign="center">
               <Text fontWeight="bold">Base (0px+)</Text>
@@ -66,7 +67,7 @@ export default function BreakpointsShowcase() {
         {/* All other breakpoints render conditionally */}
         {breakpointData.map(bp => (
             <Box key={bp.name} display={{ base: 'none', [bp.name]: 'block' }}>
-                <Heading size="md" mb={2}>{bp.name.toUpperCase()} View (`{bp.name}`)</Heading>
+                <Heading as="h3" size="md" mb={2}>{bp.name.toUpperCase()} View (`{bp.name}`)</Heading>
                 <Box borderWidth="1px" borderRadius="lg" p={4} maxW="full">
                     <Box bg={`${bp.color}.100`} color={`${bp.color}.800`} p={4} borderRadius="md" textAlign="center">
                         <Text fontWeight="bold">{bp.name.toUpperCase()} ({bp.px}px+)</Text>

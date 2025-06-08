@@ -1,5 +1,4 @@
 // src/components/admin/__tests__/layout-primitives-showcase.test.tsx
-// FINAL: Using refined NextLink mock.
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -8,34 +7,21 @@ import { axe } from 'jest-axe';
 import LayoutPrimitivesShowcase from '../layout-primitives-showcase';
 import baseTheme from '@/src/lib/theme';
 
-// MODIFIED NextLink Mock:
-// This version assumes that if 'children' is a React element,
-// it should handle the 'href' and render the anchor tag itself.
-// This prevents the mock from wrapping an element child (like a Button)
-// with an additional <a> tag, thus avoiding the nested <a> warning.
+// This mock is kept for completeness, though the primary buttons in the
+// showcase use `as="a"` and are not wrapped in <NextLink>.
 vi.mock('next/link', () => ({
   default: ({
     children,
     href,
-    passHref, // Prop is still declared as it's part of NextLink's API
-    legacyBehavior, // Prop is still declared
     ...rest
   }: {
     children: React.ReactNode;
     href: string;
-    passHref?: boolean;
-    legacyBehavior?: boolean;
     [key: string]: unknown;
   }) => {
     if (React.isValidElement(children)) {
-      // If the child is a React element (e.g., a Chakra Button or custom Button),
-      // clone it and pass the href. This assumes the child component
-      // (e.g., <Button as="a"> or a custom button that renders <a> with href)
-      // will correctly render the anchor tag.
       return React.cloneElement(children as React.ReactElement, { href, ...rest });
     }
-    // If children is not a React element (e.g., a simple string),
-    // then the Link mock itself should render the <a> tag.
     return <a href={href} {...rest}>{children}</a>;
   },
 }));
@@ -54,32 +40,34 @@ describe('LayoutPrimitivesShowcase Component', () => {
     expect(screen.getByRole('heading', { name: /Layout & Sectioning/i, level: 2 })).toBeInTheDocument();
   });
 
-  it('should render subheading for "Section Component"', () => {
+  it('should render subheadings for component showcases', () => {
     renderWithChakra(<LayoutPrimitivesShowcase />);
     expect(screen.getByRole('heading', { name: /^Section Component$/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByText('Default section content.')).toBeInTheDocument();
-  });
-
-  it('should render subheading for "ContentSection Component"', () => {
-    renderWithChakra(<LayoutPrimitivesShowcase />);
     expect(screen.getByRole('heading', { name: /^ContentSection Component$/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Default ContentSection/i})).toBeInTheDocument();
   });
 
-  it('should display examples for Section component with different variants', () => {
+  it('should display examples for ContentSection with the correct, shared content', () => {
     renderWithChakra(<LayoutPrimitivesShowcase />);
-    expect(screen.getByText(/Default section content./i)).toBeInTheDocument();
-    expect(screen.getByText(/Subtle section with centered text/i)).toBeInTheDocument();
-    expect(screen.getByText(/Inverse section with right-aligned text/i)).toBeInTheDocument();
-  });
+    
+    const headlineText = /Let’s Build Something Meaningful Together/i;
+    const bodyText = /Your patients deserve a seamless experience/i;
+    const ctaProjectText = /Start a Project/i;
+    const ctaConsultText = /Book a Free 20-Minute Consult/i;
 
-  it('should display examples for ContentSection component with different configurations', () => {
-    renderWithChakra(<LayoutPrimitivesShowcase />);
-    expect(screen.getByRole('heading', {name: /Default ContentSection/i})).toBeInTheDocument();
-    expect(screen.getByRole('link', {name: /Learn More/i})).toBeInTheDocument(); // This link should now render correctly
-    expect(screen.getByRole('heading', {name: /Subtle & Customized ContentSection/i})).toBeInTheDocument();
-    expect(screen.getByRole('heading', {name: /Inverse ContentSection with Children/i})).toBeInTheDocument();
-    expect(screen.getByText(/This is custom child content/i)).toBeInTheDocument();
+    // Check that the headline is rendered for all three sections
+    const headlines = screen.getAllByRole('heading', { name: headlineText });
+    expect(headlines).toHaveLength(3);
+
+    // Check that the body paragraph is rendered in all three sections
+    const bodyParagraphs = screen.getAllByText(bodyText);
+    expect(bodyParagraphs).toHaveLength(3);
+
+    // Check that the CTA buttons/links are rendered for all three sections
+    const projectLinks = screen.getAllByRole('link', { name: ctaProjectText });
+    expect(projectLinks).toHaveLength(3);
+
+    const consultLinks = screen.getAllByRole('link', { name: ctaConsultText });
+    expect(consultLinks).toHaveLength(3);
   });
 
   it('should have no a11y violations', async () => {

@@ -26,11 +26,10 @@ describe('BreakpointsShowcase Component', () => {
     expect(screen.getByText(/Test by resizing your browser window/i)).toBeInTheDocument();
   });
 
-  it('should render the demonstration box with text indicating color changes', () => {
+  it('should render the breakpoint key and base demonstration box', () => {
     renderWithChakra(<BreakpointsShowcase />);
-    expect(screen.getByText(/Background color changes based on breakpoint:/i)).toBeInTheDocument();
-    // Check for one of the breakpoint-specific texts to ensure the box content is there
-    expect(screen.getByText(/Base \(Red\)/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Breakpoint Key/i, level: 3 })).toBeInTheDocument();
+    expect(screen.getByText(/Base \(0px\+\)/i)).toBeInTheDocument();
   });
 
   it('should have no a11y violations', async () => {

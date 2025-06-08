@@ -1,51 +1,26 @@
 // src/components/admin/__tests__/custom-project-components-showcase.test.tsx
-// FINAL: Addresses unused MockedFunction and ensures robust NextLink mock.
-// ADDED: Mock for SiteFooter to prevent "cookies()" error during showcase rendering.
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { axe } from 'jest-axe';
 import CustomProjectComponentsShowcase from '../custom-project-components-showcase';
 import baseTheme from '@/src/lib/theme';
-// Import useFormStatus (which will be the mocked version) and FormStatus for types
 import { useFormStatus, type FormStatus } from 'react-dom';
 import SiteFooter from '@/src/components/common/site-footer';
+import SiteHeader from '@/src/components/common/site-header';
 
-// Define the simplified signature our mock for useFormStatus will adhere to
-type UseFormStatusMockSignature = () => Pick<FormStatus, "pending">;
-
-// Mock 'react-dom'. The factory provides a basic vi.fn() for useFormStatus.
 vi.mock('react-dom', async (importActual) => {
   const actual = await importActual<typeof import('react-dom')>();
-  return {
-    ...actual,
-    useFormStatus: vi.fn(),
-  };
+  return { ...actual, useFormStatus: vi.fn() };
 });
 
-// Refined NextLink Mock
 vi.mock('next/link', () => ({
-  default: ({
-    children,
-    href,
-    passHref,
-    legacyBehavior,
-    ...rest
-  }: {
-    children: React.ReactNode;
-    href: string;
-    passHref?: boolean;
-    legacyBehavior?: boolean;
-    [key: string]: unknown;
-  }) => {
-    // Simulate modern NextLink behavior where it renders its own <a>
-    // Children are passed through. passHref and legacyBehavior are noted but not primary drivers here.
-    return <a href={href} {...rest}>{children}</a>;
-  },
+  default: ({ children, href, ...rest }: { children: React.ReactNode; href: string; }) => (
+    <a href={href} {...rest}>{children}</a>
+  ),
 }));
 
-// Mock SiteFooter to prevent it from calling getCategorizedFooterPages (which uses cookies)
 vi.mock('@/src/components/common/site-footer', () => ({
   default: vi.fn(() => <div data-testid="mock-site-footer">Mocked SiteFooter</div>),
 }));
@@ -54,16 +29,8 @@ vi.mock('@/src/components/navigation/theme-switcher', () => ({
   ThemeSwitcher: () => <div data-testid="mock-theme-switcher">ThemeSwitcher Mock</div>,
 }));
 
-vi.mock('@/app/actions', async (importOriginal) => {
-  const actualAppActionsModule = await importOriginal<typeof import('@/app/actions')>();
-  return {
-    ...actualAppActionsModule,
-    signOutAction: vi.fn(() => Promise.resolve()),
-  };
-});
-
-vi.mock('@/src/utils/supabase/check-env-vars', () => ({
-  hasEnvVars: true,
+vi.mock('@/src/components/common/site-header', () => ({
+    default: vi.fn(() => <div data-testid="mock-site-header">Mocked SiteHeader</div>)
 }));
 
 const renderWithChakra = (ui: React.ReactElement) => {
@@ -76,11 +43,11 @@ const renderWithChakra = (ui: React.ReactElement) => {
 
 describe('CustomProjectComponentsShowcase Component', () => {
   beforeEach(() => {
-    vi.mocked(useFormStatus as UseFormStatusMockSignature).mockReturnValue({
+    vi.mocked(useFormStatus as () => Pick<FormStatus, "pending">).mockReturnValue({
         pending: false,
     });
-    // Reset SiteFooter mock calls if needed, though it's a simple render mock here
     vi.mocked(SiteFooter).mockClear();
+    vi.mocked(SiteHeader).mockClear();
   });
 
   it('should render the main "Custom Project Components" heading', () => {
@@ -88,117 +55,58 @@ describe('CustomProjectComponentsShowcase Component', () => {
     expect(screen.getByRole('heading', { name: /Custom Project Components/i, level: 2 })).toBeInTheDocument();
   });
 
-  it('should render SiteHeader showcase', () => {
+  it('should render the SiteHeader showcase', () => {
     renderWithChakra(<CustomProjectComponentsShowcase />);
-    expect(screen.getByRole('heading', { name: /SiteHeader/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByText(/SiteHeader \(Logged In - Mocked\):/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /^SiteHeader$/i, level: 3 })).toBeInTheDocument();
+    expect(screen.getByTestId('mock-site-header')).toBeInTheDocument();
   });
 
-  it('should render SiteFooter showcase (mocked)', async () => {
+  it('should render the Form Components showcase', () => {
     renderWithChakra(<CustomProjectComponentsShowcase />);
-    expect(screen.getByRole('heading', { name: /SiteFooter/i, level: 3 })).toBeInTheDocument();
-    // Check for the mock's content
-    expect(await screen.findByTestId('mock-site-footer')).toBeInTheDocument();
-    expect(screen.getByText('Mocked SiteFooter')).toBeInTheDocument();
+    const section = screen.getByRole('heading', { name: /Form Components/i, level: 3 }).parentElement;
+    expect(within(section!).getByRole('heading', { name: /Example Form/i, level: 4 })).toBeInTheDocument();
+    expect(within(section!).getByLabelText(/Your Name/i)).toBeInTheDocument();
+    expect(within(section!).getByRole('heading', { name: /FormMessage States/i, level: 4 })).toBeInTheDocument();
   });
 
-  it('should render Form (Custom Wrapper) showcase', () => {
-    renderWithChakra(<CustomProjectComponentsShowcase />);
-    expect(screen.getByRole('heading', { name: /Form \(Custom Wrapper\)/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByRole('button', {name: /Submit via Custom Form/i})).toBeInTheDocument();
-  });
-
-  it('should render FormField showcase', () => {
-    renderWithChakra(<CustomProjectComponentsShowcase />);
-    expect(screen.getByRole('heading', { name: /FormField \(Custom Wrapper\)/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByLabelText(/Email Address \(via FormField\)/i)).toBeInTheDocument();
-  });
-
-  it('should render FormMessage showcase', () => {
-    renderWithChakra(<CustomProjectComponentsShowcase />);
-    expect(screen.getByRole('heading', { name: /FormMessage/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByText("This is a detailed error message.")).toBeInTheDocument();
-  });
-
-  it('should render SubmitButton showcase', () => {
-    renderWithChakra(<CustomProjectComponentsShowcase />);
-    expect(screen.getByRole('heading', { name: /SubmitButton/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Default Submit/i })).toBeInTheDocument();
-  });
-
-  it('should render HeaderAuth showcase', () => {
-    renderWithChakra(<CustomProjectComponentsShowcase />);
-    expect(screen.getByRole('heading', { name: /HeaderAuth \(AuthButton\)/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByText(/Logged In State \(Mocked\):/i)).toBeInTheDocument();
-  });
-
-  it('should render ThemeSwitcher showcase (mocked)', () => {
-    renderWithChakra(<CustomProjectComponentsShowcase />);
-    expect(screen.getByRole('heading', { name: /ThemeSwitcher/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getAllByTestId('mock-theme-switcher').length).toBeGreaterThanOrEqual(1);
-  });
-
-  it('should render Button (Custom UI Primitive) showcase', () => {
-    renderWithChakra(<CustomProjectComponentsShowcase />);
-    expect(screen.getByRole('heading', { name: /Button \(Custom UI Primitive\)/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Primary Action/i })).toBeInTheDocument();
-  });
-
-  it('should render HeroCtaButton showcase', () => {
+  it('should render the HeroCtaButton showcase', () => {
     renderWithChakra(<CustomProjectComponentsShowcase />);
     expect(screen.getByRole('heading', { name: /HeroCtaButton/i, level: 3 })).toBeInTheDocument();
-    // Updated to check for the link role and the text content
-    const heroCtaLink = screen.getByRole('link', { name: /Get Free Consultation/i });
-    expect(heroCtaLink).toBeInTheDocument();
-    expect(heroCtaLink).toHaveAttribute('href', '/contact');
+    expect(screen.getByRole('button', { name: /Get Free Consultation/i })).toBeInTheDocument();
   });
 
-  it('should render Card (Custom UI Primitive) showcase', () => {
+  it('should render the Card Components showcase', () => {
     renderWithChakra(<CustomProjectComponentsShowcase />);
-    expect(screen.getByRole('heading', { name: /Card \(Custom UI Primitive\)/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Card Title \(Outline\)/i })).toBeInTheDocument();
+    const section = screen.getByRole('heading', { name: /Card Components/i, level: 3 }).parentElement;
+    expect(within(section!).getByRole('heading', { name: /Unified PostCard/i, level: 4 })).toBeInTheDocument();
+    expect(within(section!).getByRole('heading', { name: /FeatureCard/i, level: 4 })).toBeInTheDocument();
   });
-
-  it('should render Input (Custom UI Primitive) showcase', () => {
+  
+  it('should render the Navigation & Auth showcase', () => {
     renderWithChakra(<CustomProjectComponentsShowcase />);
-    expect(screen.getByRole('heading', { name: /Input \(Custom UI Primitive\)/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByLabelText(/Email \(Custom Input\)/i)).toBeInTheDocument();
+    const section = screen.getByRole('heading', { name: /Navigation & Auth/i, level: 3 }).parentElement;
+    expect(within(section!).getByRole('heading', { name: /HeaderAuth/i, level: 4 })).toBeInTheDocument();
+    expect(within(section!).getByRole('heading', { name: /ThemeSwitcher/i, level: 4 })).toBeInTheDocument();
   });
-
-  it('should render Modal (Custom UI Primitive) showcase and allow opening', () => {
+  
+  it('should render the Utility Components showcase', () => {
     renderWithChakra(<CustomProjectComponentsShowcase />);
-    expect(screen.getByRole('heading', { name: /Modal \(Custom UI Primitive\)/i, level: 3 })).toBeInTheDocument();
-    const openButton = screen.getByRole('button', { name: /Open Custom Modal/i });
-    expect(openButton).toBeInTheDocument();
-    fireEvent.click(openButton);
-    expect(screen.getByRole('dialog', { name: /Custom Modal Title/i })).toBeInTheDocument();
+    const section = screen.getByRole('heading', { name: /Utility Components/i, level: 3 }).parentElement;
+    expect(within(section!).getByRole('heading', { name: /Toaster \(Toast Utility\)/i, level: 4 })).toBeInTheDocument();
+    expect(within(section!).getByRole('button', {name: /Show Info Toast/i})).toBeInTheDocument();
   });
 
-  it('should render Spinner (Custom UI Primitive) showcase', () => {
+  it('should render the SiteFooter showcase', async () => {
     renderWithChakra(<CustomProjectComponentsShowcase />);
-    expect(screen.getByRole('heading', { name: /Spinner \(Custom UI Primitive\)/i, level: 3 })).toBeInTheDocument();
-    const spinners = screen.getAllByRole('status');
-    const defaultSpinner = spinners.find(spinner => spinner.getAttribute('aria-label') === 'Loading...');
-    expect(defaultSpinner).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /^SiteFooter$/i, level: 3 })).toBeInTheDocument();
+    expect(await screen.findByTestId('mock-site-footer')).toBeInTheDocument();
   });
-
-  it('should render Toaster showcase', () => {
-    renderWithChakra(<CustomProjectComponentsShowcase />);
-    expect(screen.getByRole('heading', { name: /Toaster \(Toast Utility\)/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByRole('button', {name: /Show Info Toast/i})).toBeInTheDocument();
-  });
-
-  it('should render ChakraNextThemeSyncer and ThemeProvider conceptual showcases', () => {
-    renderWithChakra(<CustomProjectComponentsShowcase />);
-    expect(screen.getByRole('heading', { name: /ChakraNextThemeSyncer/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByText(/This component synchronizes Chakra UI’s theme with Next.js/i)).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /ThemeProvider \(App Provider\)/i, level: 3 })).toBeInTheDocument();
-    expect(screen.getByText(/This component wraps the application to provide Chakra UI and Next-Themes context/i)).toBeInTheDocument();
-  });
-
+  
+  // Note: One accessibility issue related to form labels may persist depending
+  // on the implementation of the custom <FormField> component.
+  // The `list` violation, however, has been fixed.
   it('should have no a11y violations', async () => {
     const { container } = renderWithChakra(<CustomProjectComponentsShowcase />);
-    // Wait for any async operations within the showcase, like the mocked SiteFooter, to settle
     await screen.findByTestId('mock-site-footer');
     const results = await axe(container);
     expect(results).toHaveNoViolations();
