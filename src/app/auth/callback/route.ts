@@ -1,9 +1,4 @@
-// ATTEMPT 3: Final fix - re-adding await to createServerClient.
-// - The `createServerClient` function IS asynchronous and must be awaited. The previous
-//   error was caused by importing the wrong function name. This change fixes the
-//   'Property 'auth' does not exist on type 'Promise<...>' error.
-
-import { createServerClient } from "@/src/utils/supabase/server";
+import { createClient } from "@/src/utils/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -16,8 +11,7 @@ export async function GET(request: Request) {
   const redirectTo = requestUrl.searchParams.get("redirect_to")?.toString();
 
   if (code) {
-    // FIX: Re-added 'await' as createServerClient is an async function.
-    const supabase = await createServerClient();
+    const supabase = createClient();
     await supabase.auth.exchangeCodeForSession(code);
   }
 

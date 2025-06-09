@@ -2,6 +2,11 @@ import { createClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { PageRow, FaqPageJoin, UxProblemPageJoin, UxSolutionPageJoin } from './minimal_pages_schema';
 
+// --- Exported Types ---
+export type FooterCategory = 'MAIN' | 'RESOURCES' | 'SUPPORT' | 'LEGAL';
+export interface FooterLink { title: string; href: string; }
+export type CategorizedFooterPages = Record<FooterCategory, FooterLink[]>;
+
 export interface NavigablePageInfo {
   slug: string;
   title: string;
@@ -14,6 +19,7 @@ export type PageWithRelations = PageRow & {
     faq_pages: { faqs: FaqPageJoin['faqs'] }[];
 };
 
+// --- Data Fetching Functions ---
 export async function getPageBySlug(slug: string): Promise<PageWithRelations | null> {
     noStore();
     const supabase = createClient();
@@ -54,7 +60,7 @@ export async function getNavigablePages(): Promise<NavigablePageInfo[]> {
     return data;
 }
 
-export async function getCategorizedFooterPages() {
+export async function getCategorizedFooterPages(): Promise<CategorizedFooterPages> {
   noStore();
   const supabase = createClient();
   const { data, error } = await supabase
@@ -63,24 +69,24 @@ export async function getCategorizedFooterPages() {
     .in('status', ['PUBLISHED'])
     .in('page_type', ['MAIN', 'RESOURCES', 'SUPPORT', 'LEGAL']);
 
-  if (error) {
-    console.error('Error fetching footer pages:', error);
-    return { MAIN: [], RESOURCES: [], SUPPORT: [], LEGAL: [] };
-  }
-
-  const categorized: Record<string, { title: string; href: string }[]> = {
+  const categorized: CategorizedFooterPages = {
     MAIN: [],
     RESOURCES: [],
     SUPPORT: [],
     LEGAL: [],
   };
 
+  if (error) {
+    console.error('Error fetching footer pages:', error);
+    return categorized;
+  }
+
   data.forEach(page => {
-    const category = page.page_type as keyof typeof categorized;
+    const category = page.page_type as FooterCategory;
     if (categorized[category]) {
       categorized[category].push({ 
-        title: page.nav_title || page.title, // Use nav_title first, fallback to title
-        href: `/${page.slug === 'home' ? '' : page.slug}` // Handle homepage slug
+        title: page.nav_title || page.title,
+        href: `/${page.slug === 'home' ? '' : page.slug}`
     });
     }
   });
