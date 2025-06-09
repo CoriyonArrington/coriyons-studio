@@ -1,4 +1,3 @@
-// src/app/(main)/services/view.tsx
 'use client';
 
 import React from 'react';
@@ -7,19 +6,19 @@ import Section from '@/src/components/common/section';
 import { VStack, SimpleGrid, Box, Heading, Text } from '@chakra-ui/react';
 import PostCard from '@/src/components/common/post-card';
 import PrevNextNavigation, { type NavLinkInfo } from '@/src/components/common/prev-next-navigation';
-import type { ServiceData } from '@/src/lib/data/services';
+import type { ServiceCardItem } from '@/src/lib/data/services';
 import type { PageRow } from '@/src/lib/data/minimal_pages_schema';
 
 interface ServicesViewProps {
   pageData: PageRow | null;
-  allServices: ServiceData[];
+  allServices: ServiceCardItem[];
   previousPageLink?: NavLinkInfo;
   nextPageLink?: NavLinkInfo;
 }
 
 export default function ServicesView({ pageData, allServices, previousPageLink, nextPageLink }: ServicesViewProps) {
   const cmsContent = pageData?.content as { intro_text?: string } | null;
-  const pageTitle = (pageData?.title as string) || 'Services';
+  const pageTitle = pageData?.title || 'Services';
 
   return (
     <Layout>

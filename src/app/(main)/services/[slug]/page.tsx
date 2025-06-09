@@ -1,7 +1,3 @@
-// ATTEMPT 1: Removing an unnecessary conditional check.
-// - The `getAllServices` function always returns an array, so checking if
-//   `allServicesForNav` is truthy is redundant. Simplified the condition.
-
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import {
@@ -32,6 +28,22 @@ interface ServiceDetailPageProps {
   params: { slug: string };
 }
 
+// Local type for the 'content' JSON object
+interface ServiceDetailsJson {
+    price?: string;
+    what_you_get?: string;
+    turnaround?: string;
+    capacity?: string;
+    guarantee?: string;
+    cta_text?: string;
+    cta_link?: string;
+    includes_summary?: string;
+    perfect_for?: string;
+    use_cases?: string[];
+    savings_summary?: string;
+    value_summary?: string;
+}
+
 const renderServiceListItems = (items: string[] | undefined, listHeading: string) => {
   if (!items || items.length === 0) return null;
   return (
@@ -60,7 +72,6 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   let previousServiceLink: PrevNextNavLinkInfo | undefined;
   let nextServiceLink: PrevNextNavLinkInfo | undefined;
 
-  // FIX: Removed the redundant `allServicesForNav &&` check.
   if (allServicesForNav.length > 0) {
     const currentIndex = allServicesForNav.findIndex(s => s.slug === service.slug);
     if (currentIndex !== -1) {
@@ -76,7 +87,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   }
 
   const { title, description, offering_type, featured_image_url, content, relatedTestimonials } = service;
-  const details = content;
+  const details = content as ServiceDetailsJson | null;
 
   return (
     <Layout>
