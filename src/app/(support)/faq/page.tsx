@@ -1,5 +1,3 @@
-// src/app/(support)/faq/page.tsx
-
 import {
   Accordion,
   AccordionButton,
@@ -17,7 +15,9 @@ import { Metadata } from 'next';
 import {
   getFAQsGroupedByCategory,
   type FAQAnswerContent,
+  type FAQAnswerBlock,
   type FAQCategoryWithItems,
+  type FAQItem,
 } from '@/src/lib/data/faqs';
 
 export const metadata: Metadata = {
@@ -27,8 +27,6 @@ export const metadata: Metadata = {
 
 /**
  * A type-safe component to render block-based content from a JSON field.
- * This prevents unsafe access to the 'answer' object.
- * @param {FAQAnswerContent | null} answer - The content to render.
  */
 function AnswerRenderer({ answer }: { answer: FAQAnswerContent | null }) {
   if (!answer?.blocks || answer.blocks.length === 0) {
@@ -37,11 +35,8 @@ function AnswerRenderer({ answer }: { answer: FAQAnswerContent | null }) {
 
   return (
     <VStack align="start" spacing={3}>
-      {answer.blocks.map((block) => {
-        // This simple renderer handles 'paragraph' blocks safely.
-        // It can be expanded to handle other block types (e.g., lists, headers).
+      {answer.blocks.map((block: FAQAnswerBlock) => {
         if (block.type === 'paragraph' && typeof block.data.text === 'string') {
-          // Using a unique key for each rendered block.
           return <Text key={block.id || block.data.text.substring(0, 20)}>{block.data.text}</Text>;
         }
         return null;
@@ -72,7 +67,7 @@ export default async function FaqPage() {
                 {category.name}
               </Heading>
               <Accordion allowMultiple>
-                {category.faqs.map((faq) => (
+                {category.faqs.map((faq: FAQItem) => (
                   <AccordionItem key={faq.id}>
                     <h2>
                       <AccordionButton _hover={{ bg: 'gray.50' }}>

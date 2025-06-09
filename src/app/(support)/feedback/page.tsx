@@ -1,12 +1,8 @@
-// src/app/(support)/feedback/page.tsx
-// NO 'use client' - Server Component
-
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
-import { Heading, Text } from '@/src/components/typography';
-import { VStack, Box } from '@chakra-ui/react';
+import { VStack, Box, Heading, Text } from '@chakra-ui/react';
 import {
-  getPageContentBySlug,
+  getPageBySlug,
   getNavigablePages,
   type NavigablePageInfo,
 } from '@/src/lib/data/pages';
@@ -31,13 +27,12 @@ const SLUG = 'feedback';
 
 export default async function FeedbackPage() {
   const [pageCmsDataRaw, navigablePages] = await Promise.all([
-    getPageContentBySlug(SLUG),
+    getPageBySlug(SLUG),
     getNavigablePages(),
   ]);
 
   const pageCmsData = pageCmsDataRaw ?? null;
 
-  // Determine previous/next links
   let previousPageLink: PrevNextNavLinkInfo | undefined;
   let nextPageLink: PrevNextNavLinkInfo | undefined;
 
@@ -70,25 +65,21 @@ export default async function FeedbackPage() {
 
   const cmsContent = (pageCmsData?.content as FeedbackPageCmsContent | null) ?? null;
 
-  // Ensure title is a string
   const pageTitle =
     typeof pageCmsData?.title === 'string'
       ? pageCmsData.title
       : 'Submit Your Feedback';
 
-  // Ensure intro_text is a string, with fallback
   const introText =
     typeof cmsContent?.intro_text === 'string'
       ? cmsContent.intro_text
       : "We value your input! Please share your thoughts, suggestions, or any issues you've encountered. Your feedback helps us improve.";
 
-  // Determine hero headline if provided and a string
   const heroHeadline =
     typeof cmsContent?.hero?.headline === 'string'
       ? cmsContent.hero.headline
       : null;
 
-  // Determine section id as a string
   const sectionId =
     typeof pageCmsData?.slug === 'string'
       ? pageCmsData.slug
@@ -124,10 +115,9 @@ export default async function FeedbackPage() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const pageCmsDataRaw = await getPageContentBySlug(SLUG);
+  const pageCmsDataRaw = await getPageBySlug(SLUG);
   const pageCmsData = pageCmsDataRaw ?? null;
 
-  // Ensure title and description are strings with fallbacks
   const title =
     typeof pageCmsData?.title === 'string'
       ? pageCmsData.title
@@ -137,13 +127,11 @@ export async function generateMetadata(): Promise<Metadata> {
       ? pageCmsData.meta_description
       : "Share your feedback to help us improve Coriyon's Studio services and website experience.";
 
-  // Ensure og_image_url is a string before using it
   const ogImageUrl =
     typeof pageCmsData?.og_image_url === 'string'
       ? pageCmsData.og_image_url
       : null;
 
-  // Build Open Graph images array with correct types
   const openGraphImages: Array<{ url: string | URL; alt?: string }> = [];
   if (ogImageUrl) {
     openGraphImages.push({ url: ogImageUrl });
