@@ -1,27 +1,20 @@
-// FINAL, SELF-CONTAINED VERSION
-// This version manually defines all necessary types to make the file
-// self-sufficient and immune to external type-generation issues.
-
-import { createClient as createServerClient } from '@/src/utils/supabase/server';
+import { createClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
 
 // --- Core & Related Type Definitions ---
 
-export interface Author {
+export interface Tag {
   id: string;
-  name: string | null;
-  avatar_url: string | null;
+  name: string;
+  slug: string; // Made slug required to match database query
 }
 
-export interface Category {
-    id: string;
-    name: string | null;
-    slug: string | null;
-}
-
-// FIX: Replaced `any` with the safer `unknown` type.
 export interface PostContentJson {
-  [key: string]: unknown;
+  blocks: Array<{
+    id?: string;
+    type: string;
+    data: unknown;
+  }>;
 }
 
 export interface PostCardItem {
@@ -30,125 +23,128 @@ export interface PostCardItem {
   title: string;
   excerpt: string | null;
   featured_image_url: string | null;
-  author: Author | null;
-  category: Category | null;
   published_at: string;
+  tags: Tag[];
 }
 
 export interface PostDetail extends PostCardItem {
   content: PostContentJson | null;
+  og_image_url: string | null;
+  author_id: string | null;
 }
 
 // --- Self-Contained Row & Joined Types ---
 
-// Manually define the shape of a row from the 'posts' table.
-type PostRow = {
+type RawTag = {
+    id: string;
+    name: string;
+    slug: string;
+} | null;
+
+type PostWithTags = {
   id: string;
   slug: string;
   title: string;
   excerpt: string | null;
   featured_image_url: string | null;
-  content: unknown;
+  og_image_url: string | null;
   published_at: string;
-  author_id: string;
-  category_id: string;
+  content: unknown;
+  author_id: string | null;
+  post_tags: {
+    tags: RawTag;
+  }[];
 };
 
-// Manually define shapes for joined tables.
-type AuthorRow = { id: string; name: string | null; avatar_url: string | null; };
-type CategoryRow = { id: string; name: string | null; slug: string | null; };
+function processRawPosts(rawPosts: PostWithTags[]): PostDetail[] {
+    if (!rawPosts) return [];
+    return rawPosts.map(post => {
+        const tags = post.post_tags
+            .map(pt => pt.tags)
+            .filter((t): t is Tag => t !== null); // This type guard correctly filters out nulls
 
-// The fully joined shape for the queries.
-type PostWithDetails = PostRow & {
-  authors: AuthorRow | null;
-  categories: CategoryRow | null;
-};
+        return {
+            ...post,
+            content: post.content as PostContentJson | null,
+            tags: tags,
+        };
+    });
+}
+
 
 // --- Data Fetching Functions ---
 
-export async function getRecentPosts(limit: number = 3): Promise<PostCardItem[]> {
+export async function getAllPublishedPosts(limit?: number): Promise<PostCardItem[]> {
     noStore();
-    const supabase = createServerClient();
+    const supabase = createClient();
     
-    const response = await supabase
+    let query = supabase
         .from('posts')
-        .select('*, authors(*), categories(*)')
-        .order('published_at', { ascending: false })
-        .limit(limit);
+        .select(`
+            id, slug, title, excerpt, featured_image_url, published_at,
+            post_tags ( tags ( id, name, slug ) )
+        `)
+        .eq('status', 'published')
+        .order('published_at', { ascending: false });
 
-    if (response.error) {
-        console.error('Error fetching recent posts:', response.error.message);
+    if (limit) {
+        query = query.limit(limit);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+        console.error('Error fetching published posts:', error.message);
         return [];
     }
 
-    const data = response.data as PostWithDetails[];
-
-    return data.map(post => ({
-        id: post.id,
-        slug: post.slug,
-        title: post.title,
-        excerpt: post.excerpt,
-        featured_image_url: post.featured_image_url,
-        author: post.authors,
-        category: post.categories,
-        published_at: post.published_at
-    }));
+    return processRawPosts(data as unknown as PostWithTags[]);
 }
 
-export async function getAllPosts(): Promise<PostCardItem[]> {
-  noStore();
-  const supabase = createServerClient();
+export async function getFeaturedPosts(limit: number = 3): Promise<PostCardItem[]> {
+    noStore();
+    const supabase = createClient();
+    
+    const { data, error } = await supabase
+        .from('posts')
+        .select(`
+            id, slug, title, excerpt, featured_image_url, published_at,
+            post_tags ( tags ( id, name, slug ) )
+        `)
+        .eq('status', 'published')
+        .eq('featured', true)
+        .order('published_at', { ascending: false })
+        .limit(limit);
 
-  const response = await supabase
-    .from('posts')
-    .select('*, authors(*), categories(*)')
-    .order('published_at', { ascending: false });
+    if (error) {
+        console.error('Error fetching featured posts:', error.message);
+        return [];
+    }
 
-  if (response.error) {
-    console.error('Error fetching all posts:', response.error.message);
-    return [];
-  }
-
-  const data = response.data as PostWithDetails[];
-  
-  return data.map(post => ({
-    id: post.id,
-    slug: post.slug,
-    title: post.title,
-    excerpt: post.excerpt,
-    featured_image_url: post.featured_image_url,
-    author: post.authors,
-    category: post.categories,
-    published_at: post.published_at
-  }));
+    return processRawPosts(data as unknown as PostWithTags[]);
 }
 
 export async function getPostBySlug(slug: string): Promise<PostDetail | null> {
     noStore();
-    const supabase = createServerClient();
+    const supabase = createClient();
 
-    const response = await supabase
+    const { data, error } = await supabase
       .from('posts')
-      .select('*, authors(*), categories(*)')
+      .select(`
+        *,
+        post_tags ( tags ( id, name, slug ) )
+      `)
       .eq('slug', slug)
+      .eq('status', 'published')
       .single();
 
-    if (response.error) {
-      console.error(`Error fetching post by slug "${slug}":`, response.error.message);
+    if (error) {
+      if (error.code !== 'PGRST116') {
+        console.error(`Error fetching post by slug "${slug}":`, error.message);
+      }
       return null;
     }
-
-    const typedData = response.data as PostWithDetails;
-
-    return {
-        id: typedData.id,
-        slug: typedData.slug,
-        title: typedData.title,
-        excerpt: typedData.excerpt,
-        featured_image_url: typedData.featured_image_url,
-        author: typedData.authors,
-        category: typedData.categories,
-        published_at: typedData.published_at,
-        content: typedData.content as PostContentJson | null,
-    };
+    
+    const processedPosts = processRawPosts([data as unknown as PostWithTags]);
+    return processedPosts[0] || null;
 }
