@@ -1,4 +1,3 @@
-// src/app/(resources)/process/[slug]/page.tsx
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import { 
@@ -30,29 +29,15 @@ interface ProcessStepDetailPageProps { params: { slug: string }; }
 
 const DynamicLucideIcon: React.FC<{ name: string | undefined | null; } & Omit<LucideProps, 'ref' | 'children'>> = ({ name, ...props }) => {
   if (name && Object.prototype.hasOwnProperty.call(LucideIcons, name)) {
-    // Disable rules for creating the 'any' typed variable
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const IconComponent = (LucideIcons as any)[name];
     if (typeof IconComponent === 'function') {
-      // Disable rule for using the 'any' typed variable as an argument
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       return React.createElement(IconComponent, props);
     }
   }
-
-  if (process.env.NODE_ENV === 'development') {
-    console.warn(`Lucide icon "${name || ''}" not found or invalid. Rendering fallback 'Shapes'.`);
-  }
-  
-  // Disable rules for the fallback icon lookup
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
   const FallbackIcon = (LucideIcons as any)['Shapes']; 
   if (typeof FallbackIcon === 'function') {
-    // Disable rule for using the 'any' typed variable as an argument
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return React.createElement(FallbackIcon, props);
   }
-  
   return null; 
 };
 
@@ -95,7 +80,7 @@ export default async function ProcessStepDetailPage(props: ProcessStepDetailPage
         <VStack spacing={8} alignItems="stretch" maxW="container.lg" mx="auto">
           <VStack spacing={3} alignItems="center" textAlign="center" mb={8}>
             <HStack spacing={4} alignItems="center">
-              {icon && icon.icon_library === 'lucide-react' && (
+              {icon && (
                 <DynamicLucideIcon name={icon.name} size={40} color="var(--chakra-colors-primary-500)" strokeWidth={2.5}/>
               )}
               <Heading as="h1" size="2xl" color="foreground">

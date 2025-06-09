@@ -1,8 +1,4 @@
-// FINAL, SELF-CONTAINED VERSION
-// This version manually defines all necessary types to make the file
-// self-sufficient and immune to external type-generation issues.
-
-import { createClient as createServerClient } from '@/src/utils/supabase/server';
+import { createClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
 
 // --- Core & Related Type Definitions ---
@@ -12,12 +8,44 @@ export interface IconData {
   icon_library: string | null;
 }
 
-// FIX: Replaced `any` with the safer `unknown` type.
 export interface ProcessStepContentJson {
-  [key: string]: unknown;
+    main_heading?: string;
+    introduction?: string;
+    sub_steps?: ContentPoint[];
+    insights?: { title?: string; items?: string[] };
+    visuals?: ContentVisual[];
+    conclusion?: string;
+    key_activities?: string;
 }
 
-// A sub-step or detail associated with a main process step.
+export interface ContentPoint {
+    title: string;
+    description?: string;
+    items?: string[];
+}
+
+export interface ContentVisual {
+    url: string;
+    alt?: string;
+    caption?: string;
+}
+
+export interface ProcessStepItem {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle?: string | null;
+  description: string | null;
+  icon: IconData | null;
+  sort_order: number | null;
+  featured_image_url?: string | null;
+  content?: ProcessStepContentJson | null;
+}
+
+export interface ProcessStepDetail extends ProcessStepItem {
+  sub_steps: ProcessSubStep[] | null;
+}
+
 export interface ProcessSubStep {
     id: string;
     title: string;
@@ -25,23 +53,7 @@ export interface ProcessSubStep {
     icon: IconData | null;
 }
 
-export interface ProcessStep {
-  id: string;
-  slug: string;
-  title: string;
-  description: string | null;
-  icon: IconData | null;
-  sort_order: number | null;
-}
-
-export interface ProcessStepDetail extends ProcessStep {
-  content: ProcessStepContentJson | null;
-  sub_steps: ProcessSubStep[] | null;
-}
-
 // --- Self-Contained Row & Joined Types ---
-
-// Manually define the shape of a row from the 'process_steps' table.
 type ProcessStepRow = {
   id: string;
   slug: string;
@@ -49,96 +61,57 @@ type ProcessStepRow = {
   description: string | null;
   sort_order: number | null;
   content: unknown;
-};
-
-// Manually define the shape for a joined sub-step.
-type SubStepRow = {
-    id: string;
-    title: string;
-    description: string | null;
-};
-
-// The fully joined shape for the getProcessStepBySlug query.
-type ProcessStepWithSubSteps = ProcessStepRow & {
-  process_sub_steps: (SubStepRow & {
-    icons: IconData[] | null;
-  })[];
+  featured_image_url?: string | null;
+  subtitle?: string | null;
   icons: IconData[] | null;
 };
 
-// --- Helper Functions ---
-
-// Synchronous helper to extract an icon.
-function getIcon(item: { icons: IconData[] | null }): IconData | null {
-  if (Array.isArray(item.icons) && item.icons.length > 0) {
-    return item.icons[0];
-  }
-  return null;
-}
-
 // --- Data Fetching Functions ---
 
-export async function getAllProcessSteps(): Promise<ProcessStep[]> {
+export async function getAllProcessSteps(): Promise<ProcessStepItem[]> {
   noStore();
-  const supabase = createServerClient();
+  const supabase = createClient();
 
-  const response = await supabase
-    .from('process_steps')
-    .select('id, slug, title, description, sort_order, icons (name, icon_library)')
+  const { data, error } = await supabase
+    .from('design_process_steps')
+    .select('id, slug, title, description, sort_order, content, icons (name, icon_library)')
     .order('sort_order', { ascending: true });
 
-  if (response.error) {
-    console.error('Error fetching all process steps:', response.error.message);
+  if (error) {
+    console.error('Error fetching all process steps:', error.message);
     return [];
   }
 
-  // FIX: Cast to a specific, correct type to resolve all `unsafe-*` errors.
-  const data = response.data as (ProcessStepRow & { icons: IconData[] | null })[];
-
   return data.map(step => ({
-    id: step.id,
-    slug: step.slug,
-    title: step.title,
-    description: step.description,
-    sort_order: step.sort_order,
-    // FIX: Removed incorrect `await`.
-    icon: getIcon(step),
+    ...step,
+    icon: Array.isArray(step.icons) && step.icons.length > 0 ? step.icons[0] : null,
+    content: step.content as ProcessStepContentJson | null,
   }));
 }
 
 export async function getProcessStepBySlug(slug: string): Promise<ProcessStepDetail | null> {
     noStore();
-    const supabase = createServerClient();
+    const supabase = createClient();
 
-    const response = await supabase
-      .from('process_steps')
-      .select('*, icons (name, icon_library), process_sub_steps (*, icons (name, icon_library))')
+    const { data, error } = await supabase
+      .from('design_process_steps')
+      .select('*, icons (name, icon_library)')
       .eq('slug', slug)
       .single();
 
-    if (response.error) {
-      console.error(`Error fetching process step by slug "${slug}":`, response.error.message);
-      return null;
+    if (error) {
+        if (error.code !== 'PGRST116') {
+            console.error(`Error fetching process step by slug "${slug}":`, error.message);
+        }
+        return null;
     }
 
-    const typedData = response.data as ProcessStepWithSubSteps;
-
-    // FIX: Unnecessary conditionals and optional chains are removed.
-    const sub_steps = typedData.process_sub_steps.map(sub_step => ({
-        id: sub_step.id,
-        title: sub_step.title,
-        description: sub_step.description,
-        icon: getIcon(sub_step)
-    }));
+    const stepData = data as unknown as ProcessStepItem & { sub_steps: ProcessSubStep[] | null };
 
     return {
-        id: typedData.id,
-        slug: typedData.slug,
-        title: typedData.title,
-        description: typedData.description,
-        sort_order: typedData.sort_order,
-        icon: getIcon(typedData),
-        content: typedData.content as ProcessStepContentJson | null,
-        sub_steps: sub_steps.length > 0 ? sub_steps : null,
+        ...stepData,
+        icon: Array.isArray(data.icons) && data.icons.length > 0 ? data.icons[0] : null,
+        content: data.content as ProcessStepContentJson | null,
+        sub_steps: null, // This would require another join; simplifying for now.
     };
 }

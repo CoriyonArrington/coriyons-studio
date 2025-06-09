@@ -1,5 +1,3 @@
-// src/app/(resources)/process/page.tsx
-
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import {
@@ -24,24 +22,25 @@ import {
   CardFooter,
 } from '@chakra-ui/react';
 import HeroCtaButton from '@/src/components/common/hero-cta-button';
-import { getPageDataBySlug, getNavigablePages } from '@/src/lib/data/pages';
+import { getPageBySlug, getNavigablePages, type NavigablePageInfo } from '@/src/lib/data/pages';
 import { getAllProcessSteps, type ProcessStepItem } from '@/src/lib/data/process';
-import type { FAQItem, FAQAnswerBlock } from '@/src/lib/data/faqs';
-import type { UxProblemCardItem } from '@/src/lib/data/ux_problems';
 import PrevNextNavigation, {
   type NavLinkInfo as PrevNextNavLinkInfo,
 } from '@/src/components/common/prev-next-navigation';
 import { mapPageTypeToCategoryLabel } from '@/src/lib/utils';
 import type { Metadata } from 'next';
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import * as LucideIcons from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 
 const SLUG = 'process';
 
 // --- Type Definitions ---
+// Assuming these types are available from other data files or defined here if local
+interface FAQAnswerBlock { id?: string; type: string; data: any; }
+interface FAQItem { id: string; question: string; answer?: { blocks: FAQAnswerBlock[]; markdown?: string; } | null; }
+interface UxProblemCardItem { id: string; slug: string; title: string; description: string | null; icon?: { name: string } | null; }
+
 interface ProcessPageCmsContent {
   hero?: { headline?: string };
   intro_text?: string;
@@ -56,10 +55,6 @@ interface ProcessPageProps {
 // --- Helper Components ---
 const DynamicLucideIcon: React.FC<{ name: string | null | undefined } & LucideProps> = ({ name, ...props }) => {
   if (name && name in LucideIcons) {
-    // Disabling ESLint here is a pragmatic choice. The lucide-react library's types
-    // do not support dynamic string-based lookups without triggering type errors.
-    // This 'any' cast is a controlled escape hatch to solve the issue.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const IconComponent = (LucideIcons as any)[name];
     if (IconComponent) {
       return <IconComponent {...props} />;
@@ -101,18 +96,17 @@ const BlockRenderer: React.FC<{ block: FAQAnswerBlock }> = ({ block }) => {
   }
 };
 
-const MarkdownComponents: React.ComponentProps<typeof ReactMarkdown>['components'] = {};
 
 // --- Page Component ---
 export default async function ProcessPage({ params: _params }: ProcessPageProps) {
-  const pageCmsData = await getPageDataBySlug(SLUG);
+  const pageCmsData = await getPageBySlug(SLUG);
   const allProcessSteps = await getAllProcessSteps();
   const navigablePages = await getNavigablePages();
 
   let previousPageLink: PrevNextNavLinkInfo | undefined;
   let nextPageLink: PrevNextNavLinkInfo | undefined;
   if (pageCmsData) {
-    const currentPageIndex = navigablePages.findIndex(p => p.slug === pageCmsData.slug);
+    const currentPageIndex = navigablePages.findIndex((p: NavigablePageInfo) => p.slug === pageCmsData.slug);
     if (currentPageIndex > 0) {
       const prev = navigablePages[currentPageIndex - 1];
       previousPageLink = { slug: prev.slug, title: prev.title, categoryLabel: mapPageTypeToCategoryLabel(prev.page_type) };
@@ -175,9 +169,9 @@ export default async function ProcessPage({ params: _params }: ProcessPageProps)
                             <Heading size="lg" as="h3">
                               {step.title}
                             </Heading>
-                            <Text color="muted.foreground" fontSize="md">
+                            {step.subtitle && <Text color="muted.foreground" fontSize="md">
                               {step.subtitle}
-                            </Text>
+                            </Text>}
                           </VStack>
                         </HStack>
                       </CardHeader>
@@ -239,7 +233,7 @@ export default async function ProcessPage({ params: _params }: ProcessPageProps)
                 Related Questions
               </Heading>
               <Accordion allowMultiple maxW="container.md" mx="auto">
-                {relatedFaqs.map((faq: FAQItem, _index: number) => (
+                {relatedFaqs.map((faq: FAQItem) => (
                   <AccordionItem key={faq.id} mb={2}>
                     <h2>
                       <AccordionButton _expanded={{ bg: 'blue.600', color: 'white' }}>
@@ -251,11 +245,6 @@ export default async function ProcessPage({ params: _params }: ProcessPageProps)
                     </h2>
                     <AccordionPanel pb={4} pt={4} borderWidth="1px" borderTopWidth="0" borderColor="border">
                       {faq.answer?.blocks?.map((block, i) => <BlockRenderer key={block.id || `faq-block-${String(i)}`} block={block} />)}
-                      {faq.answer?.markdown && (
-                        <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm]}>
-                          {faq.answer.markdown}
-                        </ReactMarkdown>
-                      )}
                     </AccordionPanel>
                   </AccordionItem>
                 ))}
@@ -270,7 +259,7 @@ export default async function ProcessPage({ params: _params }: ProcessPageProps)
 }
 
 export async function generateMetadata({ params: _params }: ProcessPageProps): Promise<Metadata> {
-  const pageData = await getPageDataBySlug(SLUG);
+  const pageData = await getPageBySlug(SLUG);
   if (!pageData) {
     return { title: 'Process | Coriyon’s Studio' };
   }
