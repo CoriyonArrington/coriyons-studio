@@ -1,9 +1,4 @@
-/*
- FINAL VERSION - Key Changes:
- - Consolidated all component imports from '@chakra-ui/react'.
- - Removed incorrect/duplicate imports from the old typography folder.
- - Added explicit type assertions to satisfy the TypeScript compiler.
-*/
+// src/app/(main)/about/page.tsx
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import {
@@ -13,21 +8,19 @@ import {
   Text,
   Image,
   SimpleGrid,
-  HStack,
   Avatar,
 } from '@chakra-ui/react';
 import PrevNextNavigation, {
   type NavLinkInfo as PrevNextNavLinkInfo,
 } from '@/src/components/common/prev-next-navigation';
 import {
-  getPageContentBySlug,
+  getPageDataBySlug,
   getNavigablePages,
   type NavigablePageInfo,
 } from '@/src/lib/data/pages';
 import { mapPageTypeToCategoryLabel } from '@/src/lib/utils';
 import type { Metadata } from 'next';
 import React from 'react';
-import type { PageRow } from '@/src/lib/data/minimal_pages_schema';
 import { getFeaturedTestimonials, type HomepageTestimonial } from '@/src/lib/data/testimonials';
 import HeroCtaButton from '@/src/components/common/hero-cta-button';
 
@@ -42,7 +35,7 @@ interface AboutPageCmsContent {
     image_alt?: string;
   };
   main_content?: {
-    blocks: Array<{ type: string; data: any }>;
+    blocks: ContentBlock[];
   };
   cta_section?: {
     headline?: string;
@@ -50,17 +43,27 @@ interface AboutPageCmsContent {
     cta_text?: string;
     cta_href?: string;
   };
-  [key: string]: any;
+  [key: string]: unknown;
+}
+
+// A specific type for the content blocks from the CMS
+interface ContentBlock {
+  type: string; // Simplified from ('header' | 'paragraph' | string)
+  data: {
+    level?: number;
+    text?: string;
+    [key: string]: unknown;
+  };
 }
 
 interface AboutPageProps {
-  params: {};
+  params: unknown;
 }
 
 // --- Page Component ---
 export default async function AboutPage({ params: _params }: AboutPageProps) {
   const [pageCmsData, navigablePages, featuredTestimonials] = await Promise.all([
-    getPageContentBySlug(SLUG),
+    getPageDataBySlug(SLUG),
     getNavigablePages(),
     getFeaturedTestimonials(3),
   ]);
@@ -70,7 +73,7 @@ export default async function AboutPage({ params: _params }: AboutPageProps) {
 
   if (pageCmsData) {
     const currentPageIndex = navigablePages.findIndex(
-      (p: NavigablePageInfo) => p.slug === (pageCmsData.slug as string),
+      (p: NavigablePageInfo) => p.slug === pageCmsData.slug,
     );
     if (currentPageIndex !== -1) {
       if (currentPageIndex > 0) {
@@ -103,13 +106,13 @@ export default async function AboutPage({ params: _params }: AboutPageProps) {
     );
   }
 
-  const cmsContent = pageCmsData.content as unknown as AboutPageCmsContent | null;
-  const pageTitle = (pageCmsData.title as string) || 'About Us';
+  const cmsContent = pageCmsData.content as AboutPageCmsContent | null;
+  const pageTitle = pageCmsData.title || 'About Us';
 
   return (
     <Layout>
       <Section
-        id={pageCmsData.slug as string}
+        id={pageCmsData.slug}
         py={{ base: 12, md: 20 }}
         px={{ base: 4, md: 8 }}
         as="article"
@@ -138,9 +141,9 @@ export default async function AboutPage({ params: _params }: AboutPageProps) {
 
           {cmsContent?.main_content?.blocks && (
             <Box maxW="container.md" mx="auto" className="prose" sx={{'.prose': { all: 'revert'}}}>
-                {cmsContent.main_content.blocks.map((block: {type: string, data: any}, index: number) => {
+                {cmsContent.main_content.blocks.map((block: ContentBlock, index: number) => {
                     if (block.type === 'header') {
-                        const level = `h${block.data.level || 2}` as 'h1'|'h2'|'h3'|'h4'|'h5'|'h6';
+                        const level = `h${String(block.data.level || 2)}` as 'h1'|'h2'|'h3'|'h4'|'h5'|'h6';
                         return <Heading key={index} as={level} size="xl" mt={8} mb={4}>{block.data.text}</Heading>
                     }
                     if (block.type === 'paragraph') {
@@ -157,9 +160,9 @@ export default async function AboutPage({ params: _params }: AboutPageProps) {
                 What Our Clients Say
               </Heading>
               <SimpleGrid columns={{ base: 1, md: 3 }} spacing={8}>
-                {featuredTestimonials.map((testimonial) => (
+                {featuredTestimonials.map((testimonial: HomepageTestimonial) => (
                   <VStack key={testimonial.id} spacing={4} textAlign="center" p={6} bg="background" borderRadius="md" boxShadow="md">
-                    <Avatar src={testimonial.avatar_url as string} name={testimonial.name as string} size="xl" />
+                    <Avatar src={testimonial.avatar_url || undefined} name={testimonial.name} size="xl" />
                     <Text fontStyle="italic" fontSize="lg">&quot;{testimonial.quote}&quot;</Text>
                     <Box>
                         <Text fontWeight="bold">{testimonial.name}</Text>
@@ -190,14 +193,14 @@ export default async function AboutPage({ params: _params }: AboutPageProps) {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const pageData = await getPageContentBySlug(SLUG) as PageRow | null;
+  const pageData = await getPageDataBySlug(SLUG);
 
   if (!pageData) {
     return { title: "About | Coriyon's Studio" };
   }
 
-  const title = (pageData.title as string) || "About Coriyon's Studio";
-  const description = (pageData.meta_description as string) || "Learn more about Coriyon's Studio, our mission, and our process.";
+  const title = pageData.title || "About Coriyon's Studio";
+  const description = pageData.meta_description || "Learn more about Coriyon's Studio, our mission, and our process.";
   
   return {
     title,
@@ -206,7 +209,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       url: `/${SLUG}`,
-      images: pageData.og_image_url ? [{ url: pageData.og_image_url as string }] : undefined,
+      images: pageData.og_image_url ? [{ url: pageData.og_image_url }] : undefined,
     },
   };
 }

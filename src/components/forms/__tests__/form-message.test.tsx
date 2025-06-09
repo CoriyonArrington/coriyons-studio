@@ -1,17 +1,26 @@
-// src/components/forms/__tests__/form-message.test.tsx
+// ATTEMPT 1: Using extendTheme idiomatically to resolve unsafe assignment.
+// - Instead of spreading `baseTheme`, it is now passed as a separate argument
+//   to `extendTheme`, which is the intended and type-safe usage pattern.
+
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { axe } from 'jest-axe';
-import { FormMessage, type Message } from '../form-message'; // Corrected import path
+import { FormMessage, type Message } from '../form-message';
 import baseTheme from '@/src/lib/theme';
 
 const renderWithChakra = (ui: React.ReactElement, colorMode: 'light' | 'dark' = 'light') => {
-  const theme = extendTheme({
-    ...baseTheme,
-    config: { ...baseTheme.config, initialColorMode: colorMode, useSystemColorMode: false },
-  });
+  // FIX: Pass theme objects as separate arguments instead of using the spread operator.
+  const theme = extendTheme(
+    baseTheme,
+    {
+      config: { 
+        initialColorMode: colorMode, 
+        useSystemColorMode: false 
+      },
+    }
+  );
   return render(<ChakraProvider theme={theme}>{ui}</ChakraProvider>);
 };
 

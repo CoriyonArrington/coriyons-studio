@@ -1,17 +1,26 @@
-// src/components/forms/__tests__/form-field.test.tsx
+// ATTEMPT 1: Using extendTheme idiomatically to resolve unsafe assignment.
+// - Instead of spreading `baseTheme`, it is now passed as a separate argument
+//   to `extendTheme`, which is the intended and type-safe usage pattern.
+
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ChakraProvider, extendTheme, Input } from '@chakra-ui/react';
 import { axe } from 'jest-axe';
-import FormField from '../form-field'; // Adjust path as necessary
-import baseTheme from '@/src/lib/theme'; // Your base theme
+import FormField from '../form-field'; 
+import baseTheme from '@/src/lib/theme';
 
 const renderWithChakra = (ui: React.ReactElement, colorMode: 'light' | 'dark' = 'light') => {
-  const theme = extendTheme({
-    ...baseTheme,
-    config: { ...baseTheme.config, initialColorMode: colorMode, useSystemColorMode: false },
-  });
+  // FIX: Pass theme objects as separate arguments instead of using the spread operator.
+  const theme = extendTheme(
+    baseTheme,
+    {
+      config: { 
+        initialColorMode: colorMode, 
+        useSystemColorMode: false 
+      },
+    }
+  );
   return render(<ChakraProvider theme={theme}>{ui}</ChakraProvider>);
 };
 
@@ -27,7 +36,7 @@ describe('FormField Component', () => {
     );
     expect(screen.getByText(defaultLabel)).toBeInTheDocument();
     expect(screen.getByTestId('child-input')).toBeInTheDocument();
-    expect(screen.getByLabelText(defaultLabel)).toBe(screen.getByTestId('child-input')); // Checks label association
+    expect(screen.getByLabelText(defaultLabel)).toBe(screen.getByTestId('child-input'));
   });
 
   it('should display an error message when error prop is provided', () => {
@@ -38,7 +47,6 @@ describe('FormField Component', () => {
       </FormField>
     );
     expect(screen.getByText(errorMessage)).toBeInTheDocument();
-    // Check for ARIA attributes related to invalid state
     expect(screen.getByRole('textbox', { name: defaultLabel })).toHaveAttribute('aria-invalid', 'true');
   });
 
@@ -50,7 +58,7 @@ describe('FormField Component', () => {
       </FormField>
     );
     expect(screen.getByText(helperMessage)).toBeInTheDocument();
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument(); // FormErrorMessage has role="alert"
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
   
   it('should not display helper text if an error is present', () => {
@@ -71,10 +79,7 @@ describe('FormField Component', () => {
         <Input id={defaultId} />
       </FormField>
     );
-    // Chakra UI adds an asterisk to the label for required fields
-    // Check if the label element itself has the required attribute or indicator
     const labelElement = screen.getByText(defaultLabel);
-    // Chakra typically adds a span with class chakra-form__required-indicator
     expect(labelElement.querySelector('.chakra-form__required-indicator')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: defaultLabel })).toBeRequired();
   });

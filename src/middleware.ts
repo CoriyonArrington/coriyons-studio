@@ -1,44 +1,43 @@
-// ATTEMPT #13: ADD DESCRIPTIVE COMMENTS TO MIDDLEWARE
-// Change: Added comments to explain the purpose of each rule in the middleware, as requested.
+// ATTEMPT #2: Finalizing middleware linting.
+// Change 1: Removed the unused 'CookieOptions' type import to resolve the `no-unused-vars` warning.
+// Change 2: Changed 'let response' to 'const response' as the variable is no longer reassigned, resolving the `prefer-const` error.
 
 import { NextResponse, type NextRequest } from "next/server";
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: request.headers,
     },
   });
 
-  // This client is used only for session management in middleware.
-  // It is created using the plain createServerClient from @supabase/ssr
-  // and not the async helper function from utils/supabase/server.ts
+  // Safely read and validate environment variables.
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    // If the variables are not set, we can't create the client, so we return the original response.
+    console.error("Supabase URL or anonymous key is missing from environment variables.");
+    return response;
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
+        getAll() {
+          return request.cookies.getAll();
         },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({ name, value, ...options });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          response.cookies.set({ name, value, ...options });
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({ name, value: '', ...options });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          response.cookies.set({ name, value: '', ...options });
+        setAll(cookiesToSet) {
+          try {
+            // In middleware, cookies are set on the response object.
+            cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+          } catch (_error) {
+            // The `setAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing user sessions.
+          }
         },
       },
     }
@@ -53,32 +52,20 @@ export async function middleware(request: NextRequest) {
 
 
   // Rule 1: Protect all routes under `/admin`
-  // If a user is not logged in and tries to access an admin route, they are redirected to the sign-in page.
   if (pathname.startsWith('/admin') && !session) {
       return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 
   // Rule 2: Protect all routes under `/protected`
-  // If a user is not logged in and tries to access any other protected route, they are also redirected to sign-in.
   if (pathname.startsWith('/protected') && !session) {
       return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 
   // Rule 3: Redirect logged-in users away from authentication pages
-  // If a user is already logged in, this prevents them from seeing the sign-in or sign-up pages and sends them to the dashboard.
   if (session && (pathname === '/sign-in' || pathname === '/sign-up')) {
      return NextResponse.redirect(new URL('/protected', request.url));
   }
   
-  // Rule 4 (Currently Disabled): Redirect logged-in users from the homepage
-  // This rule would send logged-in users from the homepage ('/') to the '/protected' dashboard.
-  // It is commented out to allow logged-in users to visit the homepage. You can re-enable it if you want.
-  /*
-  if (session && pathname === '/') {
-      return NextResponse.redirect(new URL('/protected', request.url));
-  }
-  */
-
   // If no rules matched, continue with the request as planned.
   return response;
 }

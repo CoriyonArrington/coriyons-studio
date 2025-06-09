@@ -1,10 +1,7 @@
-/*
- FINAL VERSION - Key Changes:
- - Fixed the "Parenthesized expression cannot be empty" syntax error.
- - The "Sign Up" button now uses the `useColorModeValue` hook to switch its variant.
- - It will be `solid` in light mode and `outline` in dark mode, ensuring it is
-   always accessible and looks great on the header.
-*/
+// ATTEMPT 1: Removing unused variables and unnecessary optional chaining.
+// - Deleted the unused 'isTestAction' and 'actionProp' variables.
+// - Removed redundant `?.` operators in the `getFirstName` helper function.
+
 'use client';
 
 import React from 'react';
@@ -20,21 +17,20 @@ interface AuthButtonProps {
 
 const getFirstName = (user: User | null): string | null => {
   if (!user) return null;
+  // FIX: Removed unnecessary `?.` as the `if (!user)` check above guarantees `user` exists.
   const fullName =
-    (user.user_metadata?.name as string) ||
-    (user.user_metadata?.full_name as string);
-  const firstName = user.user_metadata?.first_name as string;
+    (user.user_metadata.name as string) ||
+    (user.user_metadata.full_name as string);
+  const firstName = user.user_metadata.first_name as string;
   if (firstName) return firstName;
   if (fullName) return fullName.split(" ")[0];
   return null;
 };
 
 export default function AuthButton({ user }: AuthButtonProps) {
-  const isTestAction = process.env.NODE_ENV === "test";
-  const actionProp = isTestAction ? "/mocked-sign-out-action" : originalSignOutAction;
+  // FIX: Removed unused variables 'isTestAction' and 'actionProp'.
   const displayName = getFirstName(user);
   
-  // Define the button variant based on the color mode for accessibility
   const signUpButtonVariant = useColorModeValue("solid", "outline");
 
   if (!hasEnvVars) {
@@ -45,7 +41,6 @@ export default function AuthButton({ user }: AuthButtonProps) {
             Please update .env.local file with anon key and url
           </Badge>
         </div>
-        {/* Fallback buttons if env vars are missing */}
       </div>
     );
   }

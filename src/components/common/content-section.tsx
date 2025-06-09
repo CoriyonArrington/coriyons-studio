@@ -1,4 +1,8 @@
-// src/components/common/content-section.tsx
+// ATTEMPT 1: Updating the Next.js Link to modern syntax.
+// - Refactored the CTA Button to use the `as={NextLink}` prop.
+// - This removes the need for a separate <NextLink> wrapper and the
+//   deprecated `legacyBehavior` and `passHref` props.
+
 "use client";
 
 import React from 'react';
@@ -69,23 +73,25 @@ const ContentSection: React.FC<ContentSectionProps> = ({
         )}
         {children}
         {cta && href && (
-          <NextLink href={href} passHref legacyBehavior>
-            <Button
-              as="a"
-              size="lg"
-              colorScheme={variant === 'inverse' ? undefined : ctaColorScheme}
-              bg={variant === 'inverse' ? 'background' : undefined}
-              color={variant === 'inverse' ? 'foreground' : undefined}
-              _hover={variant === 'inverse' ? { opacity: 0.9 } : undefined}
-            >
-              {cta}
-              {ctaRightIcon && (
-                <Box as="span" ml={2} display="inline-flex" alignItems="center">
-                  <ChakraIcon as={ArrowForwardIcon} />
-                </Box>
-              )}
-            </Button>
-          </NextLink>
+          // FIX: Updated to modern Next.js Link usage with Chakra Button
+          // by using the `as` prop on the Button component. This removes
+          // the need for `passHref` and the deprecated `legacyBehavior`.
+          <Button
+            as={NextLink}
+            href={href}
+            size="lg"
+            colorScheme={variant === 'inverse' ? undefined : ctaColorScheme}
+            bg={variant === 'inverse' ? 'background' : undefined}
+            color={variant === 'inverse' ? 'foreground' : undefined}
+            _hover={variant === 'inverse' ? { opacity: 0.9 } : undefined}
+          >
+            {cta}
+            {ctaRightIcon && (
+              <Box as="span" ml={2} display="inline-flex" alignItems="center">
+                <ChakraIcon as={ArrowForwardIcon} />
+              </Box>
+            )}
+          </Button>
         )}
       </VStack>
     </Section>

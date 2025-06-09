@@ -1,4 +1,7 @@
-// src/components/common/__tests__/section.test.tsx
+// ATTEMPT 1: Removing an unused variable.
+// - Removed the unused `container` variable from the destructuring in one
+//   of the tests to resolve the 'no-unused-vars' warning.
+
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -25,7 +28,8 @@ describe('Section Component', () => {
 
   it('should wrap children in a Container by default', () => {
     const childText = 'Child content';
-    const { container } = renderWithChakra(
+    // FIX: Removed unused `{ container }` destructuring.
+    renderWithChakra(
       <Section>
         <p>{childText}</p>
       </Section>

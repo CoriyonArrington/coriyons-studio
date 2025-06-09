@@ -1,18 +1,14 @@
-/*
- FINAL VERSION - Key Changes:
- - The "default" and "subtle" ContentSection examples are now wrapped in a <Section>
-   component with a container, giving them the correct horizontal padding.
- - The "inverse" ContentSection example remains full-bleed to properly showcase that variant.
-*/
+// ATTEMPT 2: Final cleanup.
+// - Removed the unused `useColorModeValue` hook from the imports.
+
 'use client';
 
 import React from 'react';
 import {
   Box,
-  Container,
   VStack,
   Divider,
-  useColorModeValue,
+  // FIX: Removed unused 'useColorModeValue' hook.
   Code,
   Heading,
   Text,
@@ -36,14 +32,11 @@ const finalCtaSection = {
   ],
   headline: 'Let’s Build Something Meaningful Together.',
   body_paragraph:
-    'Your patients deserve a seamless experience, and you deserve a UX partner in Minneapolis who listens. Let’s simplify what’s not working—so you can launch solutions that truly help. I’ll bring the process, the pixels, and the strategy. You bring your vision for healthier, happier patients.',
+    'Your patients deserve a seamless experience, and you deserve a UX partner who listens. Let’s simplify what’s not working—so you can launch solutions that truly help. I’ll bring the process, the pixels, and the strategy. You bring your vision for healthier, happier patients.',
 };
 
 export default function LayoutPrimitivesShowcase() {
-  const sectionDemoContentBg = useColorModeValue("teal.50", "teal.900");
-  const sectionDemoContentBorder = useColorModeValue("teal.200", "teal.700");
-  const sectionDemoTextColor = useColorModeValue("teal.700", "teal.100");
-
+  
   return (
     <Box as="section" id="layout-primitives" borderTopWidth="1px" borderColor="border" pt={10}>
       <Section containerMaxWidth="container.lg">
@@ -92,6 +85,7 @@ export default function LayoutPrimitivesShowcase() {
                 </ContentSection>
             </Section>
 
+            {/* Note: This ContentSection is intentionally not wrapped in a Section to show its subtle variant */}
             <ContentSection
                 id="cs-example-subtle"
                 variant="subtle"
@@ -122,7 +116,7 @@ export default function LayoutPrimitivesShowcase() {
                     as="a"
                     href={finalCtaSection.ctas[0].href}
                     variant="outline"
-                    color="white"
+                    color="whiteAlpha.900"
                     borderColor="whiteAlpha.400"
                     _hover={{ bg: 'whiteAlpha.200', textDecoration: 'none' }}
                 >

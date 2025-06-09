@@ -1,14 +1,14 @@
 /*
- FINAL VERSION - Key Changes:
- - Corrected the import path for `createMultiStyleConfigHelpers` to be from '@chakra-ui/react',
-   which resolves the TypeScript build error.
+ ATTEMPT #1: Removing unused import and refactoring method calls.
+ - Change 1: Removed the unused `mode` function from the '@chakra-ui/theme-tools' import to resolve the `no-unused-vars` warning.
+ - Change 2: Refactored the card theme creation to call methods directly on the helper object (`cardHelpers.definePartsStyle`) instead of destructuring them. This resolves the `unbound-method` errors by ensuring the methods retain their original `this` context.
 */
 import { extendTheme, type ThemeConfig } from '@chakra-ui/react';
 import { cardAnatomy } from '@chakra-ui/anatomy';
-import { createMultiStyleConfigHelpers } from '@chakra-ui/react'; // Corrected import
-import { mode, type StyleFunctionProps } from '@chakra-ui/theme-tools';
+import { createMultiStyleConfigHelpers } from '@chakra-ui/react';
+import { type StyleFunctionProps } from '@chakra-ui/theme-tools';
 
-const { definePartsStyle, defineMultiStyleConfig } = createMultiStyleConfigHelpers(cardAnatomy.keys);
+const cardHelpers = createMultiStyleConfigHelpers(cardAnatomy.keys);
 
 const colors = {
   background: 'hsl(var(--background))',
@@ -100,7 +100,7 @@ const inputStyles = {
   },
 };
 
-const cardBaseStyle = definePartsStyle({
+const cardBaseStyle = cardHelpers.definePartsStyle({
   container: {
     borderWidth: '1px',
     borderColor: 'border',
@@ -119,7 +119,7 @@ const cardBaseStyle = definePartsStyle({
   },
 });
 
-const cardInteractiveVariant = definePartsStyle({
+const cardInteractiveVariant = cardHelpers.definePartsStyle({
     container: {
         cursor: 'pointer',
         transition: 'all 0.2s ease-in-out',
@@ -136,7 +136,7 @@ const cardInteractiveVariant = definePartsStyle({
     }
 });
 
-const cardTheme = defineMultiStyleConfig({
+const cardTheme = cardHelpers.defineMultiStyleConfig({
   baseStyle: cardBaseStyle,
   variants: {
     interactive: cardInteractiveVariant,

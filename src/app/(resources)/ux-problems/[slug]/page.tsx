@@ -1,10 +1,4 @@
-/*
- FINAL VERSION - Key Changes:
- - Consolidated all component imports from '@chakra-ui/react'.
- - Removed incorrect/duplicate imports from the old typography folder.
- - Renamed all 'UICard' components to their official Chakra UI names.
- - Added explicit type assertions to satisfy the TypeScript compiler.
-*/
+// src/app/(resources)/ux-problems/[slug]/page.tsx
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import {
@@ -25,7 +19,6 @@ import {
 import {
   getUxProblemBySlug,
   getAllUxProblems,
-  type UxProblemDetail,
 } from '@/src/lib/data/ux_problems';
 import type { UxSolutionCardItem } from '@/src/lib/data/ux_solutions';
 import HeroCtaButton from '@/src/components/common/hero-cta-button';
@@ -41,23 +34,32 @@ import type { LucideProps } from 'lucide-react';
 const DynamicLucideIcon: React.FC<
   { name: string | undefined | null } & Omit<LucideProps, 'ref' | 'children'>
 > = ({ name, ...props }) => {
-  if (!name) {
-    return <LucideIcons.AlertTriangle {...props} />;
-  }
-  const IconComponent = (LucideIcons as any)[name];
-  if (
-    IconComponent &&
-    (typeof IconComponent === 'function' ||
-      (typeof IconComponent === 'object' && (IconComponent as any).$$typeof === Symbol.for('react.forward_ref')))
-  ) {
-    return React.createElement(IconComponent as React.ComponentType<LucideProps>, props);
+  if (name && Object.prototype.hasOwnProperty.call(LucideIcons, name)) {
+    // Disable rules for creating the 'any' typed variable
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const IconComponent = (LucideIcons as any)[name];
+    if (typeof IconComponent === 'function') {
+      // Disable rule for using the 'any' typed variable as an argument
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      return React.createElement(IconComponent, props);
+    }
   }
   if (process.env.NODE_ENV === 'development') {
     console.warn(
-      `Lucide icon "${name}" not found or invalid in ux-problems/[slug]/page.tsx. Rendering fallback 'AlertTriangle'.`,
+      `Lucide icon "${name ?? '??'}" not found or invalid in ux-problems/[slug]/page.tsx. Rendering fallback 'AlertTriangle'.`,
     );
   }
-  return <LucideIcons.AlertTriangle {...props} />;
+  
+  // Disable rules for the fallback icon lookup
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+  const FallbackIcon = (LucideIcons as any)['AlertTriangle'];
+  if (typeof FallbackIcon === 'function') {
+    // Disable rule for using the 'any' typed variable as an argument
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return React.createElement(FallbackIcon, props);
+  }
+
+  return null;
 };
 
 interface UxProblemDetailPageProps {
@@ -117,7 +119,7 @@ export default async function UxProblemDetailPage({ params }: UxProblemDetailPag
   let previousProblemLink: PrevNextNavLinkInfo | undefined;
   let nextProblemLink: PrevNextNavLinkInfo | undefined;
 
-  if (allUxProblemsForNav && allUxProblemsForNav.length > 0) {
+  if (allUxProblemsForNav.length > 0) {
     const currentIndex = allUxProblemsForNav.findIndex((p) => p.slug === problem.slug);
     if (currentIndex !== -1) {
       if (currentIndex > 0) {
@@ -226,7 +228,7 @@ export async function generateMetadata(
   _parent: ResolvingMetadata
 ): Promise<Metadata> {
   const slug = params.slug;
-  const problem = await getUxProblemBySlug(slug) as UxProblemDetail | null;
+  const problem = await getUxProblemBySlug(slug);
 
   if (!problem) {
     return {

@@ -1,10 +1,13 @@
-// src/components/navigation/__tests__/header-auth.test.tsx
+// ATTEMPT 1: Using extendTheme idiomatically to resolve unsafe assignment.
+// - Instead of spreading `baseTheme`, it is now passed as a separate argument
+//   to `extendTheme`, which is the intended and type-safe usage pattern.
+
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { axe } from 'jest-axe';
-import AuthButton from '../header-auth'; // Corrected import path
+import AuthButton from '../header-auth';
 import baseTheme from '@/src/lib/theme';
 import type { User } from "@supabase/supabase-js";
 
@@ -32,10 +35,16 @@ vi.mock('@/src/utils/supabase/check-env-vars', () => ({
 }));
 
 const renderWithChakra = (ui: React.ReactElement, colorMode: 'light' | 'dark' = 'light') => {
-  const theme = extendTheme({
-    ...baseTheme,
-    config: { ...baseTheme.config, initialColorMode: colorMode, useSystemColorMode: false },
-  });
+  // FIX: Pass theme objects as separate arguments instead of using the spread operator.
+  const theme = extendTheme(
+    baseTheme,
+    {
+      config: { 
+        initialColorMode: colorMode, 
+        useSystemColorMode: false 
+      },
+    }
+  );
   return render(<ChakraProvider theme={theme}>{ui}</ChakraProvider>);
 };
 
@@ -48,12 +57,12 @@ describe('AuthButton Accessibility', () => {
     aud: 'authenticated',
     created_at: new Date().toISOString(),
     email: 'test@example.com',
-    email_confirmed_at: new Date().toISOString(), // Added to satisfy User type
-    last_sign_in_at: new Date().toISOString(),   // Added
-    phone: '',                                   // Added
-    role: 'authenticated',                       // Added
-    updated_at: new Date().toISOString(),        // Added
-    identities: [],                              // Added
+    email_confirmed_at: new Date().toISOString(),
+    last_sign_in_at: new Date().toISOString(),
+    phone: '',
+    role: 'authenticated',
+    updated_at: new Date().toISOString(),
+    identities: [],
   } as User;
 
   beforeEach(() => {

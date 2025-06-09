@@ -1,21 +1,15 @@
-/*
- FINAL VERSION - Key Changes:
- - The custom card implementation has been replaced with the new, unified <PostCard /> component.
- - Data from the `project` object is now mapped to the props of <PostCard />, ensuring
-   a consistent look and feel with other cards on the site.
-*/
+// src/app/(main)/projects/page.tsx
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import { VStack, SimpleGrid, Box, Heading, Text } from '@chakra-ui/react';
 import PostCard from '@/src/components/common/post-card';
-import { getPageContentBySlug, getNavigablePages, type NavigablePageInfo } from '@/src/lib/data/pages';
+import { getPageDataBySlug, getNavigablePages } from '@/src/lib/data/pages';
 import { getAllProjects, type HomepageProject } from '@/src/lib/data/projects';
 import type { FAQItem } from '@/src/lib/data/faqs';
 import PrevNextNavigation, { type NavLinkInfo as PrevNextNavLinkInfo } from '@/src/components/common/prev-next-navigation';
 import { mapPageTypeToCategoryLabel } from '@/src/lib/utils';
 import type { Metadata } from 'next';
 import React from 'react';
-import type { PageRow } from '@/src/lib/data/minimal_pages_schema';
 
 interface ProjectsPageCmsContent {
   hero?: { headline?: string };
@@ -24,15 +18,17 @@ interface ProjectsPageCmsContent {
 }
 
 interface ProjectsPageProps {
-  params: {};
+  params: unknown;
 }
 
 const SLUG = 'projects';
 
 export default async function ProjectsPage({ params: _params }: ProjectsPageProps) {
-  const pageCmsData = await getPageContentBySlug(SLUG) as PageRow | null;
-  const allProjects = await getAllProjects() as HomepageProject[];
-  const navigablePages = await getNavigablePages();
+  const [pageCmsData, allProjects, navigablePages] = await Promise.all([
+    getPageDataBySlug(SLUG),
+    getAllProjects(),
+    getNavigablePages()
+  ]);
 
   let previousPageLink: PrevNextNavLinkInfo | undefined;
   let nextPageLink: PrevNextNavLinkInfo | undefined;
@@ -52,7 +48,7 @@ export default async function ProjectsPage({ params: _params }: ProjectsPageProp
   }
 
   const cmsContent = pageCmsData?.content as unknown as ProjectsPageCmsContent | null;
-  const pageTitle = (pageCmsData?.title as string) || 'Our Work & Case Studies';
+  const pageTitle = pageCmsData?.title || 'Our Work & Case Studies';
 
   return (
     <Layout>
@@ -67,7 +63,7 @@ export default async function ProjectsPage({ params: _params }: ProjectsPageProp
             )}
           </Box>
           <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: 6, md: 8 }}>
-            {allProjects.map((project) => (
+            {allProjects.map((project: HomepageProject) => (
               <PostCard
                 key={project.id}
                 href={`/projects/${project.slug}`}
@@ -88,9 +84,9 @@ export default async function ProjectsPage({ params: _params }: ProjectsPageProp
 }
 
 export async function generateMetadata({ params: _params }: ProjectsPageProps): Promise<Metadata> {
-  const pageData = await getPageContentBySlug(SLUG);
-  const title = (pageData?.title as string) || "Projects & Case Studies | Coriyon's Studio";
-  const description = (pageData?.meta_description as string) || "Explore the portfolio of UX design projects and case studies by Coriyon's Studio.";
+  const pageData = await getPageDataBySlug(SLUG);
+  const title = pageData?.title || "Projects & Case Studies | Coriyon's Studio";
+  const description = pageData?.meta_description || "Explore the portfolio of UX design projects and case studies by Coriyon's Studio.";
 
   return {
     title,
@@ -99,7 +95,7 @@ export async function generateMetadata({ params: _params }: ProjectsPageProps): 
       title,
       description,
       url: `/${SLUG}`,
-      images: pageData?.og_image_url ? [{ url: pageData.og_image_url as string }] : undefined,
+      images: pageData?.og_image_url ? [{ url: pageData.og_image_url }] : undefined,
     },
   };
 }

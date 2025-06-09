@@ -1,10 +1,12 @@
-// src/app/(resources)/blog/view.tsx
+// ATTEMPT 1: Removing unused component imports from Chakra UI.
+
 'use client';
 
 import React from 'react';
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
-import { VStack, SimpleGrid, Heading, Text, Box } from '@chakra-ui/react';
+// FIX: Removed unused 'VStack' and 'Box' imports.
+import { SimpleGrid, Heading, Text } from '@chakra-ui/react';
 import PostCard from '@/src/components/common/post-card';
 import PrevNextNavigation, { type NavLinkInfo } from '@/src/components/common/prev-next-navigation';
 import type { PostCardItem } from '@/src/lib/data/posts';
@@ -19,7 +21,7 @@ interface BlogViewProps {
 
 export default function BlogView({ pageData, posts, previousPageLink, nextPageLink }: BlogViewProps) {
   const cmsContent = pageData?.content as { intro_text?: string } | null;
-  const pageTitle = (pageData?.title as string) || 'Our Blog';
+  const pageTitle = (pageData?.title) || 'Our Blog';
 
   return (
     <Layout>

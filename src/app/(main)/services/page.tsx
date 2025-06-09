@@ -1,20 +1,17 @@
-/*
- FINAL VERSION - Key Changes:
- - The custom card implementation has been replaced with the new, unified <PostCard /> component.
- - Data from the `service` object is now mapped to the props of <PostCard />, including generating
-   a tag from the `offering_type`.
-*/
+// ATTEMPT 2: Final cleanup.
+// - Removed unused 'ServiceData' and 'PageRow' type imports.
+
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import { VStack, SimpleGrid, Box, Heading, Text } from '@chakra-ui/react';
 import PostCard from '@/src/components/common/post-card';
-import { getPageContentBySlug, getNavigablePages, type NavigablePageInfo } from '@/src/lib/data/pages';
-import { getAllServices, type ServiceData } from '@/src/lib/data/services';
+import { getPageDataBySlug, getNavigablePages } from '@/src/lib/data/pages';
+// FIX: Removed unused 'ServiceData' type import.
+import { getAllServices } from '@/src/lib/data/services';
 import PrevNextNavigation, { type NavLinkInfo as PrevNextNavLinkInfo } from '@/src/components/common/prev-next-navigation';
 import { mapPageTypeToCategoryLabel } from '@/src/lib/utils';
 import type { Metadata } from 'next';
 import React from 'react';
-import type { PageRow } from '@/src/lib/data/minimal_pages_schema';
 
 const SLUG = 'services';
 
@@ -24,12 +21,12 @@ interface ServicesPageCmsContent {
 }
 
 interface ServicesPageProps {
-  params: {};
+  params: unknown;
 }
 
 export default async function ServicesPage({ params: _params }: ServicesPageProps) {
-  const pageCmsData = await getPageContentBySlug(SLUG) as PageRow | null;
-  const allServices = await getAllServices() as ServiceData[];
+  const pageCmsData = await getPageDataBySlug(SLUG);
+  const allServices = await getAllServices();
   const navigablePages = await getNavigablePages();
 
   let previousPageLink: PrevNextNavLinkInfo | undefined;
@@ -48,11 +45,11 @@ export default async function ServicesPage({ params: _params }: ServicesPageProp
   }
 
   const cmsContent = pageCmsData?.content as unknown as ServicesPageCmsContent | null;
-  const pageTitle = (pageCmsData?.title as string) || 'Services';
+  const pageTitle = pageCmsData?.title || 'Services';
 
   return (
     <Layout>
-      <Section id={pageCmsData?.slug as string} py={{ base: 12, md: 20 }}>
+      <Section id={pageCmsData?.slug} py={{ base: 12, md: 20 }}>
         <VStack spacing={10}>
           <Box textAlign="center">
             <Heading as="h1" size="3xl" mb={6}>{pageTitle}</Heading>
@@ -84,9 +81,9 @@ export default async function ServicesPage({ params: _params }: ServicesPageProp
 }
 
 export async function generateMetadata({ params: _params }: ServicesPageProps): Promise<Metadata> {
-  const pageData = await getPageContentBySlug(SLUG);
-  const title = (pageData?.title as string) || 'Services | Coriyon’s Studio';
-  const description = (pageData?.meta_description as string) || 'Explore the UX services offered by Coriyon’s Studio.';
+  const pageData = await getPageDataBySlug(SLUG);
+  const title = pageData?.title || "Services & Case Studies | Coriyon's Studio";
+  const description = pageData?.meta_description || 'Explore the UX services offered by Coriyon’s Studio.';
 
   return {
     title,
@@ -95,7 +92,7 @@ export async function generateMetadata({ params: _params }: ServicesPageProps): 
       title,
       description,
       url: `/${SLUG}`,
-      images: pageData?.og_image_url ? [{ url: pageData.og_image_url as string }] : undefined,
+      images: pageData?.og_image_url ? [{ url: pageData.og_image_url }] : undefined,
     },
   };
 }

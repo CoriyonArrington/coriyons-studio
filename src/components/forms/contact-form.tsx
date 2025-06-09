@@ -1,13 +1,6 @@
-/**
- * UPDATED ContactForm Component to Fix TS Errors:
- *
- * Changes:
- * 1. Renamed `props` to `_props` to avoid the unused-variable warning.
- * 2. In `handleSubmit`, always call `submitContactForm(null, formData)` and IGNORE `_props.onSubmit`.
- *    (This ensures the existing tests—which mock `submitContactForm`—continue to pass.)
- * 3. Switched from `undefined` to `null` when invoking `submitContactForm` for the “previous state” parameter,
- *    to match the expected `SubmitContactFormState | null` type.
- */
+// ATTEMPT 1: Fixing a misused promise in an event handler.
+// - Wrapped the async `handleSubmit` function in a synchronous arrow function
+//   in the `onSubmit` prop to resolve the `no-misused-promises` error.
 
 'use client';
 
@@ -27,12 +20,8 @@ import {
 } from '@chakra-ui/react';
 import { z } from 'zod';
 
-// Import the server action that tests mock:
 import { submitContactForm } from '@/src/lib/actions/contact-actions';
 
-//
-// 1. Zod Schema (unchanged client‐side validations):
-//
 const ContactFormSchema = z.object({
   name: z.string().nonempty('Name is required'),
   email: z
@@ -53,19 +42,7 @@ interface ServerFieldErrors {
   message?: string[];
 }
 
-/**
- * 2. Renamed `props` to `_props` so that passing `onSubmit={...}` does not error,
- *    but we still ignore it during submission.
- */
-interface ContactFormProps {
-  onSubmit?: (data: ContactFormValues) => Promise<{
-    success: boolean;
-    fieldErrors?: Record<string, string[]>;
-    generalError?: string;
-  }>;
-}
-
-export default function ContactForm(_props: ContactFormProps) {
+export default function ContactForm() {
   const toast = useToast();
 
   const [values, setValues] = useState<ContactFormValues>({
@@ -82,12 +59,10 @@ export default function ContactForm(_props: ContactFormProps) {
     { type: 'success' | 'error'; text: string } | null
   >(null);
 
-  // Clear server errors whenever any field changes
   useEffect(() => {
     setServerErrors({});
   }, [values.name, values.email, values.message]);
 
-  // Handle field value changes
   const handleChange =
     (field: keyof ContactFormValues) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -96,7 +71,6 @@ export default function ContactForm(_props: ContactFormProps) {
       setGeneralMessage(null);
     };
 
-  // Validate a single field on blur
   const handleBlur = (field: keyof ContactFormValues) => () => {
     try {
       switch (field) {
@@ -126,7 +100,6 @@ export default function ContactForm(_props: ContactFormProps) {
     }
   };
 
-  // Validate all fields at once
   const validateAll = (): boolean => {
     try {
       ContactFormSchema.parse(values);
@@ -147,31 +120,22 @@ export default function ContactForm(_props: ContactFormProps) {
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setGeneralMessage(null);
     setServerErrors({});
 
-    // Run client-side validation
     if (!validateAll()) {
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // Build FormData from values
       const formData = new FormData();
       formData.append('name', values.name);
       formData.append('email', values.email);
       formData.append('message', values.message);
 
-      /**
-       * 3. ALWAYS call `submitContactForm(null, formData)`.
-       *    We pass `null` as the “previous state” (tests expect null rather than undefined).
-       *    We IGNORE `_props.onSubmit` here so that tests— which mock `submitContactForm`—
-       *    continue to pass correctly.
-       */
       const result: {
         success: boolean;
         message?: string;
@@ -180,21 +144,18 @@ export default function ContactForm(_props: ContactFormProps) {
 
       if (!result.success) {
         if (result.errors) {
-          // Server-side field-specific errors
           setServerErrors(result.errors);
           setGeneralMessage({
             type: 'error',
             text: result.message || 'Please correct the errors below.',
           });
         } else {
-          // General server error (no field-specific errors)
           setGeneralMessage({
             type: 'error',
             text: result.message || 'Submission failed, please try again.',
           });
         }
       } else {
-        // Successful submission
         const successText = result.message || 'Your message has been sent!';
         setGeneralMessage({ type: 'success', text: successText });
         setValues({ name: '', email: '', message: '' });
@@ -218,7 +179,8 @@ export default function ContactForm(_props: ContactFormProps) {
 
   return (
     <Box as="section" maxW="lg" mx="auto">
-      <form onSubmit={handleSubmit} data-testid="contact-form" noValidate>
+      {/* FIX: Wrapped handleSubmit in a synchronous arrow function. */}
+      <form onSubmit={(e) => { void handleSubmit(e); }} data-testid="contact-form" noValidate>
         <VStack spacing={4} align="stretch">
           <FormControl
             isInvalid={!!(clientErrors.name || serverErrors.name?.[0])}

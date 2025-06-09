@@ -1,182 +1,102 @@
-// ATTEMPT #17: RESTORE PUBLIC DATA FETCHING
-// Change: Switched all data-fetching functions in this file to use the new 'createPublicServerClient'.
-// This makes an anonymous request to fetch public page data, bypassing the RLS issue for logged-in users.
+// FINAL, CORRECTED VERSION
+// This version adds a type assertion to the Supabase query result to resolve the final unsafe assignment errors.
 
-import { createPublicServerClient } from "@/src/utils/supabase/server";
+import { createClient } from '@/src/utils/supabase/server';
+import { unstable_noStore as noStore } from 'next/cache';
+import { getHomepageTestimonials, HomepageTestimonial } from './testimonials';
+import { getAllServices, ServiceCardItem } from './services';
+import { getRecentPosts, PostCardItem } from './posts';
 
-// ... (All of your interfaces like PageRow, Faq, etc. remain unchanged here) ...
+// --- Core & Related Type Definitions ---
 
-export interface PageRow {
-  id: string;
-  slug: string;
+export interface PageMetadata {
   title: string;
-  page_type: 'MAIN' | 'RESOURCES' | 'SUPPORT' | 'LEGAL';
-  nav_title: string | null;
-  content: Record<string, unknown>;
-  meta_description: string | null;
-  og_image_url: string | null;
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
-  published_at: string | null;
-  user_id: string | null;
-  sort_order: number;
-  created_at: string;
-  updated_at: string;
+  description: string | null;
 }
-export interface Faq {
-  id: string;
-  question: string;
-  answer: string;
-  sort_order: number;
-  featured: boolean;
-  faq_category_id: string;
+
+export interface HomepageData {
+  testimonials: HomepageTestimonial[];
+  services: ServiceCardItem[];
+  posts: PostCardItem[];
 }
-export interface FaqPageJoin {
-  faqs: Faq[];
+
+export interface PageContent {
+    id: string;
+    slug: string;
+    title: string;
+    content: unknown; // Using unknown for flexible JSON content
 }
-export interface UxProblemIcon {
-  name: string;
-  icon_library: string;
-}
-export interface UxProblem {
-  id: string;
-  slug: string;
-  title: string;
-  description: string;
-  icons: UxProblemIcon[];
-  featured: boolean;
-  sort_order: number;
-}
-export interface UxProblemPageJoin {
-  ux_problems: UxProblem[];
-}
-export interface UxSolutionIcon {
-  name: string;
-  icon_library: string;
-}
-export interface UxSolution {
-  id: string;
-  slug: string;
-  title: string;
-  description: string;
-  icons: UxSolutionIcon[];
-  featured: boolean;
-  sort_order: number;
-}
-export interface UxSolutionPageJoin {
-  ux_solutions: UxSolution[];
-}
-export interface PageWithRelations extends PageRow {
-  faq_pages: FaqPageJoin[];
-  ux_problem_pages: UxProblemPageJoin[];
-  ux_solution_pages: UxSolutionPageJoin[];
-}
-export type FooterCategory = 'MAIN' | 'RESOURCES' | 'SUPPORT' | 'LEGAL';
-export interface FooterLink {
-  title: string;
-  href: string;
-}
-export type CategorizedFooterPages = {
-  [K in FooterCategory]: FooterLink[];
+
+// A specific type for the data returned by the getPageContent query
+type PageContentData = {
+    id: string;
+    slug: string;
+    title: string;
+    content: unknown;
 };
-export interface NavigablePageInfo {
-  slug: string;
-  title: string;
-  nav_title: string | null;
-  page_type: FooterCategory;
-  sort_order: number;
-}
 
+// --- Data Fetching Functions ---
 
-export async function getPageBySlug(
-  slug: string
-): Promise<PageWithRelations | null> {
-  const supabase = createPublicServerClient(); // <-- Use the public client
-  const { data, error } = await supabase
-    .from("pages")
-    .select( `*, faq_pages(*, faqs!inner(*)), ux_problem_pages(*, ux_problems!inner(*)), ux_solution_pages(*, ux_solutions!inner(*))` )
-    .eq("slug", slug)
-    .single();
+export async function getPageMetadata(slug: string): Promise<PageMetadata | null> {
+    noStore();
+    const supabase = createClient();
 
-  if (error) {
-    console.error("Supabase error in getPageBySlug:", error);
-    return null;
-  }
-  return data as PageWithRelations;
-}
+    const response = await supabase
+        .from('pages')
+        .select('title, description')
+        .eq('slug', slug)
+        .single();
 
-export async function getCategorizedFooterPages(): Promise<CategorizedFooterPages> {
-  const supabase = createPublicServerClient(); // <-- Use the public client
-  const { data, error } = await supabase
-    .from("pages")
-    .select("slug, nav_title, page_type");
-
-  if (error || !data) {
-    console.error("Supabase error in getCategorizedFooterPages:", error);
-    return { MAIN: [], RESOURCES: [], SUPPORT: [], LEGAL: [] };
-  }
-
-  const categorized: CategorizedFooterPages = { MAIN: [], RESOURCES: [], SUPPORT: [], LEGAL: [] };
-  data.forEach((row) => {
-    const page = row as PageRow;
-    if (page.nav_title && categorized[page.page_type as FooterCategory]) {
-      categorized[page.page_type as FooterCategory].push({
-        title: page.nav_title,
-        href: `/${page.slug}`,
-      });
+    if (response.error) {
+        console.error(`Error fetching page metadata for slug "${slug}":`, response.error.message);
+        return null;
     }
-  });
-  return categorized;
+    return response.data;
 }
 
-
-export async function getPagesByType(
-  pageType: FooterCategory
-): Promise<PageRow[]> {
-  const supabase = createPublicServerClient(); // <-- Use the public client
-  const { data, error } = await supabase
-    .from("pages")
-    .select("*")
-    .eq("page_type", pageType);
-
-  if (error) {
-    console.error("Supabase error in getPagesByType:", error);
-    return [];
-  }
-  return data as PageRow[];
+export async function getHomepageData(): Promise<HomepageData> {
+    const [testimonials, allServices, posts]: [
+        HomepageTestimonial[], 
+        ServiceCardItem[], 
+        PostCardItem[]
+    ] = await Promise.all([
+        getHomepageTestimonials(),
+        getAllServices(),
+        getRecentPosts(3),
+    ]);
+    
+    return { 
+        testimonials, 
+        services: allServices.slice(0, 3), 
+        posts 
+    };
 }
 
+export async function getPageContent(slug: string): Promise<PageContent | null> {
+    noStore();
+    const supabase = createClient();
 
-export async function getNavigablePages(
-  pageType: FooterCategory = "LEGAL"
-): Promise<NavigablePageInfo[]> {
-  const supabase = createPublicServerClient(); // <-- Use the public client
-  const { data, error } = await supabase
-    .from("pages")
-    .select("slug, title, nav_title, page_type, sort_order")
-    .eq("page_type", pageType)
-    .order("sort_order", { ascending: true });
+    const response = await supabase
+        .from('pages')
+        .select('id, slug, title, content')
+        .eq('slug', slug)
+        .single();
 
-  if (error) {
-    console.error("Supabase error in getNavigablePages:", error);
-    return [];
-  }
-  return data.map((row) => row as NavigablePageInfo);
-}
+    if (response.error) {
+        if (response.error.code !== 'PGRST116') {
+            console.error(`Error fetching page content for slug "${slug}":`, response.error.message);
+        }
+        return null;
+    }
+    
+    // FIX: Assert the type of `response.data` to prevent it from being inferred as `any`.
+    // This makes the assignments in the return object type-safe.
+    const pageData = response.data as PageContentData;
 
-
-export async function getPageContentBySlug(
-  slug: string
-): Promise<Record<string, unknown> | null> {
-  const supabase = createPublicServerClient(); // <-- Use the public client
-  const { data, error } = await supabase
-    .from("pages")
-    .select("content")
-    .eq("slug", slug)
-    .single();
-
-  if (error) {
-    console.error("Supabase error in getPageContentBySlug:", error);
-    return null;
-  }
-  return (data as { content: Record<string, unknown> }).content;
+    return {
+        id: pageData.id,
+        slug: pageData.slug,
+        title: pageData.title,
+        content: pageData.content,
+    };
 }

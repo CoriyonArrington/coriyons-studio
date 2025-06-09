@@ -1,12 +1,11 @@
-/*
- FINAL VERSION - Key Changes:
- - Added `import type { Mock } from 'vitest'` to provide the correct types for mocks.
- - Cast the `useNextTheme` mock to `Mock` to resolve all 'unsafe' TypeScript errors.
- - Removed the unused 'React' import to clean up linting warnings.
-*/
+// ATTEMPT 1: Removing deprecated `act` calls.
+// - Removed the explicit `act()` wrappers. The `renderHook` utility from
+//   React Testing Library handles wrapping state updates automatically.
+
 import { describe, it, expect, vi } from 'vitest';
 import type { Mock } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+// FIX: Removed deprecated `act` import.
+import { renderHook } from '@testing-library/react';
 import { useColorMode, useColorModeValue } from '../color-mode';
 import { useTheme as useNextTheme } from 'next-themes';
 
@@ -28,9 +27,8 @@ describe('Color Mode Hooks', () => {
 
       expect(result.current.colorMode).toBe('light');
 
-      act(() => {
-        result.current.toggleColorMode();
-      });
+      // FIX: Removed the `act()` wrapper.
+      result.current.toggleColorMode();
 
       expect(setTheme).toHaveBeenCalledWith('dark');
     });
@@ -41,9 +39,8 @@ describe('Color Mode Hooks', () => {
 
       const { result } = renderHook(() => useColorMode());
 
-      act(() => {
-        result.current.setColorMode('dark');
-      });
+      // FIX: Removed the `act()` wrapper.
+      result.current.setColorMode('dark');
 
       expect(setTheme).toHaveBeenCalledWith('dark');
     });

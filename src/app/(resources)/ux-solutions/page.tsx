@@ -1,17 +1,10 @@
-/*
- FINAL VERSION - Key Changes:
- - Consolidated all component imports from '@chakra-ui/react'.
- - Removed incorrect/duplicate imports from the old typography folder.
- - Renamed all 'UICard' components to their official Chakra UI names.
- - Added explicit type assertions to satisfy the TypeScript compiler.
-*/
+// src/app/(resources)/ux-solutions/page.tsx
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import {
   VStack,
   SimpleGrid,
   HStack,
-  Box,
   Card,
   CardHeader,
   CardBody,
@@ -21,7 +14,7 @@ import {
 } from '@chakra-ui/react';
 import HeroCtaButton from '@/src/components/common/hero-cta-button';
 import {
-  getPageContentBySlug,
+  getPageDataBySlug,
   getNavigablePages,
   type NavigablePageInfo,
 } from '@/src/lib/data/pages';
@@ -32,12 +25,11 @@ import type { Metadata } from 'next';
 import React from 'react';
 import * as LucideIcons from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
-import type { PageRow } from '@/src/lib/data/minimal_pages_schema';
 
 interface UxSolutionsPageCmsContent {
   hero?: { headline?: string };
   intro_text?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const SLUG = 'ux-solutions';
@@ -45,29 +37,38 @@ const SLUG = 'ux-solutions';
 const DynamicLucideIcon: React.FC<
   { name: string | undefined | null } & Omit<LucideProps, 'ref' | 'children'>
 > = ({ name, ...props }) => {
-  if (!name) {
-    return <LucideIcons.CheckCircle {...props} />;
+  if (name && Object.prototype.hasOwnProperty.call(LucideIcons, name)) {
+    // This is a controlled escape hatch. The lucide-react library's types do not
+    // support this dynamic lookup cleanly. We use 'any' and disable the related
+    // ESLint rules for this single operation to resolve all type and lint errors.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const IconComponent = (LucideIcons as any)[name];
+    if (typeof IconComponent === 'function') {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      return React.createElement(IconComponent, props);
+    }
   }
-  const IconComponent = (LucideIcons as any)[name];
-  if (
-    IconComponent &&
-    (typeof IconComponent === 'function' ||
-      (typeof IconComponent === 'object' && (IconComponent as any).$$typeof === Symbol.for('react.forward_ref')))
-  ) {
-    return React.createElement(IconComponent as React.ComponentType<LucideProps>, props);
-  }
+
   if (process.env.NODE_ENV === 'development') {
-    console.warn(
-      `Lucide icon "${name}" not found or invalid in ux-solutions/page.tsx. Rendering fallback 'CheckCircle'.`,
-    );
+    console.warn(`Lucide icon "${name ?? '??'}" not found or invalid. Rendering fallback 'CheckCircle'.`);
   }
-  return <LucideIcons.CheckCircle {...props} />;
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+  const FallbackIcon = (LucideIcons as any)['CheckCircle'];
+  if (typeof FallbackIcon === 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return React.createElement(FallbackIcon, props);
+  }
+
+  return null;
 };
 
 export default async function UxSolutionsLandingPage() {
-  const pageCmsData = await getPageContentBySlug(SLUG) as PageRow | null;
-  const uxSolutions = await getAllUxSolutions();
-  const navigablePages = await getNavigablePages();
+  const [pageCmsData, uxSolutions, navigablePages] = await Promise.all([
+    getPageDataBySlug(SLUG),
+    getAllUxSolutions(),
+    getNavigablePages(),
+  ]);
 
   let previousPageLink: PrevNextNavLinkInfo | undefined;
   let nextPageLink: PrevNextNavLinkInfo | undefined;
@@ -101,10 +102,7 @@ export default async function UxSolutionsLandingPage() {
 
   if (cmsContent) {
     const parts: React.ReactNode[] = [];
-    if (
-      cmsContent.hero?.headline &&
-      cmsContent.hero.headline !== (pageCmsData?.title as string)
-    ) {
+    if (cmsContent.hero?.headline && cmsContent.hero.headline !== pageCmsData?.title) {
       parts.push(
         <Heading key="hero-headline" as="h2" size="2xl" mt={4} mb={4} textAlign="center">
           {cmsContent.hero.headline}
@@ -135,9 +133,9 @@ export default async function UxSolutionsLandingPage() {
     }
   }
 
-  const pageTitle = (pageCmsData?.title as string) || 'Key UX Solutions';
+  const pageTitle = pageCmsData?.title || 'Key UX Solutions';
 
-  if (!pageCmsData && (!uxSolutions || uxSolutions.length === 0)) {
+  if (!pageCmsData && uxSolutions.length === 0) {
     return (
       <Layout>
         <Section id="ux-solutions-error" py={{ base: 16, md: 24 }} textAlign="center">
@@ -156,7 +154,7 @@ export default async function UxSolutionsLandingPage() {
   return (
     <Layout>
       <Section
-        id={(pageCmsData?.slug as string) || SLUG}
+        id={pageCmsData?.slug || SLUG}
         py={{ base: 12, md: 20 }}
         px={{ base: 4, md: 8 }}
         as="article"
@@ -166,7 +164,7 @@ export default async function UxSolutionsLandingPage() {
         </Heading>
         {introContent}
 
-        {uxSolutions && uxSolutions.length > 0 ? (
+        {uxSolutions.length > 0 ? (
           <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: 6, md: 8 }} mt={8}>
             {uxSolutions.map((solution: UxSolutionCardItem) => (
               <Card
@@ -223,10 +221,10 @@ export default async function UxSolutionsLandingPage() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const pageCmsData = await getPageContentBySlug(SLUG);
-  const title = (pageCmsData?.title as string) || "Key UX Solutions | Coriyon's Studio";
+  const pageCmsData = await getPageDataBySlug(SLUG);
+  const title = pageCmsData?.title || "Key UX Solutions | Coriyon's Studio";
   const description =
-    (pageCmsData?.meta_description as string) ||
+    pageCmsData?.meta_description ||
     "Explore key user experience solutions and learn how Coriyon's Studio can help implement them.";
 
   return {
@@ -236,7 +234,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       url: `/${SLUG}`,
-      images: pageCmsData?.og_image_url ? [{ url: pageCmsData.og_image_url as string }] : undefined,
+      images: pageCmsData?.og_image_url ? [{ url: pageCmsData.og_image_url }] : undefined,
     },
   };
 }

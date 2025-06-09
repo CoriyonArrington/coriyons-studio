@@ -1,10 +1,7 @@
-/*
- FINAL VERSION - Key Changes:
- - The explicit `bg="foreground"` prop has been removed.
- - The footer will now correctly use the main `background` token, making it white in light mode
-   and pure black in dark mode, ensuring it matches the main page content area.
- - Adds a placeholder text for the "Support" column when no links are available.
-*/
+// ATTEMPT 1: Removing an unnecessary conditional fallback.
+// - The `CategorizedFooterPages` type guarantees that `footerPages.LEGAL`
+//   is always an array, so the `|| []` fallback is redundant.
+
 "use client";
 
 import React from "react";
@@ -75,7 +72,8 @@ export default function SiteFooter({
     );
   };
 
-  const legalLinks = footerPages.LEGAL || [];
+  // FIX: Removed unnecessary `|| []` fallback. `footerPages.LEGAL` is always an array.
+  const legalLinks = footerPages.LEGAL;
 
   return (
     <Box as="footer" bg="muted.DEFAULT" color="muted.foreground">

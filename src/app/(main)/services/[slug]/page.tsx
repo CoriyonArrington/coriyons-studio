@@ -1,10 +1,7 @@
-/*
- FINAL VERSION - Key Changes:
- - Consolidated all component imports from '@chakra-ui/react' into a single block.
- - Removed incorrect/duplicate imports.
- - Renamed 'UICard' and 'UICardBody' to their official Chakra UI names.
- - Added explicit type assertions (e.g., `as string`) to resolve type mismatches.
-*/
+// ATTEMPT 1: Removing an unnecessary conditional check.
+// - The `getAllServices` function always returns an array, so checking if
+//   `allServicesForNav` is truthy is redundant. Simplified the condition.
+
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import {
@@ -63,7 +60,8 @@ export default async function ServiceDetailPage({ params }: ServiceDetailPagePro
   let previousServiceLink: PrevNextNavLinkInfo | undefined;
   let nextServiceLink: PrevNextNavLinkInfo | undefined;
 
-  if (allServicesForNav && allServicesForNav.length > 0) {
+  // FIX: Removed the redundant `allServicesForNav &&` check.
+  if (allServicesForNav.length > 0) {
     const currentIndex = allServicesForNav.findIndex(s => s.slug === service.slug);
     if (currentIndex !== -1) {
       if (currentIndex > 0) {

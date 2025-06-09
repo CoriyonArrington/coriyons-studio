@@ -1,4 +1,8 @@
-// src/components/common/__tests__/content-section.test.tsx
+// ATTEMPT #4: Updating the Next.js Link mock to support `ref` forwarding.
+// Change 1: The mock for `next/link` is now wrapped in `React.forwardRef`.
+// Change 2: The `ref` is now correctly passed to the underlying cloned element.
+// This resolves the "Function components cannot be given refs" warning by correctly simulating the behavior of the real Next.js Link component.
+
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -7,36 +11,35 @@ import { axe } from 'jest-axe';
 import ContentSection, { type ContentSectionProps } from '../content-section';
 import baseTheme from '@/src/lib/theme';
 
-// Updated NextLink mock
+// FIX: Updated NextLink mock to use React.forwardRef
 vi.mock('next/link', () => ({
-  default: ({
-    children,
-    href,
-    passHref, // Explicitly list known props
-    legacyBehavior, // Explicitly list known props
-    ...props     // For any other props
-  }: {
-    children: React.ReactNode;
-    href: string;
-    passHref?: boolean;
-    legacyBehavior?: boolean;
-    [key: string]: unknown; // Use unknown for other dynamic props
-  }) => {
-    // If the child is a component that will render its own anchor (e.g., Button as="a"),
-    // NextLink should just pass props to it.
-    if (React.isValidElement(children) && React.Children.count(children) === 1) {
-        return React.cloneElement(children as React.ReactElement, { href, ...props });
-    }
-    // Fallback for string children or multiple children
-    return <a href={href} {...props}>{children}</a>;
-  },
+  default: React.forwardRef<HTMLAnchorElement, { children: React.ReactNode; href: string;[key: string]: unknown; }>(
+      ({ children, href, ...props }, ref) => {
+          if (React.isValidElement(children)) {
+              return React.cloneElement(children, { ...props, href, ref });
+          }
+          return (
+              <a href={href} ref={ref} {...props}>
+                  {children}
+              </a>
+          );
+      }
+  )
 }));
+// Add a displayName for better debugging
+vi.mocked(require('next/link').default).displayName = 'MockNextLink';
+
 
 const renderWithChakra = (ui: React.ReactElement, colorMode: 'light' | 'dark' = 'light') => {
-  const theme = extendTheme({
-    ...baseTheme,
-    config: { ...baseTheme.config, initialColorMode: colorMode, useSystemColorMode: false },
-  });
+  const theme = extendTheme(
+    baseTheme, 
+    {
+      config: { 
+        initialColorMode: colorMode, 
+        useSystemColorMode: false 
+      },
+    }
+  );
   return render(<ChakraProvider theme={theme}>{ui}</ChakraProvider>);
 };
 
@@ -52,35 +55,49 @@ describe('ContentSection Component', () => {
   it('should render headline, body, and CTA correctly', () => {
     renderWithChakra(<ContentSection {...defaultProps} />);
     expect(screen.getByRole('heading', { name: defaultProps.headline })).toBeInTheDocument();
-    expect(screen.getByText(defaultProps.body!)).toBeInTheDocument();
-    const ctaButton = screen.getByRole('link', { name: defaultProps.cta! });
-    expect(ctaButton).toBeInTheDocument();
-    expect(ctaButton).toHaveAttribute('href', defaultProps.href);
+    
+    if (defaultProps.body) {
+      expect(screen.getByText(defaultProps.body)).toBeInTheDocument();
+    }
+    if (defaultProps.cta && defaultProps.href) {
+      const ctaButton = screen.getByRole('link', { name: defaultProps.cta });
+      expect(ctaButton).toBeInTheDocument();
+      expect(ctaButton).toHaveAttribute('href', defaultProps.href);
+    }
   });
 
   it('should render an icon in CTA when ctaRightIcon is true', () => {
-    renderWithChakra(<ContentSection {...defaultProps} ctaRightIcon={true} />);
-    const button = screen.getByRole('link', { name: defaultProps.cta! });
-    expect(button.querySelector('svg')).toBeInTheDocument();
+    if (defaultProps.cta) {
+      renderWithChakra(<ContentSection {...defaultProps} ctaRightIcon={true} />);
+      const button = screen.getByRole('link', { name: defaultProps.cta });
+      expect(button.querySelector('svg')).toBeInTheDocument();
+    }
   });
 
   it('should not render an icon in CTA when ctaRightIcon is false or undefined', () => {
-    const { rerender } = renderWithChakra(
-      <ContentSection {...defaultProps} ctaRightIcon={false} />
-    );
-    let button = screen.getByRole('link', { name: defaultProps.cta! });
-    expect(button.querySelector('svg')).not.toBeInTheDocument();
+    if (defaultProps.cta) {
+      const { rerender } = renderWithChakra(
+        <ContentSection {...defaultProps} ctaRightIcon={false} />
+      );
+      let button = screen.getByRole('link', { name: defaultProps.cta });
+      expect(button.querySelector('svg')).not.toBeInTheDocument();
 
-    rerender(<ContentSection {...defaultProps} />);
-    button = screen.getByRole('link', { name: defaultProps.cta! });
-    expect(button.querySelector('svg')).not.toBeInTheDocument();
+      rerender(<ContentSection {...defaultProps} />);
+      button = screen.getByRole('link', { name: defaultProps.cta });
+      expect(button.querySelector('svg')).not.toBeInTheDocument();
+    }
   });
 
   it('should render without optional body and CTA', () => {
     renderWithChakra(<ContentSection id="minimal" headline="Minimal Headline" />);
     expect(screen.getByRole('heading', { name: 'Minimal Headline' })).toBeInTheDocument();
-    expect(screen.queryByText(defaultProps.body!)).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: defaultProps.cta! })).not.toBeInTheDocument();
+
+    if (defaultProps.body) {
+      expect(screen.queryByText(defaultProps.body)).not.toBeInTheDocument();
+    }
+    if (defaultProps.cta) {
+      expect(screen.queryByRole('link', { name: defaultProps.cta })).not.toBeInTheDocument();
+    }
   });
 
   it('should render children when provided', () => {

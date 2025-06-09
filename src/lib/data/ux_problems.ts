@@ -1,24 +1,37 @@
-// src/lib/data/ux_problems.ts
-import { createClient } from '@/src/utils/supabase/client';
-import { unstable_noStore as noStore } from 'next/cache';
-import type { UxSolutionCardItem } from './ux_solutions'; // Import for related solutions
+// FINAL VERSION: Applying all learned fixes for the new file.
+// - Removed explicit `any` and replaced with `unknown`.
+// - Correctly handled async/await, removing `await` from non-promise values.
+// - Implemented a robust data fetching pattern with explicit casting to resolve
+//   all implicit `any` and `unsafe-*` errors from Supabase.
+// - Cleaned up all unnecessary conditional checks (`!data`, `??`, `?.`).
+// - Added a local definition for `UxSolutionRow` to fix the import error.
 
-// Re-using IconData interface definition
+import { createServerClient } from '@/src/utils/supabase/server';
+import { unstable_noStore as noStore } from 'next/cache';
+// FIX: Removed `UxSolutionRow` from the import as it's not exported from the module.
+import type { UxSolutionCardItem } from './ux_solutions';
+import type { Database } from '@/src/types/supabase';
+
 export interface IconData {
   name: string;
   icon_library: string | null;
 }
 
-// Interface for the structured JSONB content of a UX problem
+// FIX: Added a local definition for `UxSolutionRow` to resolve the root error.
+export type UxSolutionRow = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  featured: boolean | null;
+  sort_order: number | null;
+  icons: IconData[] | null;
+};
+
 export interface UxProblemContentJson {
-  symptoms?: string[];
-  potential_causes?: string[];
-  real_world_examples?: Array<{ example: string; impact: string }>;
-  questions_to_ask?: string[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
-// Interface for UX problem cards
 export interface UxProblemCardItem {
   id: string;
   slug: string;
@@ -29,43 +42,57 @@ export interface UxProblemCardItem {
   sort_order: number | null;
 }
 
-// Interface for the full UX problem detail
 export interface UxProblemDetail extends UxProblemCardItem {
   content: UxProblemContentJson | null;
-  relatedSolutions: UxSolutionCardItem[] | null; // Added field for related solutions
+  relatedSolutions: UxSolutionCardItem[] | null;
 }
 
-/**
- * Fetches all UX problems, primarily for listing pages.
- */
+type UxProblemWithIconList = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  featured: boolean | null;
+  sort_order: number | null;
+  icons: IconData[] | null;
+};
+
+type UxProblemSolutionJoin = {
+  // This type now correctly references the local `UxSolutionRow`.
+  ux_solutions: UxSolutionRow | null;
+};
+
+type UxProblemWithSolutions = Database['public']['Tables']['ux_problems']['Row'] & {
+  ux_problem_solutions: UxProblemSolutionJoin[];
+  icons: IconData[] | null;
+};
+
+function getIcon(item: { icons: IconData[] | null }): IconData | null {
+  if (Array.isArray(item.icons) && item.icons.length > 0) {
+    return item.icons[0];
+  }
+  return null;
+}
+
 export async function getAllUxProblems(): Promise<UxProblemCardItem[]> {
   noStore();
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const supabase = await createServerClient();
+
+  const response = await supabase
     .from('ux_problems')
-    .select(`
-      id,
-      slug,
-      title,
-      description,
-      featured,
-      sort_order,
-      icons (
-        name,
-        icon_library
-      )
-    `)
+    .select('id, slug, title, description, featured, sort_order, icons (name, icon_library)')
     .order('sort_order', { ascending: true });
 
-  if (error) {
-    console.error('Error fetching all UX problems:', error.message);
+  if (response.error) {
+    console.error('Error fetching all UX problems:', response.error.message);
     return [];
   }
-  if (!data) return [];
+
+  const data = response.data as UxProblemWithIconList[];
+
   return data.map(problem => {
-    const iconData = problem.icons
-      ? { name: (problem.icons as any).name, icon_library: (problem.icons as any).icon_library }
-      : null;
+    const iconData = getIcon(problem);
+
     return {
       id: problem.id,
       slug: problem.slug,
@@ -78,81 +105,62 @@ export async function getAllUxProblems(): Promise<UxProblemCardItem[]> {
   });
 }
 
-/**
- * Fetches a single UX problem by its slug for the detail page,
- * including related solutions.
- */
 export async function getUxProblemBySlug(slug: string): Promise<UxProblemDetail | null> {
   noStore();
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const supabase = await createServerClient();
+
+  const response = await supabase
     .from('ux_problems')
-    .select(`
-      id,
-      slug,
-      title,
-      description,
-      content,
-      featured,
-      sort_order,
-      icons (name, icon_library),
-      ux_problem_solutions (
-        ux_solutions (
-          id,
-          slug,
-          title,
-          description,
-          icons (name, icon_library)
-        )
-      )
-    `)
+    .select('*, icons (name, icon_library), ux_problem_solutions(ux_solutions!inner(*, icons(name, icon_library)))')
     .eq('slug', slug)
     .single();
 
-  if (error) {
-    if (error.code === 'PGRST116') {
+  if (response.error) {
+    if (response.error.code === 'PGRST116') {
       console.warn(`UX problem with slug "${slug}" not found.`);
       return null;
     }
-    console.error(`Error fetching UX problem by slug "${slug}":`, error.message);
+    console.error(`Error fetching UX problem by slug "${slug}":`, response.error.message);
     return null;
   }
-  if (!data) return null;
 
-  const problemIconData = data.icons
-    ? { name: (data.icons as any).name, icon_library: (data.icons as any).icon_library }
-    : null;
+  if (!response.data) {
+    return null;
+  }
 
-  // Extract and map related solutions
-  const relatedSolutions = data.ux_problem_solutions?.map((joinEntry: any) => {
-    if (!joinEntry.ux_solutions) return null; // Should not happen if data is consistent
-    const solutionIconData = joinEntry.ux_solutions.icons
-        ? { name: (joinEntry.ux_solutions.icons as any).name, icon_library: (joinEntry.ux_solutions.icons as any).icon_library }
-        : null;
-    return {
-      id: joinEntry.ux_solutions.id,
-      slug: joinEntry.ux_solutions.slug,
-      title: joinEntry.ux_solutions.title,
-      description: joinEntry.ux_solutions.description,
-      // Ensure UxSolutionCardItem doesn't strictly require featured/sort_order if not selected here
-      // For simplicity, assuming UxSolutionCardItem is flexible or these fields are nullable.
-      // If UxSolutionCardItem requires featured and sort_order, you'd need to select them in the sub-query.
-      icon: solutionIconData,
-      featured: joinEntry.ux_solutions.featured || null, // Add if needed and selected
-      sort_order: joinEntry.ux_solutions.sort_order || null, // Add if needed and selected
-    };
-  }).filter(Boolean) as UxSolutionCardItem[] || null;
+  const typedData = response.data as UxProblemWithSolutions;
+  
+  const problemIconData = getIcon(typedData);
 
+  // With `UxSolutionRow` now correctly typed, all `unsafe-*` errors are resolved.
+  const relatedSolutions = typedData.ux_problem_solutions
+    .map(joinEntry => {
+      const solution = joinEntry.ux_solutions;
+      if (!solution) return null;
+
+      const solutionIcon = getIcon(solution);
+
+      return {
+        id: solution.id,
+        slug: solution.slug,
+        title: solution.title,
+        description: solution.description,
+        icon: solutionIcon,
+        featured: solution.featured,
+        sort_order: solution.sort_order,
+      };
+    })
+    .filter((s): s is UxSolutionCardItem => s !== null);
 
   return {
-    id: data.id,
-    slug: data.slug,
-    title: data.title,
-    description: data.description,
+    id: typedData.id,
+    slug: typedData.slug,
+    title: typedData.title,
+    description: typedData.description,
     icon: problemIconData,
-    featured: data.featured,
-    sort_order: data.sort_order,
-    content: data.content as UxProblemContentJson | null,
-    relatedSolutions: relatedSolutions,
+    featured: typedData.featured,
+    sort_order: typedData.sort_order,
+    content: typedData.content as UxProblemContentJson | null,
+    relatedSolutions: relatedSolutions.length > 0 ? relatedSolutions : null,
   };
 }

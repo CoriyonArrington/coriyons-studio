@@ -1,43 +1,64 @@
 // src/app/(resources)/ux-solutions/[slug]/page.tsx
-// NO 'use client' - Server Component
-// - Added section to display Related Problems.
-
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
-import { Heading, Text } from '@/src/components/typography';
-import { Box, VStack, UnorderedList, ListItem, HStack, Divider, SimpleGrid } from '@chakra-ui/react';
 import {
-    getUxSolutionBySlug,
-    getAllUxSolutions, 
-    // type UxSolutionDetail, // Removed
-    // type UxSolutionContentJson, // Removed
-    // type IconData // Removed
-} from '@/src/lib/data/ux_solutions'; 
-import type { UxProblemCardItem } from '@/src/lib/data/ux_problems'; 
-import { UICard, UICardHeader, UICardBody, UICardHeading, UICardText, UICardFooter } from '@/src/components/ui/card'; 
+  Box,
+  VStack,
+  UnorderedList,
+  ListItem,
+  HStack,
+  Divider,
+  SimpleGrid,
+  Card,
+  CardHeader,
+  CardBody,
+  Heading,
+  Text,
+  CardFooter,
+} from '@chakra-ui/react';
+import {
+  getUxSolutionBySlug,
+  getAllUxSolutions,
+} from '@/src/lib/data/ux_solutions';
+import type { UxProblemCardItem } from '@/src/lib/data/ux_problems';
 import HeroCtaButton from '@/src/components/common/hero-cta-button';
 import { notFound } from 'next/navigation';
 import type { Metadata, ResolvingMetadata } from 'next';
-// import NextLink from 'next/link'; // NextLink removed
-import PrevNextNavigation, { type NavLinkInfo as PrevNextNavLinkInfo } from '@/src/components/common/prev-next-navigation'; 
+import PrevNextNavigation, {
+  type NavLinkInfo as PrevNextNavLinkInfo,
+} from '@/src/components/common/prev-next-navigation';
 import React from 'react';
 import * as LucideIcons from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 
-const DynamicLucideIcon: React.FC<{ name: string | undefined | null; } & Omit<LucideProps, 'ref' | 'children'>> = ({ name, ...props }) => {
-  if (!name) {
-    return <LucideIcons.AlertTriangle {...props} />;
-  }
-  if (Object.prototype.hasOwnProperty.call(LucideIcons, name)) {
+const DynamicLucideIcon: React.FC<
+  { name: string | undefined | null } & Omit<LucideProps, 'ref' | 'children'>
+> = ({ name, ...props }) => {
+  if (name && Object.prototype.hasOwnProperty.call(LucideIcons, name)) {
+    // This is a controlled escape hatch. The lucide-react library's types do not
+    // support this dynamic lookup cleanly. We use 'any' and disable all related
+    // ESLint rules for this single operation to resolve all type and lint errors.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const IconComponent = (LucideIcons as any)[name];
-    if (IconComponent && (typeof IconComponent === 'function' || (typeof IconComponent === 'object' && IconComponent.$$typeof === Symbol.for('react.forward_ref')))) {
-      return React.createElement(IconComponent as React.ComponentType<LucideProps>, props);
+    if (typeof IconComponent === 'function') {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      return React.createElement(IconComponent, props);
     }
   }
   if (process.env.NODE_ENV === 'development') {
-    console.warn(`Lucide icon "${name}" not found or invalid in ux-solutions/[slug]/page.tsx. Rendering fallback 'AlertTriangle'.`);
+    console.warn(
+      `Lucide icon "${name ?? '??'}" not found or invalid. Rendering fallback 'CheckCircle'.`,
+    );
   }
-  return <LucideIcons.AlertTriangle {...props} />;
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+  const FallbackIcon = (LucideIcons as any)['CheckCircle'];
+  if (typeof FallbackIcon === 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return React.createElement(FallbackIcon, props);
+  }
+
+  return null;
 };
 
 interface UxSolutionDetailPageProps {
@@ -75,8 +96,8 @@ const renderContentParagraphSection = (title: string, text: string | undefined) 
 export default async function UxSolutionDetailPage({ params }: UxSolutionDetailPageProps) {
   const { slug } = params;
   const [solution, allUxSolutionsForNav] = await Promise.all([
-    getUxSolutionBySlug(slug), 
-    getAllUxSolutions()
+    getUxSolutionBySlug(slug),
+    getAllUxSolutions(),
   ]);
 
   if (!solution) {
@@ -86,33 +107,41 @@ export default async function UxSolutionDetailPage({ params }: UxSolutionDetailP
   let previousSolutionLink: PrevNextNavLinkInfo | undefined;
   let nextSolutionLink: PrevNextNavLinkInfo | undefined;
 
-  if (allUxSolutionsForNav && allUxSolutionsForNav.length > 0) {
+  if (allUxSolutionsForNav.length > 0) {
     const currentIndex = allUxSolutionsForNav.findIndex(s => s.slug === solution.slug);
     if (currentIndex !== -1) {
       if (currentIndex > 0) {
         const prevSolution = allUxSolutionsForNav[currentIndex - 1];
-        previousSolutionLink = { slug: prevSolution.slug, title: prevSolution.title, categoryLabel: "Previous Solution" };
+        previousSolutionLink = {
+          slug: prevSolution.slug,
+          title: prevSolution.title,
+          categoryLabel: 'Previous Solution',
+        };
       }
       if (currentIndex < allUxSolutionsForNav.length - 1) {
         const nextSolution = allUxSolutionsForNav[currentIndex + 1];
-        nextSolutionLink = { slug: nextSolution.slug, title: nextSolution.title, categoryLabel: "Next Solution" };
+        nextSolutionLink = {
+          slug: nextSolution.slug,
+          title: nextSolution.title,
+          categoryLabel: 'Next Solution',
+        };
       }
     }
   }
 
-  const { title, description, icon, content, relatedProblems } = solution; 
+  const { title, description, icon, content, relatedProblems } = solution;
 
   return (
     <Layout>
       <Section as="article" py={{ base: 10, md: 16 }} px={{ base: 4, md: 8 }}>
         <VStack spacing={8} alignItems="stretch" maxW="container.lg" mx="auto">
           <VStack spacing={3} alignItems="center" textAlign="center" mb={8}>
-            {icon && icon.name && (
+            {icon?.name && (
               <Box mb={2}>
                 <DynamicLucideIcon
                   name={icon.icon_library === 'lucide-react' ? icon.name : undefined}
                   size={40}
-                  color="var(--chakra-colors-green-500)" 
+                  color="var(--chakra-colors-green-500)"
                   strokeWidth={2.5}
                 />
               </Box>
@@ -130,10 +159,10 @@ export default async function UxSolutionDetailPage({ params }: UxSolutionDetailP
 
           {content ? (
             <Box>
-              {renderContentListSection("Key Benefits", content.key_benefits)}
-              {renderContentParagraphSection("Approach Summary", content.approach_summary)}
-              {renderContentParagraphSection("Deliverables Summary", content.deliverables_summary)}
-              {renderContentListSection("Tools Used", content.tools_used)}
+              {renderContentListSection('Key Benefits', content.key_benefits)}
+              {renderContentParagraphSection('Approach Summary', content.approach_summary)}
+              {renderContentParagraphSection('Deliverables Summary', content.deliverables_summary)}
+              {renderContentListSection('Tools Used', content.tools_used)}
             </Box>
           ) : (
             <Text>Detailed content for this UX solution is not yet available.</Text>
@@ -146,10 +175,10 @@ export default async function UxSolutionDetailPage({ params }: UxSolutionDetailP
               </Heading>
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                 {relatedProblems.map((problem: UxProblemCardItem) => (
-                  <UICard key={problem.id} variant="outlineFilled" h="full" display="flex" flexDirection="column">
-                    <UICardHeader>
+                  <Card key={problem.id} variant="outline" h="full" display="flex" flexDirection="column">
+                    <CardHeader>
                       <HStack spacing={3} alignItems="center">
-                        {problem.icon && problem.icon.name && (
+                        {problem.icon?.name && (
                            <DynamicLucideIcon
                              name={problem.icon.icon_library === 'lucide-react' ? problem.icon.name : undefined}
                              size={22}
@@ -157,20 +186,20 @@ export default async function UxSolutionDetailPage({ params }: UxSolutionDetailP
                              strokeWidth={2.5}
                            />
                         )}
-                        <UICardHeading size="md" as="h3">{problem.title}</UICardHeading>
+                        <Heading size="md" as="h3">{problem.title}</Heading>
                       </HStack>
-                    </UICardHeader>
-                    <UICardBody flexGrow={1}>
-                      <UICardText color="muted.foreground" mb={4} noOfLines={3}>
+                    </CardHeader>
+                    <CardBody flexGrow={1}>
+                      <Text color="muted.foreground" mb={4} noOfLines={3}>
                         {problem.description || "More details about this UX problem."}
-                      </UICardText>
-                    </UICardBody>
-                    <UICardFooter>
+                      </Text>
+                    </CardBody>
+                    <CardFooter>
                       <HeroCtaButton href={`/ux-problems/${problem.slug}`} size="sm" variant="outline" width="full">
                         View Problem Details
                       </HeroCtaButton>
-                    </UICardFooter>
-                  </UICard>
+                    </CardFooter>
+                  </Card>
                 ))}
               </SimpleGrid>
             </Box>
@@ -184,15 +213,15 @@ export default async function UxSolutionDetailPage({ params }: UxSolutionDetailP
 
 export async function generateMetadata(
   { params }: UxSolutionDetailPageProps,
-  _parent: ResolvingMetadata // parent renamed to _parent
+  _parent: ResolvingMetadata,
 ): Promise<Metadata> {
   const slug = params.slug;
-  const solution = await getUxSolutionBySlug(slug); 
+  const solution = await getUxSolutionBySlug(slug);
 
   if (!solution) {
     return {
-      title: 'UX Solution Not Found | Coriyon\'s Studio',
-      description: 'The requested UX solution could not be found.'
+      title: "UX Solution Not Found | Coriyon's Studio",
+      description: 'The requested UX solution could not be found.',
     };
   }
 

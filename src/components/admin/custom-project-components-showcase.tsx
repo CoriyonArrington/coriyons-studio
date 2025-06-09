@@ -1,11 +1,7 @@
-/*
- FINAL VERSION - Key Changes:
- - The "Toaster (Toast Utility)" showcase has been restored and expanded to include buttons
-   that trigger all the primary toast variants, as originally intended.
- - A <Wrap> component is used to ensure the buttons display nicely on all screen sizes.
- - Added <WrapItem> to fix accessibility violations for list elements.
- - Added explicit `id` props to Inputs inside FormFields to correctly link them with their labels.
-*/
+// ATTEMPT #6: Providing a complete mock user object.
+// Change 1: The mock `user` object passed to the <SiteHeader> and <HeaderAuth> components was missing the `user_metadata` property, causing a runtime error.
+// Change 2: Added `user_metadata: {}` to the mock user object to ensure the `getFirstName` helper function can safely access it without crashing.
+
 'use client';
 
 import React from 'react';
@@ -13,12 +9,9 @@ import {
   Heading,
   Box,
   Text,
-  useDisclosure,
   VStack,
   Input,
   Button,
-  Card,
-  CardBody,
   HStack,
   Wrap,
   WrapItem,
@@ -31,10 +24,19 @@ import { ThemeSwitcher } from '@/src/components/navigation/theme-switcher';
 import { Form, FormField, FormMessage, SubmitButton } from '@/src/components/forms';
 import HeroCtaButton from '@/src/components/common/hero-cta-button';
 import PostCard from '@/src/components/common/post-card';
-import FeatureCard from '../common/featured-card';
+import FeatureCard from '@/src/components/common/featured-card';
 import { toaster } from '@/src/components/ui/toaster';
-import type { CategorizedFooterPages } from '@/src/lib/data/pages';
 import HeaderAuth from '@/src/components/navigation/header-auth';
+import type { User } from '@supabase/supabase-js';
+
+// Define types locally for mock data.
+interface FooterLink {
+  title: string;
+  href: string;
+}
+type FooterCategory = 'MAIN' | 'RESOURCES' | 'SUPPORT' | 'LEGAL';
+type CategorizedFooterPages = Record<FooterCategory, FooterLink[]>;
+
 
 // Mock data for components that require props
 const mockFooterPages: CategorizedFooterPages = {
@@ -44,8 +46,13 @@ const mockFooterPages: CategorizedFooterPages = {
   LEGAL: [{ title: 'Privacy', href: '#' }],
 };
 
+const mockUser = {
+  id: '123',
+  email: 'hey.coriyonarrington@gmail.com',
+  user_metadata: {}, // FIX: Add empty user_metadata to prevent crash
+} as User;
+
 export default function CustomProjectComponentsShowcase() {
-  const { isOpen, onOpen, onClose } = useDisclosure();
 
   return (
     <Box as="section" id="custom-components" borderTopWidth="1px" borderColor="border" pt={10}>
@@ -58,7 +65,7 @@ export default function CustomProjectComponentsShowcase() {
         <Box id="custom-site-header">
           <Heading as="h3" size="lg" mb={2}>SiteHeader</Heading>
           <Box borderWidth="1px" borderRadius="lg" p={2}>
-            <SiteHeader user={{ id: '123', email: 'hey.coriyonarrington@gmail.com' } as any} />
+            <SiteHeader user={mockUser} />
           </Box>
         </Box>
 
@@ -68,7 +75,7 @@ export default function CustomProjectComponentsShowcase() {
             
             <Box w="full" maxW="md">
               <Heading as="h4" size="md" mb={4}>Example Form</Heading>
-              <Form onSubmit={(e) => e.preventDefault()}>
+              <Form onSubmit={(e) => { e.preventDefault(); }}>
                 <VStack spacing={4}>
                   <FormField id="showcase-name" label="Your Name">
                     <Input placeholder="Jane Doe" id="showcase-name" />
@@ -147,7 +154,7 @@ export default function CustomProjectComponentsShowcase() {
                     <Text mb={1} fontSize="sm">Logged Out State:</Text>
                     <HeaderAuth user={null} />
                     <Text mt={4} mb={1} fontSize="sm">Logged In State:</Text>
-                    <HeaderAuth user={{ id: '123', email: 'hey.coriyonarrington@gmail.com' } as any} />
+                    <HeaderAuth user={mockUser} />
                 </Box>
                  <Box>
                     <Heading as="h4" size="md" mb={2}>ThemeSwitcher</Heading>

@@ -1,17 +1,27 @@
-// src/lib/data/posts.ts
-// - Added Tag interface (consistent with projects.ts).
-// - Updated PostCardItem and PostDetail interfaces to include tags.
-// - Modified getAllPublishedPosts, getFeaturedPosts, and getPostBySlug to fetch associated tags.
+// FINAL, SELF-CONTAINED VERSION
+// This version manually defines all necessary types to make the file
+// self-sufficient and immune to external type-generation issues.
 
-import { createClient } from '@/src/utils/supabase/client';
+import { createServerClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
 
-// Basic Tag interface (consistent with projects.ts)
-// Consider moving to a shared types file if used more broadly.
-export interface Tag {
+// --- Core & Related Type Definitions ---
+
+export interface Author {
   id: string;
-  name: string;
-  slug: string;
+  name: string | null;
+  avatar_url: string | null;
+}
+
+export interface Category {
+    id: string;
+    name: string | null;
+    slug: string | null;
+}
+
+// FIX: Replaced `any` with the safer `unknown` type.
+export interface PostContentJson {
+  [key: string]: unknown;
 }
 
 export interface PostCardItem {
@@ -20,123 +30,125 @@ export interface PostCardItem {
   title: string;
   excerpt: string | null;
   featured_image_url: string | null;
-  published_at: string | null;
-  tags?: Tag[]; // Added tags
+  author: Author | null;
+  category: Category | null;
+  published_at: string;
 }
 
-export interface PostContentJson {
-  blocks?: Array<{ type: string; data: any; [key: string]: any }>;
-  body?: string;
-  markdownContent?: string;
-  [key: string]: any;
-}
-
-export interface PostDetail extends PostCardItem { // PostDetail now inherently includes tags via PostCardItem
+export interface PostDetail extends PostCardItem {
   content: PostContentJson | null;
-  og_image_url?: string | null;
-  author_id?: string | null;
 }
 
-export async function getAllPublishedPosts(
-  limit: number = 10,
-  offset: number = 0
-): Promise<PostCardItem[]> {
-  noStore();
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('posts')
-    .select(`
-      id,
-      slug,
-      title,
-      excerpt,
-      featured_image_url,
-      published_at,
-      post_tags (
-        tags (id, name, slug)
-      )
-    `)
-    .eq('status', 'published')
-    .order('published_at', { ascending: false })
-    .range(offset, offset + limit - 1);
+// --- Self-Contained Row & Joined Types ---
 
-  if (error) {
-    console.error('Error fetching all published posts:', error.message);
-    return [];
-  }
-  return data?.map(post => ({
-    ...post,
-    tags: post.post_tags.map((pt: any) => pt.tags).filter(Boolean) as Tag[],
-  })) || [];
+// Manually define the shape of a row from the 'posts' table.
+type PostRow = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  featured_image_url: string | null;
+  content: unknown;
+  published_at: string;
+  author_id: string;
+  category_id: string;
+};
+
+// Manually define shapes for joined tables.
+type AuthorRow = { id: string; name: string | null; avatar_url: string | null; };
+type CategoryRow = { id: string; name: string | null; slug: string | null; };
+
+// The fully joined shape for the queries.
+type PostWithDetails = PostRow & {
+  authors: AuthorRow | null;
+  categories: CategoryRow | null;
+};
+
+// --- Data Fetching Functions ---
+
+export async function getRecentPosts(limit: number = 3): Promise<PostCardItem[]> {
+    noStore();
+    const supabase = await createServerClient();
+    
+    const response = await supabase
+        .from('posts')
+        .select('*, authors(*), categories(*)')
+        .order('published_at', { ascending: false })
+        .limit(limit);
+
+    if (response.error) {
+        console.error('Error fetching recent posts:', response.error.message);
+        return [];
+    }
+
+    const data = response.data as PostWithDetails[];
+
+    return data.map(post => ({
+        id: post.id,
+        slug: post.slug,
+        title: post.title,
+        excerpt: post.excerpt,
+        featured_image_url: post.featured_image_url,
+        author: post.authors,
+        category: post.categories,
+        published_at: post.published_at
+    }));
 }
 
-export async function getFeaturedPosts(limit: number = 3): Promise<PostCardItem[]> {
+export async function getAllPosts(): Promise<PostCardItem[]> {
   noStore();
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('posts')
-    .select(`
-      id,
-      slug,
-      title,
-      excerpt,
-      featured_image_url,
-      published_at,
-      post_tags (
-        tags (id, name, slug)
-      )
-    `)
-    .eq('status', 'published')
-    .eq('featured', true)
-    .order('published_at', { ascending: false })
-    .limit(limit);
+  const supabase = await createServerClient();
 
-  if (error) {
-    console.error('Error fetching featured posts:', error.message);
+  const response = await supabase
+    .from('posts')
+    .select('*, authors(*), categories(*)')
+    .order('published_at', { ascending: false });
+
+  if (response.error) {
+    console.error('Error fetching all posts:', response.error.message);
     return [];
   }
-  return data?.map(post => ({
-    ...post,
-    tags: post.post_tags.map((pt: any) => pt.tags).filter(Boolean) as Tag[],
-  })) || [];
+
+  const data = response.data as PostWithDetails[];
+  
+  return data.map(post => ({
+    id: post.id,
+    slug: post.slug,
+    title: post.title,
+    excerpt: post.excerpt,
+    featured_image_url: post.featured_image_url,
+    author: post.authors,
+    category: post.categories,
+    published_at: post.published_at
+  }));
 }
 
 export async function getPostBySlug(slug: string): Promise<PostDetail | null> {
-  noStore();
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('posts')
-    .select(`
-      id,
-      slug,
-      title,
-      excerpt,
-      content,
-      featured_image_url,
-      og_image_url,
-      published_at,
-      author_id,
-      post_tags (
-        tags (id, name, slug)
-      )
-    `)
-    .eq('slug', slug)
-    .eq('status', 'published')
-    .single();
+    noStore();
+    const supabase = await createServerClient();
 
-  if (error) {
-    if (error.code === 'PGRST116') { // Not found
-        console.warn(`Post with slug "${slug}" not found.`);
-        return null;
+    const response = await supabase
+      .from('posts')
+      .select('*, authors(*), categories(*)')
+      .eq('slug', slug)
+      .single();
+
+    if (response.error) {
+      console.error(`Error fetching post by slug "${slug}":`, response.error.message);
+      return null;
     }
-    console.error(`Error fetching post by slug "${slug}":`, error.message);
-    return null;
-  }
-  if (!data) return null;
 
-  return {
-    ...data,
-    content: data.content as PostContentJson | null,
-    tags: data.post_tags.map((pt: any) => pt.tags).filter(Boolean) as Tag[],
-  } as PostDetail;
+    const typedData = response.data as PostWithDetails;
+
+    return {
+        id: typedData.id,
+        slug: typedData.slug,
+        title: typedData.title,
+        excerpt: typedData.excerpt,
+        featured_image_url: typedData.featured_image_url,
+        author: typedData.authors,
+        category: typedData.categories,
+        published_at: typedData.published_at,
+        content: typedData.content as PostContentJson | null,
+    };
 }

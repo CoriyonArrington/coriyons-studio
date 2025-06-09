@@ -1,11 +1,7 @@
-/*
- FINAL VERSION - Key Changes:
- - The horizontal padding (`px`) on the main <Section> components has been updated
-   to use responsive values, providing more breathing room on larger screens.
-   - Mobile: 24px (theme value `6`)
-   - Tablet: 32px (theme value `8`)
-   - Desktop: 64px (theme value `16`)
-*/
+// ATTEMPT 1: Escaping a special character in JSX.
+// - Replaced the unescaped apostrophe in "project's" with its HTML
+//   entity `&apos;` to resolve the 'react/no-unescaped-entities' error.
+
 'use client';
 
 import React from 'react';
@@ -62,7 +58,8 @@ export default function DesignSystemPage() {
         <Box as="header" mb={12}>
           <Heading as="h1" size="2xl" mb={4}>Design System</Heading>
           <Text fontSize="xl" color="muted.foreground">
-            A visual guide to the project's tokens, components, and brand standards.
+            {/* FIX: Replaced the apostrophe with &apos; */}
+            A visual guide to the project&apos;s tokens, components, and brand standards.
           </Text>
         </Box>
 

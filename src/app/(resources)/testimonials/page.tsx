@@ -1,10 +1,4 @@
-/*
- FINAL VERSION - Key Changes:
- - Consolidated all component imports from '@chakra-ui/react'.
- - Removed incorrect/duplicate imports from the old typography folder.
- - Renamed all 'UICard' components to their official Chakra UI names.
- - Added explicit type assertions (e.g., `as string`) to resolve type mismatches.
-*/
+// src/app/(resources)/testimonials/page.tsx
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import {
@@ -16,7 +10,7 @@ import {
   Text,
 } from '@chakra-ui/react';
 import {
-  getPageContentBySlug,
+  getPageDataBySlug,
   getNavigablePages,
   type NavigablePageInfo,
 } from '@/src/lib/data/pages';
@@ -28,19 +22,18 @@ import type { Metadata } from 'next';
 interface TestimonialsPageCmsContent {
   hero?: { headline?: string };
   intro_text?: string;
-  [key: string]: any;
+  [key: string]: unknown; // Use 'unknown' for safer type handling
 }
 
 interface TestimonialsPageProps {
-  params: {};
+  params: unknown; // Use 'unknown' for unused params
 }
 
 const SLUG = 'testimonials';
 
 export default async function TestimonialsPage({ params: _params }: TestimonialsPageProps) {
-  // Fetch CMS data and testimonials
   const [pageCmsData, allTestimonials, navigablePages] = await Promise.all([
-    getPageContentBySlug(SLUG),
+    getPageDataBySlug(SLUG),
     getAllTestimonials(),
     getNavigablePages(),
   ]);
@@ -50,7 +43,7 @@ export default async function TestimonialsPage({ params: _params }: Testimonials
 
   if (pageCmsData) {
     const currentPageIndex = navigablePages.findIndex(
-      (p: NavigablePageInfo) => p.slug === (pageCmsData.slug as string),
+      (p: NavigablePageInfo) => p.slug === pageCmsData.slug,
     );
     if (currentPageIndex !== -1) {
       if (currentPageIndex > 0) {
@@ -72,7 +65,8 @@ export default async function TestimonialsPage({ params: _params }: Testimonials
     }
   }
 
-  if (!pageCmsData && (!allTestimonials || allTestimonials.length === 0)) {
+  // Simplified conditional check
+  if (!pageCmsData && allTestimonials.length === 0) {
     return (
       <Layout>
         <Section id="testimonials-error" py={{ base: 16, md: 24 }} textAlign="center">
@@ -86,12 +80,12 @@ export default async function TestimonialsPage({ params: _params }: Testimonials
     );
   }
 
-  const cmsContent = pageCmsData?.content as unknown as TestimonialsPageCmsContent | null;
+  const cmsContent = pageCmsData?.content as TestimonialsPageCmsContent | null;
   let introContent: React.ReactNode = null;
 
   if (cmsContent) {
     const parts: React.ReactNode[] = [];
-    if (cmsContent.hero?.headline && cmsContent.hero.headline !== (pageCmsData?.title as string)) {
+    if (cmsContent.hero?.headline && cmsContent.hero.headline !== pageCmsData?.title) {
       parts.push(
         <Heading key="hero-headline" as="h2" size="2xl" mt={4} mb={4} textAlign="center">
           {cmsContent.hero.headline}
@@ -125,17 +119,17 @@ export default async function TestimonialsPage({ params: _params }: Testimonials
   return (
     <Layout>
       <Section
-        id={(pageCmsData?.slug as string) || SLUG}
+        id={pageCmsData?.slug || SLUG}
         py={{ base: 12, md: 20 }}
         px={{ base: 4, md: 8 }}
         as="article"
       >
         <Heading as="h1" size="3xl" mb={6} textAlign="center">
-          {(pageCmsData?.title as string) || 'Client Testimonials'}
+          {pageCmsData?.title || 'Client Testimonials'}
         </Heading>
         {introContent}
 
-        {allTestimonials && allTestimonials.length > 0 ? (
+        {allTestimonials.length > 0 ? (
           <VStack spacing={8} mt={8} alignItems="stretch">
             {allTestimonials.map((testimonial: HomepageTestimonial) => (
               <Card
@@ -149,20 +143,20 @@ export default async function TestimonialsPage({ params: _params }: Testimonials
               >
                 <CardBody>
                   {testimonial.avatar_url && (
-                    <Avatar name={testimonial.name as string} src={testimonial.avatar_url as string} mb={4} size="lg" />
+                    <Avatar name={testimonial.name} src={testimonial.avatar_url} mb={4} size="lg" />
                   )}
                   <Text fontSize="xl" fontStyle="italic" color="foreground" mb={4}>
-                    &quot;{testimonial.quote as string}&quot;
+                    &quot;{testimonial.quote}&quot;
                   </Text>
                   <VStack alignItems="flex-end" spacing={0}>
                     <Text fontWeight="semibold" fontSize="md" color="foreground">
-                      — {testimonial.name as string}
+                      — {testimonial.name}
                     </Text>
                     {(testimonial.role || testimonial.company_name) && (
                       <Text fontSize="sm" color="muted.foreground">
-                        {testimonial.role as string}
+                        {testimonial.role}
                         {testimonial.role && testimonial.company_name && ', '}
-                        {testimonial.company_name as string}
+                        {testimonial.company_name}
                       </Text>
                     )}
                   </VStack>
@@ -182,10 +176,10 @@ export default async function TestimonialsPage({ params: _params }: Testimonials
 }
 
 export async function generateMetadata({ params: _params }: TestimonialsPageProps): Promise<Metadata> {
-  const pageCmsData = await getPageContentBySlug(SLUG);
-  const title = (pageCmsData?.title as string) || "Client Testimonials | Coriyon's Studio";
+  const pageCmsData = await getPageDataBySlug(SLUG);
+  const title = pageCmsData?.title || "Client Testimonials | Coriyon's Studio";
   const description =
-    (pageCmsData?.meta_description as string) ||
+    pageCmsData?.meta_description ||
     "Read what our clients have to say about their experience working with Coriyon's Studio.";
 
   return {
@@ -195,7 +189,7 @@ export async function generateMetadata({ params: _params }: TestimonialsPageProp
       title,
       description,
       url: `/${SLUG}`,
-      images: pageCmsData?.og_image_url ? [{ url: pageCmsData.og_image_url as string }] : undefined,
+      images: pageCmsData?.og_image_url ? [{ url: pageCmsData.og_image_url }] : undefined,
     },
   };
 }

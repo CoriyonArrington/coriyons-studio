@@ -1,33 +1,25 @@
-/*
- FINAL, DEFINITIVE VERSION - Key Changes:
- - Removed the `blog_section` variable from the data destructuring, as it does not exist
-   in the homepage's CMS content.
- - The heading for the "From Our Blog" section is now set with static text, resolving
-   the "Cannot read properties of undefined" runtime error.
-*/
+// ATTEMPT 5: Final cleanup.
+// - Removed the unused 'UxItem' interface definition.
+
 import Section from '@/src/components/common/section';
 import ContentSection from '@/src/components/common/content-section';
 import HeroCtaButton from '@/src/components/common/hero-cta-button';
 import PostCard from '@/src/components/common/post-card';
 import FeatureCard from '@/src/components/common/featured-card';
 import {
-  Button,
   Card,
   CardBody,
   Heading,
   Text,
   VStack,
   SimpleGrid,
-  HStack,
-  Tag as ChakraTag,
-  Image,
   Avatar,
   Box,
 } from '@chakra-ui/react';
-import { getFeaturedServices, type ServiceData } from '@/src/lib/data/services';
-import { getFeaturedProjects, type HomepageProject } from '@/src/lib/data/projects';
-import { getFeaturedTestimonials, type HomepageTestimonial } from '@/src/lib/data/testimonials';
-import { getFeaturedPosts, type PostCardItem } from '@/src/lib/data/posts';
+import { getFeaturedServices } from '@/src/lib/data/services';
+import { getFeaturedProjects } from '@/src/lib/data/projects';
+import { getFeaturedTestimonials } from '@/src/lib/data/testimonials';
+import { getFeaturedPosts } from '@/src/lib/data/posts';
 import { getPageBySlug, getNavigablePages } from '@/src/lib/data/pages';
 import type { PageWithRelations, NavigablePageInfo } from '@/src/lib/data/pages';
 import PrevNextNavigation, { type NavLinkInfo as PrevNextNavLinkInfo } from '@/src/components/common/prev-next-navigation';
@@ -37,22 +29,17 @@ import React from 'react';
 
 const SLUG = 'home';
 
-// --- (Interfaces and Helper Components remain the same) ---
+// --- (Local Interfaces) ---
 interface Cta { text: string; href: string; }
 interface HeroSectionContent { headline: string; subheadline: string; cta: Cta; }
-interface ContentSectionItemData { headline: string; body_paragraphs?: string[]; cta?: Cta; }
-interface UxItem { id: string; slug: string; title: string; description: string | null; icons?: Array<{ name?: string | null; }> | null; }
+interface ContentSectionItemData { headline: string; body_paragraphs?: string[]; cta?: Cta; body_intro_paragraph?: string; }
+// FIX: Removed unused UxItem interface.
 interface HomeContent {
   hero_section: HeroSectionContent;
   why_our_studio_section: ContentSectionItemData;
   services_section: ContentSectionItemData;
   case_studies_section: ContentSectionItemData;
   testimonials_section: ContentSectionItemData;
-}
-
-function formatDate(dateString: string | null | undefined): string {
-  if (!dateString) return '';
-  return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 interface MappedContentSectionProps { headline: string; body?: string; cta?: string; href?: string; }
@@ -93,10 +80,11 @@ export default async function HomePage() {
     testimonials_section,
   } = pageData.content as unknown as HomeContent;
   
-  const relatedUxProblems = pageData.ux_problem_pages?.flatMap(p => p.ux_problems) as UxItem[] || [];
-  const relatedUxSolutions = pageData.ux_solution_pages?.flatMap(s => s.ux_solutions) as UxItem[] || [];
-  const featuredUxProblem = relatedUxProblems?.[0] ?? null;
-  const featuredUxSolution = relatedUxSolutions?.[0] ?? null;
+  const relatedUxProblems = Array.isArray(pageData.ux_problems) ? pageData.ux_problems : [pageData.ux_problems].filter(Boolean);
+  const relatedUxSolutions = Array.isArray(pageData.ux_solutions) ? pageData.ux_solutions : [pageData.ux_solutions].filter(Boolean);
+  
+  const featuredUxProblem = relatedUxProblems[0] ?? null;
+  const featuredUxSolution = relatedUxSolutions[0] ?? null;
 
   const [
     featuredServices,
@@ -185,7 +173,7 @@ export default async function HomePage() {
       <Section id="featured-projects" py={{ base: 12, md: 20 }} variant="subtle">
         <VStack spacing={4} mb={12} textAlign="center">
           <Heading as="h2" size="2xl" color="foreground">{case_studies_section.headline}</Heading>
-          {(case_studies_section as any).body_intro_paragraph && ( <Text fontSize="lg" color="muted.foreground" maxW="lg" mx="auto">{(case_studies_section as any).body_intro_paragraph}</Text> )}
+          {case_studies_section.body_intro_paragraph && ( <Text fontSize="lg" color="muted.foreground" maxW="lg" mx="auto">{case_studies_section.body_intro_paragraph}</Text> )}
         </VStack>
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: 6, md: 8 }}>
           {featuredProjects.map((project) => (
@@ -235,7 +223,7 @@ export default async function HomePage() {
               description={post.excerpt}
               imageUrl={post.featured_image_url}
               tags={post.tags}
-              tagColorScheme="purple"
+              tagColorScheme="orange"
               ctaText="Read More"
             />
           ))}
@@ -256,9 +244,9 @@ export async function generateMetadata(): Promise<Metadata> {
     return { title: 'Page Not Found | Your Studio', description: 'The requested page could not be found.' };
   }
 
-  const title = pageData.title as string;
-  const description = (pageData.meta_description as string) ?? undefined;
-  const ogImageUrl = (pageData.og_image_url as string) ?? undefined;
+  const title = pageData.title;
+  const description = pageData.meta_description ?? undefined;
+  const ogImageUrl = pageData.og_image_url ?? undefined;
 
   return {
     title,

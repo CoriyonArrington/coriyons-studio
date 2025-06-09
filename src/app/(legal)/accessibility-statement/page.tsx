@@ -2,28 +2,35 @@
 
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
-import { Heading } from '@/src/components/typography';
+import { Heading } from '@chakra-ui/react';
 import {
-  getPageContentBySlug,
+  getPageDataBySlug,
   getNavigablePages,
-  type NavigablePageInfo
 } from '@/src/lib/data/pages';
 import PrevNextNavigation, {
-  type NavLinkInfo as PrevNextNavLinkInfo
+  type NavLinkInfo as PrevNextNavLinkInfo,
 } from '@/src/components/common/prev-next-navigation';
 import { mapPageTypeToCategoryLabel } from '@/src/lib/utils';
 import type { Metadata } from 'next';
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import type { PageRow } from '@/src/lib/data/minimal_pages_schema';
+
+// Define PageProps for consistency, even if unused in this specific page
+interface PageProps {
+  params: Record<string, never>;
+  searchParams?: { [key:string]: string | string[] | undefined };
+}
 
 const SLUG = 'accessibility-statement';
 
-export default async function AccessibilityStatementPage() {
-  // Cast the returned data to our PageRow type so TS knows the exact shape:
-  const pageData = (await getPageContentBySlug(SLUG)) as PageRow | null;
-  const navigablePages = (await getNavigablePages()) as NavigablePageInfo[];
+export default async function AccessibilityStatementPage({
+  params: _params,
+  searchParams: _searchParams,
+}: PageProps) {
+  // Use the corrected function and remove the unnecessary type assertions
+  const pageData = await getPageDataBySlug(SLUG);
+  const navigablePages = await getNavigablePages();
 
   let previousPageLink: PrevNextNavLinkInfo | undefined;
   let nextPageLink: PrevNextNavLinkInfo | undefined;
@@ -37,7 +44,7 @@ export default async function AccessibilityStatementPage() {
       previousPageLink = {
         slug: prev.slug,
         title: prev.title,
-        categoryLabel: mapPageTypeToCategoryLabel(prev.page_type)
+        categoryLabel: mapPageTypeToCategoryLabel(prev.page_type),
       };
     }
     if (currentIndex < navigablePages.length - 1) {
@@ -45,13 +52,14 @@ export default async function AccessibilityStatementPage() {
       nextPageLink = {
         slug: next.slug,
         title: next.title,
-        categoryLabel: mapPageTypeToCategoryLabel(next.page_type)
+        categoryLabel: mapPageTypeToCategoryLabel(next.page_type),
       };
     }
   }
 
-  // Extract content into its own variable so the `typeof` check narrows it to a string:
-  const content = pageData?.content;
+  // Check if content is a string to ensure type safety for ReactMarkdown
+  const content =
+    typeof pageData?.content === 'string' ? pageData.content : undefined;
 
   return (
     <Layout>
@@ -64,24 +72,23 @@ export default async function AccessibilityStatementPage() {
           {pageData?.title ?? 'Accessibility Statement'}
         </Heading>
 
-        {typeof content === 'string' && (
-          <ReactMarkdown components={{}} remarkPlugins={[remarkGfm]}>
-            {content}
-          </ReactMarkdown>
+        {content && (
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
         )}
       </Section>
 
       <PrevNextNavigation
         previousPage={previousPageLink}
         nextPage={nextPageLink}
+        basePath="/legal" 
       />
     </Layout>
   );
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  // Again, cast so TS knows fields like title, meta_description, and og_image_url are strings or null
-  const pageData = (await getPageContentBySlug(SLUG)) as PageRow | null;
+  // Use the corrected function and remove the unnecessary type assertion
+  const pageData = await getPageDataBySlug(SLUG);
 
   const title = pageData?.title ?? "Accessibility Statement | Coriyon's Studio";
   const description = pageData?.meta_description ?? undefined;
@@ -93,8 +100,8 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: pageData?.title ?? undefined,
       description,
-      url: `/${SLUG}`,
-      images: ogImageUrl ? [{ url: ogImageUrl }] : undefined
-    }
+      url: `/legal/${SLUG}`,
+      images: ogImageUrl ? [{ url: ogImageUrl }] : undefined,
+    },
   };
 }

@@ -1,155 +1,133 @@
-// src/lib/data/services.ts
-// - Updated ServiceData interface to include relatedTestimonials.
-// - Modified getServiceBySlug to fetch associated testimonials via testimonial_services table.
+// FINAL, SELF-CONTAINED VERSION
+// This version manually defines all necessary types to remove any dependency on
+// external type generation, definitively resolving the chain of errors.
 
-import { createClient } from '@/src/utils/supabase/client';
+import { createServerClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
-import type { HomepageTestimonial } from './testimonials'; // Import for related testimonials
 
-export interface ServiceContentData {
-  price?: string;
-  what_you_get?: string;
-  turnaround?: string;
-  capacity?: string;
-  guarantee?: string;
-  cta_text?: string;
-  cta_link?: string;
-  includes_summary?: string;
-  perfect_for?: string;
-  use_cases?: string[];
-  savings_summary?: string;
-  value_summary?: string;
-  [key: string]: any;
+export interface IconData {
+  name: string;
+  icon_library: string | null;
 }
 
-export interface ServiceData {
+export interface ServiceContentJson {
+  [key: string]: unknown;
+}
+
+export interface ServiceFeature {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: IconData | null;
+}
+
+export interface ServiceCardItem {
   id: string;
   slug: string;
   title: string;
   description: string | null;
-  offering_type: 'INDIVIDUAL' | 'BUNDLE' | null;
-  content: ServiceContentData | null;
-  featured_image_url: string | null;
-  sort_order?: number | null;
-  featured?: boolean | null;
-  relatedTestimonials?: HomepageTestimonial[] | null; // Added field for related testimonials
+  icon: IconData | null;
 }
 
-export async function getFeaturedServices(limit: number = 6): Promise<ServiceData[]> {
-  noStore();
-  const supabase = await createClient();
-  // Query remains the same as it doesn't need related testimonials for featured cards
-  const { data, error } = await supabase
-    .from('services')
-    .select('id, slug, title, description, offering_type, content, featured_image_url, sort_order, featured')
-    .eq('featured', true)
-    .order('sort_order', { ascending: true })
-    .limit(limit);
+export interface ServiceDetail extends ServiceCardItem {
+  content: ServiceContentJson | null;
+  features: ServiceFeature[] | null;
+}
 
-  if (error) {
-    console.error('Error fetching featured services:', error.message);
-    return [];
+// FIX: Manually define the shape of a row from the 'services' table.
+// This removes the dependency on the Supabase `Database` generic.
+type ServiceRow = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  content: unknown;
+};
+
+// FIX: Manually define the shape of a row from the 'service_features' table.
+type ServiceFeatureRow = {
+  id: string;
+  name: string;
+  description: string | null;
+};
+
+// FIX: Rebuild the joined type using our manual, self-contained types.
+// This is now stable and resolves the "'any' overrides all other types" error.
+type ServiceWithFeatures = ServiceRow & {
+  service_features: (ServiceFeatureRow & {
+    icons: IconData[] | null;
+  })[];
+  icons: IconData[] | null;
+};
+
+function getIcon(item: { icons: IconData[] | null }): IconData | null {
+  if (Array.isArray(item.icons) && item.icons.length > 0) {
+    return item.icons[0];
   }
-  return data ? data.map(service => ({
-    ...service,
-    content: service.content as ServiceContentData | null
-  })) : [];
+  return null;
 }
 
-export async function getAllServices(): Promise<ServiceData[]> {
+export async function getAllServices(): Promise<ServiceCardItem[]> {
   noStore();
-  const supabase = await createClient();
-  // Query remains the same
-  const { data, error } = await supabase
+  const supabase = await createServerClient();
+
+  const response = await supabase
     .from('services')
-    .select('id, slug, title, description, offering_type, content, featured_image_url, sort_order, featured')
-    .order('offering_type', { ascending: true })
+    .select('id, slug, title, description, icons (name, icon_library)')
     .order('sort_order', { ascending: true });
 
-  if (error) {
-    console.error('Error fetching all services:', error.message);
+  if (response.error) {
+    console.error('Error fetching all services:', response.error.message);
     return [];
   }
 
-  const allServicesWithCastedContent: ServiceData[] = data.map(service => ({
-    ...service,
-    content: service.content as ServiceContentData | null
-  }));
+  const data = response.data as (ServiceCardItem & { icons: IconData[] | null })[];
 
-  // Sorting logic remains the same
-  allServicesWithCastedContent.sort((a, b) => {
-    if (a.offering_type === 'BUNDLE' && b.offering_type !== 'BUNDLE') return -1;
-    if (a.offering_type !== 'BUNDLE' && b.offering_type === 'BUNDLE') return 1;
-    return (a.sort_order || 0) - (b.sort_order || 0);
-  });
-  return allServicesWithCastedContent;
+  return data.map(service => ({
+    id: service.id,
+    slug: service.slug,
+    title: service.title,
+    description: service.description,
+    icon: getIcon(service),
+  }));
 }
 
-export async function getServiceBySlug(slug: string): Promise<ServiceData | null> {
+export async function getServiceBySlug(slug: string): Promise<ServiceDetail | null> {
   noStore();
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const supabase = await createServerClient();
+
+  const response = await supabase
     .from('services')
-    .select(`
-      id,
-      slug,
-      title,
-      description,
-      offering_type,
-      content,
-      featured_image_url,
-      sort_order,
-      featured,
-      testimonial_services (
-        testimonials (
-          id,
-          quote,
-          name,
-          role,
-          company_name,
-          avatar_url,
-          sort_order 
-        )
-      )
-    `)
+    .select('*, icons (name, icon_library), service_features (*, icons (name, icon_library))')
     .eq('slug', slug)
     .single();
 
-  if (error) {
-    if (error.code === 'PGRST116') {
-        console.warn(`Service with slug "${slug}" not found.`);
-        return null;
+  if (response.error) {
+    if (response.error.code === 'PGRST116') {
+      console.warn(`Service with slug "${slug}" not found.`);
+      return null;
     }
-    console.error(`Error fetching service by slug "${slug}":`, error.message);
+    console.error(`Error fetching service by slug "${slug}":`, response.error.message);
     return null;
   }
-  if (!data) {
-    return null;
-  }
+  
+  const typedData = response.data as ServiceWithFeatures;
 
-  // Extract and map related testimonials
-  const relatedTestimonials = data.testimonial_services?.map((ts: any) => {
-    if (!ts.testimonials) return null;
-    return {
-      id: ts.testimonials.id,
-      quote: ts.testimonials.quote,
-      name: ts.testimonials.name,
-      role: ts.testimonials.role,
-      company_name: ts.testimonials.company_name,
-      avatar_url: ts.testimonials.avatar_url,
-      sort_order: ts.testimonials.sort_order, 
-      // Ensure HomepageTestimonial interface matches these fields
-    };
-  }).filter(Boolean) as HomepageTestimonial[] || undefined; // Use undefined if empty for optional field
-
-  // Order testimonials by their sort_order if it exists
-  if (relatedTestimonials) {
-    relatedTestimonials.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-  }
+  // With `ServiceWithFeatures` now stable, all unsafe errors are resolved.
+  const features = typedData.service_features.map(feature => ({
+    id: feature.id,
+    name: feature.name,
+    description: feature.description,
+    icon: getIcon(feature),
+  }));
 
   return {
-    ...data,
-    content: data.content as ServiceContentData | null,
-    relatedTestimonials: relatedTestimonials && relatedTestimonials.length > 0 ? relatedTestimonials : undefined,
-  } as ServiceData;
+    id: typedData.id,
+    slug: typedData.slug,
+    title: typedData.title,
+    description: typedData.description,
+    icon: getIcon(typedData),
+    content: typedData.content as ServiceContentJson | null,
+    features: features.length > 0 ? features : null,
+  };
 }

@@ -1,4 +1,7 @@
-// src/components/common/__tests__/site-header.test.tsx
+// ATTEMPT 1: Applying our standard fixes for test files.
+// - Used `extendTheme` idiomatically to resolve the unsafe assignment.
+// - Added fallbacks to template literals to handle potentially undefined values.
+
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -8,7 +11,7 @@ import SiteHeader from '../site-header';
 import baseTheme from '@/src/lib/theme';
 import type { User } from "@supabase/supabase-js";
 
-// Updated NextLink mock
+// Mock NextLink
 vi.mock('next/link', () => ({
   default: ({
     children,
@@ -36,23 +39,28 @@ vi.mock('../../navigation/theme-switcher', () => ({
 vi.mock('../../navigation/header-auth', () => ({
   default: ({ user }: { user?: User | null }) => (
     <div data-testid="mock-auth-button">
-      {user ? `User: ${user.email}` : 'No User'}
+      {/* FIX: Added fallback for potentially undefined email. */}
+      {user ? `User: ${user.email || ''}` : 'No User'}
     </div>
   ),
 }));
 
-// ESLint Solution: Use a function for the mock to control the value per test via beforeEach
-// This also makes it clearer that mockableHasEnvVarsForSiteHeaderTest is indeed used.
 let currentMockHasEnvVars = true;
 vi.mock('@/src/utils/supabase/check-env-vars', () => ({
   get hasEnvVars() { return currentMockHasEnvVars; }
 }));
 
 const renderWithChakra = (ui: React.ReactElement, colorMode: 'light' | 'dark' = 'light') => {
-  const theme = extendTheme({
-    ...baseTheme,
-    config: { ...baseTheme.config, initialColorMode: colorMode, useSystemColorMode: false },
-  });
+  // FIX: Pass theme objects as separate arguments instead of using the spread operator.
+  const theme = extendTheme(
+    baseTheme,
+    {
+      config: { 
+        initialColorMode: colorMode, 
+        useSystemColorMode: false 
+      },
+    }
+  );
   return render(<ChakraProvider theme={theme}>{ui}</ChakraProvider>);
 };
 
@@ -83,15 +91,13 @@ describe('SiteHeader Accessibility', () => {
   };
 
   beforeEach(() => {
-    currentMockHasEnvVars = true; // Reset before each test
+    currentMockHasEnvVars = true;
   });
 
   it('should have no a11y violations in light mode when user is logged out', async () => {
     const { container } = renderWithChakra(<SiteHeader user={mockUserNull} />, 'light');
-    // Find the logo by its heading role and name
     const logoHeading = screen.getByRole('heading', { name: /coriyon's studio/i, level: 2 });
     expect(logoHeading).toBeInTheDocument();
-    // Assert it has the href attribute (making it function as a link)
     expect(logoHeading).toHaveAttribute('href', '/');
     const results = await axe(container);
     expect(results).toHaveNoViolations();
@@ -108,14 +114,16 @@ describe('SiteHeader Accessibility', () => {
 
   it('should have no a11y violations in light mode when user is logged in', async () => {
     const { container } = renderWithChakra(<SiteHeader user={mockUserPopulated} />, 'light');
-    expect(screen.getByTestId('mock-auth-button')).toHaveTextContent(`User: ${mockUserPopulated.email}`);
+    // FIX: Added fallback for potentially undefined email.
+    expect(screen.getByTestId('mock-auth-button')).toHaveTextContent(`User: ${mockUserPopulated.email || ''}`);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 
   it('should have no a11y violations in dark mode when user is logged in', async () => {
     const { container } = renderWithChakra(<SiteHeader user={mockUserPopulated} />, 'dark');
-    expect(screen.getByTestId('mock-auth-button')).toHaveTextContent(`User: ${mockUserPopulated.email}`);
+    // FIX: Added fallback for potentially undefined email.
+    expect(screen.getByTestId('mock-auth-button')).toHaveTextContent(`User: ${mockUserPopulated.email || ''}`);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
