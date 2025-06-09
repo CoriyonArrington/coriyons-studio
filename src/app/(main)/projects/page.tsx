@@ -18,7 +18,7 @@ interface ProjectsPageProps {
   params: unknown;
 }
 
-const SLUG = 'work'; // Correct slug for the "Work" page
+const SLUG = 'work';
 
 export default async function ProjectsPage({ params: _params }: ProjectsPageProps) {
   const [pageCmsData, allProjects, navigablePages] = await Promise.all([
@@ -66,7 +66,7 @@ export default async function ProjectsPage({ params: _params }: ProjectsPageProp
                 href={`/projects/${project.slug}`}
                 title={project.title}
                 description={project.description}
-                imageUrl={project.featured_image?.image_url}
+                imageUrl={project.featured_image_url}
                 tags={project.services?.map(s => ({id: s.id, name: s.title }))}
                 tagColorScheme="blue"
                 ctaText="View Project"

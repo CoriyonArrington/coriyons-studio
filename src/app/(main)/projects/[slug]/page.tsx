@@ -21,7 +21,6 @@ import {
 import { ExternalLinkIcon, CheckCircleIcon } from '@chakra-ui/icons';
 import type { Metadata, ResolvingMetadata } from 'next';
 import React from 'react';
-// FIX: Local types defined here, as they are specific to this component's rendering logic
 import type { ProjectService, ProjectContentJson } from '@/src/lib/data/projects';
 import PostCard from '@/src/components/common/post-card';
 import PrevNextNavigation from '@/src/components/common/prev-next-navigation';
@@ -31,7 +30,6 @@ interface ProjectPageProps {
   searchParams: { [key: string]: string | string[] | undefined };
 }
 
-// Define a more specific type for the 'content' JSON object
 interface ProjectPageContent extends ProjectContentJson {
     hero?: {
         title?: string;
@@ -59,7 +57,6 @@ interface ProjectPageContent extends ProjectContentJson {
     }>
 }
 
-// Helper component for rendering an image with a caption
 const ContentImage = ({ src, alt, caption }: { src: string; alt: string; caption?: string }) => (
   <Box as="figure">
     <Image src={src} alt={alt} borderRadius="md" objectFit="cover" w="full" />
@@ -67,7 +64,6 @@ const ContentImage = ({ src, alt, caption }: { src: string; alt: string; caption
   </Box>
 );
 
-// Main component for the project detail page
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const project = await getProjectBySlug(params.slug);
   const allProjects = await getAllProjects();
@@ -81,7 +77,6 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     ? allProjects[currentProjectIndex + 1]
     : null;
     
-  // FIX: Cast the unknown content to our specific page content type
   const pageContent = project.content as ProjectPageContent | null;
   const hero = pageContent?.hero;
   const sections = pageContent?.sections || [];
@@ -96,7 +91,6 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               <Heading as="h1" size="3xl" fontWeight="extrabold">{hero?.title || project.title}</Heading>
               {hero?.problem && <Text fontSize="xl" color="muted.foreground">{hero.problem}</Text>}
             </VStack>
-
             <Box bg="background.default" p={8} borderRadius="lg" shadow="md">
               <VStack spacing={6} align="stretch">
                 {hero?.details?.Role && <HStack><Text fontWeight="bold" minW="80px">Role:</Text><Text>{hero.details.Role}</Text></HStack>}
@@ -134,16 +128,13 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             <VStack key={`section-${String(i)}`} spacing={6} align="stretch" w="full">
               <Heading as="h2" size="xl">{section.heading}</Heading>
               <Text whiteSpace="pre-wrap" lineHeight="tall">{section.body}</Text>
-
               {section.pullquote && (
                 <Box as="blockquote" borderLeft="4px" borderColor="blue.500" pl={6} py={2} my={6}>
                   <Text fontSize="xl" fontStyle="italic">&quot;{section.pullquote.quote}&quot;</Text>
                   {section.pullquote.attribution && <Text mt={2} textAlign="right" color="muted.foreground">— {section.pullquote.attribution}</Text>}
                 </Box>
               )}
-
               {section.image && <ContentImage src={section.image} alt={`${section.heading} main visual`} />}
-              
               {section.images && section.images.length > 0 && (
                 <SimpleGrid columns={section.images.length > 1 ? 2 : 1} spacing={4} mt={6}>
                   {section.images.map((image: string, index: number) => (
@@ -151,7 +142,6 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   ))}
                 </SimpleGrid>
               )}
-
               {section.activities && (
                 <Box>
                   <Text fontWeight="bold" mb={3}>Key Activities & Links:</Text>
@@ -206,8 +196,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                       href={`/projects/${nextProject.slug}`}
                       title={nextProject.title}
                       description={nextProject.description}
-                      imageUrl={nextProject.featured_image?.image_url}
-                      tags={[]}
+                      imageUrl={nextProject.featured_image_url}
+                      tags={nextProject.services?.map(s => ({id: s.id, name: s.title}))}
                       tagColorScheme="blue"
                       ctaText="View Next Project"
                     />
@@ -215,7 +205,6 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               </VStack>
           </Section>
       )}
-
       <PrevNextNavigation previousPage={undefined} nextPage={nextProject ? { slug: nextProject.slug, title: nextProject.title, categoryLabel: 'Project' } : undefined} />
     </Layout>
   );
@@ -239,7 +228,7 @@ export async function generateMetadata(
   
   const title = `${project.title} | Case Study`;
   const description = project.description || 'Explore this detailed UX design and development case study from Coriyon\'s Studio.';
-  const ogImage = project.featured_image?.image_url;
+  const ogImage = project.featured_image_url;
 
   return {
     title,

@@ -39,7 +39,7 @@ export default function ProjectsView({ pageData, allProjects, previousPageLink, 
                 href={`/projects/${project.slug}`}
                 title={project.title}
                 description={project.description}
-                imageUrl={project.featured_image?.image_url}
+                imageUrl={project.featured_image_url}
                 tags={project.services?.map(s => ({id: s.id, name: s.title}))}
                 tagColorScheme="blue"
                 ctaText="View Project"

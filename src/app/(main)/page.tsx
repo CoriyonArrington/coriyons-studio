@@ -19,6 +19,7 @@ import { getFeaturedTestimonials, type HomepageTestimonial } from '@/src/lib/dat
 import { getFeaturedPosts, type PostCardItem } from '@/src/lib/data/posts';
 import { getPageBySlug, getNavigablePages } from '@/src/lib/data/pages';
 import type { PageWithRelations, NavigablePageInfo } from '@/src/lib/data/pages';
+import type { UxProblemRow, UxSolutionRow } from '@/src/lib/data/minimal_pages_schema';
 import PrevNextNavigation, { type NavLinkInfo as PrevNextNavLinkInfo } from '@/src/components/common/prev-next-navigation';
 import { mapPageTypeToCategoryLabel } from '@/src/lib/utils';
 import type { Metadata } from 'next';
@@ -76,8 +77,9 @@ export default async function HomePage() {
     testimonials_section,
   } = pageData.content as unknown as HomeContent;
   
-  const relatedUxProblems = pageData.ux_problem_pages?.map(p => p.ux_problems).filter(Boolean) || [];
-  const relatedUxSolutions = pageData.ux_solution_pages?.map(s => s.ux_solutions).filter(Boolean) || [];
+  // FIX: Correctly flatten and type the related items to ensure we get a single object.
+  const relatedUxProblems = pageData.ux_problem_pages?.flatMap(p => p.ux_problems).filter((p): p is UxProblemRow => !!p) || [];
+  const relatedUxSolutions = pageData.ux_solution_pages?.flatMap(s => s.ux_solutions).filter((s): s is UxSolutionRow => !!s) || [];
   
   const featuredUxProblem = relatedUxProblems[0] ?? null;
   const featuredUxSolution = relatedUxSolutions[0] ?? null;

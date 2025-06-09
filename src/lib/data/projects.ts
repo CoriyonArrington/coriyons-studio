@@ -12,12 +12,6 @@ export interface ProjectContentJson {
   [key:string]: unknown;
 }
 
-export interface ProjectImage {
-  id: string;
-  image_url: string;
-  alt_text: string | null;
-}
-
 export interface ProjectService {
   id: string;
   title: string;
@@ -47,32 +41,38 @@ export interface ProjectDetail extends ProjectCardItem {
 }
 
 // --- Internal Types ---
-type ProjectWithServices = {
+type ServiceRow = { id: string; slug: string; title: string; icons: IconData[] | null };
+type TestimonialRow = { id: string; quote: string; name: string; };
+
+type ProjectWithDetails = {
   id: string;
   slug: string;
   title: string;
   description: string | null;
   featured_image_url: string | null;
-  project_services: {
-    services: {
-      id: string;
-      slug: string;
-      title: string;
-    } | null;
-  }[];
+  content: unknown;
+  project_services: { services: ServiceRow | null; }[];
+  project_testimonials: { testimonials: TestimonialRow | null; }[];
+  other_images: { url: string; alt?: string }[] | null;
 };
 
 // --- Helper Functions ---
-function mapRawProjects(rawProjects: ProjectWithServices[]): ProjectCardItem[] {
-    return rawProjects.map((project) => {
+function getIcon(item: { icons: IconData[] | null }): IconData | null {
+  if (Array.isArray(item.icons) && item.icons.length > 0) return item.icons[0];
+  return null;
+}
+
+function mapRawProjects(rawProjects: any[]): ProjectCardItem[] {
+    return rawProjects.map((project): ProjectCardItem => {
         const services = project.project_services
-            .map(ps => ps.services)
-            .filter((s): s is NonNullable<typeof s> => s !== null)
-            .map(service => ({
+            // FIX: Added explicit type to the 'ps' parameter to resolve implicit any error.
+            .map((ps: { services: ServiceRow | null }) => ps.services)
+            .filter((s: ServiceRow | null): s is ServiceRow => s !== null)
+            .map((service: ServiceRow) => ({
                 id: service.id,
                 title: service.title,
                 slug: service.slug,
-                icon: null, // Set to null as there's no direct icon relationship
+                icon: getIcon(service),
             }));
 
         return {
@@ -87,10 +87,9 @@ function mapRawProjects(rawProjects: ProjectWithServices[]): ProjectCardItem[] {
 }
 
 // --- Data Fetching Functions ---
-// FIX: Removed the invalid 'icons' join from the 'services' table select.
 const PROJECT_CARD_SELECT_QUERY = `
     id, slug, title, description, featured_image_url,
-    project_services ( services ( id, slug, title ))
+    project_services ( services ( id, slug, title, icons ( name, icon_library )))
 `;
 
 export async function getAllProjects(): Promise<ProjectCardItem[]> {
@@ -105,7 +104,7 @@ export async function getAllProjects(): Promise<ProjectCardItem[]> {
     console.error('Error fetching all projects:', error.message);
     return [];
   }
-  return mapRawProjects(data as unknown as ProjectWithServices[]);
+  return mapRawProjects(data);
 }
 
 export async function getFeaturedProjects(limit: number = 3): Promise<ProjectCardItem[]> {
@@ -122,8 +121,53 @@ export async function getFeaturedProjects(limit: number = 3): Promise<ProjectCar
         console.error('Error fetching featured projects:', error.message);
         return [];
     }
-    return mapRawProjects(data as unknown as ProjectWithServices[]);
+    return mapRawProjects(data);
 }
 
-// Note: The getProjectBySlug function is not included here as it wasn't part of the error.
-// If it exists in your file, it should remain.
+export async function getProjectBySlug(slug: string): Promise<ProjectDetail | null> {
+  noStore();
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('projects')
+    .select(`
+      *,
+      project_services ( services ( *, icons ( name, icon_library ) ) ),
+      project_testimonials ( testimonials ( id, quote, name ) )
+    `)
+    .eq('slug', slug)
+    .single();
+
+  if (error) {
+    if (error.code !== 'PGRST116') {
+        console.error(`Error fetching project by slug "${slug}":`, error.message);
+    }
+    return null;
+  }
+
+  const typedData = data as ProjectWithDetails;
+  
+  const services = typedData.project_services
+    .map(ps => ps.services)
+    .filter((s): s is ServiceRow => s !== null)
+    .map(service => ({
+        id: service.id,
+        slug: service.slug,
+        title: service.title,
+        icon: getIcon(service),
+    }));
+
+  const testimonial = typedData.project_testimonials[0]?.testimonials || null;
+
+  return {
+    id: typedData.id,
+    slug: typedData.slug,
+    title: typedData.title,
+    description: typedData.description,
+    featured_image_url: typedData.featured_image_url,
+    services: services.length > 0 ? services : null,
+    content: typedData.content as ProjectContentJson | null,
+    testimonial: testimonial,
+    other_images: typedData.other_images, 
+  };
+}
