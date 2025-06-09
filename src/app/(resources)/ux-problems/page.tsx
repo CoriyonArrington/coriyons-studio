@@ -14,7 +14,7 @@ import {
 } from '@chakra-ui/react';
 import HeroCtaButton from '@/src/components/common/hero-cta-button';
 import {
-  getPageDataBySlug,
+  getPageBySlug,
   getNavigablePages,
   type NavigablePageInfo,
 } from '@/src/lib/data/pages';
@@ -63,7 +63,7 @@ const DynamicLucideIcon: React.FC<{ name: string | undefined | null } & Omit<Luc
 
 export default async function UxProblemsLandingPage() {
   const [pageCmsData, uxProblems, navigablePages] = await Promise.all([
-    getPageDataBySlug(SLUG),
+    getPageBySlug(SLUG),
     getAllUxProblems(),
     getNavigablePages(),
   ]);
@@ -219,7 +219,7 @@ export default async function UxProblemsLandingPage() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const pageCmsData = await getPageDataBySlug(SLUG);
+  const pageCmsData = await getPageBySlug(SLUG);
   const title = pageCmsData?.title || "Common UX Problems | Coriyon's Studio";
   const description =
     pageCmsData?.meta_description ||

@@ -14,7 +14,6 @@ import PrevNextNavigation, {
   type NavLinkInfo as PrevNextNavLinkInfo,
 } from '@/src/components/common/prev-next-navigation';
 import {
-  getPageDataBySlug,
   getNavigablePages,
   type NavigablePageInfo,
 } from '@/src/lib/data/pages';
@@ -212,4 +211,8 @@ export async function generateMetadata(): Promise<Metadata> {
       images: pageData.og_image_url ? [{ url: pageData.og_image_url }] : undefined,
     },
   };
+}
+
+function getPageDataBySlug(SLUG: string): any {
+  throw new Error('Function not implemented.');
 }

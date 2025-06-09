@@ -4,7 +4,7 @@ import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import { Heading } from '@chakra-ui/react';
 import {
-  getPageDataBySlug,
+  getPageBySlug,
   getNavigablePages,
 } from '@/src/lib/data/pages';
 import PrevNextNavigation, {
@@ -29,7 +29,7 @@ export default async function SecurityPolicyPage({
   searchParams: _searchParams,
 }: PageProps) {
   // Use the corrected function and remove all unnecessary type assertions
-  const pageData = await getPageDataBySlug(SLUG);
+  const pageData = await getPageBySlug(SLUG);
   const navigablePages = await getNavigablePages();
 
   let previousPageLink: PrevNextNavLinkInfo | undefined;
@@ -88,7 +88,7 @@ export default async function SecurityPolicyPage({
 
 export async function generateMetadata(): Promise<Metadata> {
   // Use the corrected function and remove the unnecessary type assertion
-  const pageData = await getPageDataBySlug(SLUG);
+  const pageData = await getPageBySlug(SLUG);
   const title = pageData?.title ?? "Security Policy | Coriyon's Studio";
   const description = pageData?.meta_description ?? undefined;
   const ogImageUrl = pageData?.og_image_url ?? undefined;

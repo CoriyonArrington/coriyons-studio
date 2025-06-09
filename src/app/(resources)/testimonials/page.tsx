@@ -10,7 +10,7 @@ import {
   Text,
 } from '@chakra-ui/react';
 import {
-  getPageDataBySlug,
+  getPageBySlug,
   getNavigablePages,
   type NavigablePageInfo,
 } from '@/src/lib/data/pages';
@@ -33,7 +33,7 @@ const SLUG = 'testimonials';
 
 export default async function TestimonialsPage({ params: _params }: TestimonialsPageProps) {
   const [pageCmsData, allTestimonials, navigablePages] = await Promise.all([
-    getPageDataBySlug(SLUG),
+    getPageBySlug(SLUG),
     getAllTestimonials(),
     getNavigablePages(),
   ]);
@@ -176,7 +176,7 @@ export default async function TestimonialsPage({ params: _params }: Testimonials
 }
 
 export async function generateMetadata({ params: _params }: TestimonialsPageProps): Promise<Metadata> {
-  const pageCmsData = await getPageDataBySlug(SLUG);
+  const pageCmsData = await getPageBySlug(SLUG);
   const title = pageCmsData?.title || "Client Testimonials | Coriyon's Studio";
   const description =
     pageCmsData?.meta_description ||
