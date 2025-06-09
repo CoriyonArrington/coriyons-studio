@@ -99,7 +99,7 @@ function getIcon(item: { icons: IconData[] | null }): IconData | null {
 
 export async function getAllProjects(): Promise<ProjectCardItem[]> {
   noStore();
-  const supabase = await createServerClient();
+  const supabase = createServerClient();
 
   const response = await supabase
     .from('projects')
@@ -144,7 +144,7 @@ export async function getAllProjects(): Promise<ProjectCardItem[]> {
 
 export async function getProjectBySlug(slug: string): Promise<ProjectDetail | null> {
   noStore();
-  const supabase = await createServerClient();
+  const supabase = createServerClient();
 
   const response = await supabase
     .from('projects')

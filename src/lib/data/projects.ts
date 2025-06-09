@@ -1,4 +1,4 @@
-// ATTEMPT #4: Removing `await` from synchronous function calls.
+// ATTEMPT #4: Removing await from synchronous function calls.
 // Change 1 & 2: The `getIcon` helper function is synchronous and does not return a Promise. Removed the unnecessary `await` keyword from the calls to this function inside `getAllProjects` and `getProjectBySlug` to resolve the `await-thenable` errors.
 
 import { createClient as createServerClient } from '@/src/utils/supabase/server';

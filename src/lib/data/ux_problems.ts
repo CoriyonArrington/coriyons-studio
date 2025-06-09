@@ -6,7 +6,7 @@
 // - Cleaned up all unnecessary conditional checks (`!data`, `??`, `?.`).
 // - Added a local definition for `UxSolutionRow` to fix the import error.
 
-import { createServerClient } from '@/src/utils/supabase/server';
+import { createClient as createServerClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
 // FIX: Removed `UxSolutionRow` from the import as it's not exported from the module.
 import type { UxSolutionCardItem } from './ux_solutions';
@@ -76,7 +76,7 @@ function getIcon(item: { icons: IconData[] | null }): IconData | null {
 
 export async function getAllUxProblems(): Promise<UxProblemCardItem[]> {
   noStore();
-  const supabase = await createServerClient();
+  const supabase = createServerClient();
 
   const response = await supabase
     .from('ux_problems')
@@ -107,7 +107,7 @@ export async function getAllUxProblems(): Promise<UxProblemCardItem[]> {
 
 export async function getUxProblemBySlug(slug: string): Promise<UxProblemDetail | null> {
   noStore();
-  const supabase = await createServerClient();
+  const supabase = createServerClient();
 
   const response = await supabase
     .from('ux_problems')

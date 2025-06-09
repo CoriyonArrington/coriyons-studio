@@ -1,7 +1,7 @@
 // FINAL, SELF-CONTAINED VERSION
 // This version uses our established robust pattern to resolve the final data layer errors.
 
-import { createServerClient } from '@/src/utils/supabase/server';
+import { createClient as createServerClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
 
 // --- Core Type Definitions ---
@@ -33,7 +33,7 @@ type TestimonialRow = {
 
 export async function getHomepageTestimonials(): Promise<HomepageTestimonial[]> {
   noStore();
-  const supabase = await createServerClient();
+  const supabase = createServerClient();
 
   const response = await supabase
     .from('testimonials')
@@ -52,7 +52,7 @@ export async function getHomepageTestimonials(): Promise<HomepageTestimonial[]> 
 
 export async function getAllTestimonials(): Promise<HomepageTestimonial[]> {
   noStore();
-  const supabase = await createServerClient();
+  const supabase = createServerClient();
 
   const response = await supabase
     .from('testimonials')

@@ -2,7 +2,7 @@
 // This version manually defines all necessary types to remove any dependency on
 // external type generation, definitively resolving the chain of errors.
 
-import { createServerClient } from '@/src/utils/supabase/server';
+import { createClient as createServerClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
 
 export interface IconData {
@@ -69,7 +69,7 @@ function getIcon(item: { icons: IconData[] | null }): IconData | null {
 
 export async function getAllServices(): Promise<ServiceCardItem[]> {
   noStore();
-  const supabase = await createServerClient();
+  const supabase = createServerClient();
 
   const response = await supabase
     .from('services')
@@ -94,7 +94,7 @@ export async function getAllServices(): Promise<ServiceCardItem[]> {
 
 export async function getServiceBySlug(slug: string): Promise<ServiceDetail | null> {
   noStore();
-  const supabase = await createServerClient();
+  const supabase = createServerClient();
 
   const response = await supabase
     .from('services')

@@ -8,7 +8,7 @@
 // - Used explicit type casting (`as`) to enforce strong types on query results.
 // - Removed redundant conditional and avoided direct destructuring of Supabase results.
 
-import { createServerClient } from '@/src/utils/supabase/server';
+import { createClient as createServerClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Database } from '@/src/types/supabase';
 
@@ -78,7 +78,7 @@ export interface UxSolutionDetail extends UxSolutionCardItem {
 
 export async function getAllUxSolutions(): Promise<UxSolutionCardItem[]> {
   noStore();
-  const supabase = await createServerClient();
+  const supabase = createServerClient();
   
   // FIX: Avoid direct destructuring to prevent unsafe-assignment errors.
   const response = await supabase
@@ -112,7 +112,7 @@ export async function getAllUxSolutions(): Promise<UxSolutionCardItem[]> {
 
 export async function getUxSolutionBySlug(slug: string): Promise<UxSolutionDetail | null> {
   noStore();
-  const supabase = await createServerClient();
+  const supabase = createServerClient();
   
   // FIX: Avoid direct destructuring to resolve the "unsafe array destructuring" error.
   const response = await supabase

@@ -2,7 +2,7 @@
 // This version manually defines all necessary types to make the file
 // self-sufficient and immune to external type-generation issues.
 
-import { createServerClient } from '@/src/utils/supabase/server';
+import { createClient as createServerClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
 
 // --- Core & Related Type Definitions ---
@@ -68,7 +68,7 @@ type PostWithDetails = PostRow & {
 
 export async function getRecentPosts(limit: number = 3): Promise<PostCardItem[]> {
     noStore();
-    const supabase = await createServerClient();
+    const supabase = createServerClient();
     
     const response = await supabase
         .from('posts')
@@ -97,7 +97,7 @@ export async function getRecentPosts(limit: number = 3): Promise<PostCardItem[]>
 
 export async function getAllPosts(): Promise<PostCardItem[]> {
   noStore();
-  const supabase = await createServerClient();
+  const supabase = createServerClient();
 
   const response = await supabase
     .from('posts')
@@ -125,7 +125,7 @@ export async function getAllPosts(): Promise<PostCardItem[]> {
 
 export async function getPostBySlug(slug: string): Promise<PostDetail | null> {
     noStore();
-    const supabase = await createServerClient();
+    const supabase = createServerClient();
 
     const response = await supabase
       .from('posts')

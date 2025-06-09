@@ -2,7 +2,7 @@
 // This version manually defines all necessary types to make the file
 // self-sufficient and immune to external type-generation issues.
 
-import { createServerClient } from '@/src/utils/supabase/server';
+import { createClient as createServerClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
 
 // --- Core & Related Type Definitions ---
@@ -80,7 +80,7 @@ function getIcon(item: { icons: IconData[] | null }): IconData | null {
 
 export async function getAllProcessSteps(): Promise<ProcessStep[]> {
   noStore();
-  const supabase = await createServerClient();
+  const supabase = createServerClient();
 
   const response = await supabase
     .from('process_steps')
@@ -108,7 +108,7 @@ export async function getAllProcessSteps(): Promise<ProcessStep[]> {
 
 export async function getProcessStepBySlug(slug: string): Promise<ProcessStepDetail | null> {
     noStore();
-    const supabase = await createServerClient();
+    const supabase = createServerClient();
 
     const response = await supabase
       .from('process_steps')
