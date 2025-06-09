@@ -1,8 +1,3 @@
-// ATTEMPT 2: Final cleanup of all reported errors.
-// - Removed unused type imports for 'ProjectDetail' and 'PrevNextNavLinkInfo'.
-// - Replaced a non-null assertion `!` with a safe conditional check.
-// - Wrapped numbers in `key` props with String() to satisfy the template literal rule.
-
 import { notFound } from 'next/navigation';
 import { getProjectBySlug, getAllProjects } from '@/src/lib/data/projects';
 import Layout from '@/src/components/common/layout';
@@ -26,15 +21,42 @@ import {
 import { ExternalLinkIcon, CheckCircleIcon } from '@chakra-ui/icons';
 import type { Metadata, ResolvingMetadata } from 'next';
 import React from 'react';
-// FIX: Removed unused 'ProjectDetail' type.
-import type { SectionContent, RelatedServiceInfo } from '@/src/lib/data/projects';
+// FIX: Local types defined here, as they are specific to this component's rendering logic
+import type { ProjectService, ProjectContentJson } from '@/src/lib/data/projects';
 import PostCard from '@/src/components/common/post-card';
-// FIX: Removed unused 'PrevNextNavLinkInfo' type.
 import PrevNextNavigation from '@/src/components/common/prev-next-navigation';
 
 interface ProjectPageProps {
   params: { slug: string };
   searchParams: { [key: string]: string | string[] | undefined };
+}
+
+// Define a more specific type for the 'content' JSON object
+interface ProjectPageContent extends ProjectContentJson {
+    hero?: {
+        title?: string;
+        problem?: string;
+        details?: {
+            Role?: string;
+            Timeline?: string;
+            Tools?: string[];
+            Contributions?: string[];
+        };
+    };
+    sections?: Array<{
+        heading: string;
+        body: string;
+        pullquote?: {
+            quote: string;
+            attribution?: string;
+        };
+        image?: string;
+        images?: string[];
+        activities?: Array<{
+            label: string;
+            href?: string;
+        }>;
+    }>
 }
 
 // Helper component for rendering an image with a caption
@@ -54,34 +76,27 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     notFound();
   }
 
-  // Find the next project for the "Next Up" section
   const currentProjectIndex = allProjects.findIndex(p => p.slug === params.slug);
   const nextProject = currentProjectIndex !== -1 && currentProjectIndex < allProjects.length - 1
     ? allProjects[currentProjectIndex + 1]
     : null;
-
-  const hero = project.content?.hero;
-  const sections = project.content?.sections || [];
-  const relatedServices = project.relatedServices || [];
+    
+  // FIX: Cast the unknown content to our specific page content type
+  const pageContent = project.content as ProjectPageContent | null;
+  const hero = pageContent?.hero;
+  const sections = pageContent?.sections || [];
+  const relatedServices = project.services || [];
 
   return (
     <Layout>
-      {/* Hero Section */}
       <Box as="header" bg="background.subtle" py={{ base: 12, md: 20 }}>
         <Container maxW="container.xl">
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 8, md: 12 }} alignItems="center">
-            {/* Left Column: Text Content */}
             <VStack spacing={6} alignItems="flex-start">
               <Heading as="h1" size="3xl" fontWeight="extrabold">{hero?.title || project.title}</Heading>
               {hero?.problem && <Text fontSize="xl" color="muted.foreground">{hero.problem}</Text>}
-              {project.project_date && (
-                <Text fontSize="sm" color="muted.foreground" textTransform="uppercase" letterSpacing="wider">
-                  {new Date(project.project_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
-                </Text>
-              )}
             </VStack>
 
-            {/* Right Column: Details & Contributions */}
             <Box bg="background.default" p={8} borderRadius="lg" shadow="md">
               <VStack spacing={6} align="stretch">
                 {hero?.details?.Role && <HStack><Text fontWeight="bold" minW="80px">Role:</Text><Text>{hero.details.Role}</Text></HStack>}
@@ -90,7 +105,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   <HStack align="start">
                     <Text fontWeight="bold" minW="80px" mt={1}>Tools:</Text>
                     <HStack wrap="wrap" spacing={2}>
-                      {hero.details.Tools.map(tool => <ChakraTag key={tool} variant="solid" colorScheme="blue">{tool}</ChakraTag>)}
+                      {hero.details.Tools.map((tool: string) => <ChakraTag key={tool} variant="solid" colorScheme="blue">{tool}</ChakraTag>)}
                     </HStack>
                   </HStack>
                 )}
@@ -98,7 +113,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   <VStack align="stretch" spacing={3}>
                     <Text fontWeight="bold">My Contributions:</Text>
                     <List spacing={2}>
-                      {hero.details.Contributions.map(item => (
+                      {hero.details.Contributions.map((item: string) => (
                         <ListItem key={item} display="flex" alignItems="center">
                           <ListIcon as={CheckCircleIcon} color="green.500" />
                           {item}
@@ -113,11 +128,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         </Container>
       </Box>
 
-      {/* Main Content Sections */}
       <Section id="project-details" py={{ base: 16, md: 24 }}>
         <VStack spacing={{ base: 16, md: 24 }} maxW="container.md" mx="auto">
-          {sections.map((section: SectionContent, i: number) => (
-            // FIX: Wrapped number in key prop with String()
+          {sections.map((section, i: number) => (
             <VStack key={`section-${String(i)}`} spacing={6} align="stretch" w="full">
               <Heading as="h2" size="xl">{section.heading}</Heading>
               <Text whiteSpace="pre-wrap" lineHeight="tall">{section.body}</Text>
@@ -130,16 +143,10 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               )}
 
               {section.image && <ContentImage src={section.image} alt={`${section.heading} main visual`} />}
-
-              {/* FIX: Replaced non-null assertion `!` with a proper truthy check */}
-              {section.images && section.images.length === 1 && section.images[0] && (
-                <ContentImage src={section.images[0]} alt={`${section.heading} detailed visual`} />
-              )}
               
-              {section.images && section.images.length > 1 && (
-                <SimpleGrid columns={section.images.length} spacing={4} mt={6}>
-                  {section.images.map((image, index) => (
-                    // FIX: Wrapped number in key prop with String()
+              {section.images && section.images.length > 0 && (
+                <SimpleGrid columns={section.images.length > 1 ? 2 : 1} spacing={4} mt={6}>
+                  {section.images.map((image: string, index: number) => (
                     image && <ContentImage key={`img-${String(index)}`} src={image} alt={`${section.heading} visual ${String(index + 1)}`} />
                   ))}
                 </SimpleGrid>
@@ -149,7 +156,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 <Box>
                   <Text fontWeight="bold" mb={3}>Key Activities & Links:</Text>
                   <UnorderedList spacing={2}>
-                    {section.activities.map(activity => (
+                    {section.activities.map((activity: {label: string, href?: string}) => (
                       <ListItem key={activity.label}>
                         {activity.href ? (
                           <ChakraLink href={activity.href} isExternal color="blue.500">
@@ -168,26 +175,24 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         </VStack>
       </Section>
       
-      {/* Related Services Section */}
       {relatedServices.length > 0 && (
         <Section id="related-services" py={{ base: 16, md: 24 }} variant="subtle">
           <Heading as="h2" size="2xl" textAlign="center" mb={12}>Services Used in This Project</Heading>
           <SimpleGrid columns={{ base: 1, md: 2, lg: Math.min(3, relatedServices.length) }} spacing={{ base: 6, md: 8 }}>
-            {relatedServices.map((service: RelatedServiceInfo) => (
+            {relatedServices.map((service: ProjectService) => (
               <PostCard
                 key={service.id}
                 href={`/services/${service.slug}`}
                 title={service.title}
-                description={service.description}
-                tags={service.offering_type ? [{ id: service.offering_type, name: service.offering_type }] : []}
-                tagColorScheme={service.offering_type === 'BUNDLE' ? 'purple' : 'teal'}
+                description={null}
+                tags={service.icon ? [{ id: service.id, name: 'Service' }] : []}
+                tagColorScheme={'teal'}
               />
             ))}
           </SimpleGrid>
         </Section>
       )}
 
-      {/* Next Up Project Section */}
       {nextProject && (
           <Section id="next-up" py={{ base: 16, md: 24 }}>
               <VStack spacing={8} alignItems="center">
@@ -201,8 +206,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                       href={`/projects/${nextProject.slug}`}
                       title={nextProject.title}
                       description={nextProject.description}
-                      imageUrl={nextProject.featured_image_url}
-                      tags={nextProject.tags}
+                      imageUrl={nextProject.featured_image?.image_url}
+                      tags={[]}
                       tagColorScheme="blue"
                       ctaText="View Next Project"
                     />
@@ -211,13 +216,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           </Section>
       )}
 
-      {/* This PrevNextNavigation seems to be for a different page type, but keeping logic */}
       <PrevNextNavigation previousPage={undefined} nextPage={nextProject ? { slug: nextProject.slug, title: nextProject.title, categoryLabel: 'Project' } : undefined} />
     </Layout>
   );
 }
 
-// Generate metadata for the page
 export async function generateMetadata(
   { params }: ProjectPageProps,
   parent: ResolvingMetadata
@@ -236,7 +239,7 @@ export async function generateMetadata(
   
   const title = `${project.title} | Case Study`;
   const description = project.description || 'Explore this detailed UX design and development case study from Coriyon\'s Studio.';
-  const ogImage = project.og_image_url || project.featured_image_url;
+  const ogImage = project.featured_image?.image_url;
 
   return {
     title,

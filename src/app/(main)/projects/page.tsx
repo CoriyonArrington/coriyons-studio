@@ -1,11 +1,9 @@
-// src/app/(main)/projects/page.tsx
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import { VStack, SimpleGrid, Box, Heading, Text } from '@chakra-ui/react';
 import PostCard from '@/src/components/common/post-card';
-import { getPageDataBySlug, getNavigablePages } from '@/src/lib/data/pages';
-import { getAllProjects, type HomepageProject } from '@/src/lib/data/projects';
-import type { FAQItem } from '@/src/lib/data/faqs';
+import { getPageBySlug, getNavigablePages, type NavigablePageInfo } from '@/src/lib/data/pages';
+import { getAllProjects, type ProjectCardItem } from '@/src/lib/data/projects';
 import PrevNextNavigation, { type NavLinkInfo as PrevNextNavLinkInfo } from '@/src/components/common/prev-next-navigation';
 import { mapPageTypeToCategoryLabel } from '@/src/lib/utils';
 import type { Metadata } from 'next';
@@ -14,18 +12,17 @@ import React from 'react';
 interface ProjectsPageCmsContent {
   hero?: { headline?: string };
   intro_text?: string;
-  relatedFaqs?: FAQItem[];
 }
 
 interface ProjectsPageProps {
   params: unknown;
 }
 
-const SLUG = 'projects';
+const SLUG = 'work'; // Correct slug for the "Work" page
 
 export default async function ProjectsPage({ params: _params }: ProjectsPageProps) {
   const [pageCmsData, allProjects, navigablePages] = await Promise.all([
-    getPageDataBySlug(SLUG),
+    getPageBySlug(SLUG),
     getAllProjects(),
     getNavigablePages()
   ]);
@@ -34,7 +31,7 @@ export default async function ProjectsPage({ params: _params }: ProjectsPageProp
   let nextPageLink: PrevNextNavLinkInfo | undefined;
 
   if (pageCmsData) {
-    const currentPageIndex = navigablePages.findIndex((p) => p.slug === pageCmsData.slug);
+    const currentPageIndex = navigablePages.findIndex((p: NavigablePageInfo) => p.slug === pageCmsData.slug);
     if (currentPageIndex !== -1) {
       if (currentPageIndex > 0) {
         const prev = navigablePages[currentPageIndex - 1];
@@ -63,14 +60,14 @@ export default async function ProjectsPage({ params: _params }: ProjectsPageProp
             )}
           </Box>
           <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: 6, md: 8 }}>
-            {allProjects.map((project: HomepageProject) => (
+            {allProjects.map((project: ProjectCardItem) => (
               <PostCard
                 key={project.id}
                 href={`/projects/${project.slug}`}
                 title={project.title}
                 description={project.description}
-                imageUrl={project.featured_image_url}
-                tags={project.tags}
+                imageUrl={project.featured_image?.image_url}
+                tags={project.services?.map(s => ({id: s.id, name: s.title }))}
                 tagColorScheme="blue"
                 ctaText="View Project"
               />
@@ -84,7 +81,7 @@ export default async function ProjectsPage({ params: _params }: ProjectsPageProp
 }
 
 export async function generateMetadata({ params: _params }: ProjectsPageProps): Promise<Metadata> {
-  const pageData = await getPageDataBySlug(SLUG);
+  const pageData = await getPageBySlug(SLUG);
   const title = pageData?.title || "Projects & Case Studies | Coriyon's Studio";
   const description = pageData?.meta_description || "Explore the portfolio of UX design projects and case studies by Coriyon's Studio.";
 
