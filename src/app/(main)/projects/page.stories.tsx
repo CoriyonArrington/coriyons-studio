@@ -1,36 +1,38 @@
-// ATTEMPT 1: Creating a strongly-typed mock for `pageData` to remove 'as any'.
-// - Imported the 'PageRow' type to build a complete mock object.
-// - Removed the unused 'Tag' import.
-
 import type { Meta, StoryObj } from '@storybook/react';
 import ProjectsView from './view';
-// FIX: Removed unused 'Tag' import. 'HomepageProject' already includes it.
-import type { HomepageProject } from '@/src/lib/data/projects';
-// FIX: Imported the PageRow type to create a valid mock object.
+import type { ProjectCardItem } from '@/src/lib/data/projects';
 import type { PageRow } from '@/src/lib/data/minimal_pages_schema';
 
-const mockProjects: HomepageProject[] = [
+const mockProjects: ProjectCardItem[] = [
   {
     id: '1',
     slug: 'project-one',
     title: 'HealthTech Startup MVP Prototyping',
     description: 'Designed and prototyped an MVP for a health-tech startup, focusing on core user flows to validate the concept with target users and secure initial funding.',
-    client_name: 'CareConnect Startups',
-    featured_image_url: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=800&q=60',
-    tags: [{id: '1', name: 'UX Design', slug: 'ux-design'}, {id: '2', name: 'Prototyping', slug: 'prototyping'}]
+    featured_image: { 
+      id: 'img1',
+      image_url: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=800&q=60',
+      alt_text: 'HealthTech MVP'
+    },
+    services: [
+        {id: '1', title: 'UX Design', slug: 'ux-design', icon: null}, 
+        {id: '2', title: 'Prototyping', slug: 'prototyping', icon: null}
+    ]
   },
   {
     id: '2',
     slug: 'project-two',
     title: 'Mobile Wellness App UX Overhaul',
     description: 'Redesigned a wellness app to improve user engagement and satisfaction through an intuitive, personalized experience.',
-    client_name: 'HealthyLife Inc.',
-    featured_image_url: 'https://images.unsplash.com/photo-1555066931-4365d1469c9b?auto=format&fit=crop&w=800&q=60',
-    tags: [{id: '3', name: 'UI/UX Redesign', slug: 'ui-ux-redesign'}]
+    featured_image: {
+      id: 'img2',
+      image_url: 'https://images.unsplash.com/photo-1555066931-4365d1469c9b?auto=format&fit=crop&w=800&q=60',
+      alt_text: 'Wellness App Overhaul'
+    },
+    services: [{id: '3', title: 'UI/UX Redesign', slug: 'ui-ux-redesign', icon: null}]
   },
 ];
 
-// FIX: Created a complete mock that satisfies the expected PageRow type.
 const mockPageData: PageRow = {
   id: 'page_projects_mock',
   slug: 'projects',
@@ -58,7 +60,6 @@ type Story = StoryObj<typeof ProjectsView>;
 
 export const Default: Story = {
   args: {
-    // FIX: Removed the 'as any' cast, now using the strongly-typed mock.
     pageData: mockPageData,
     allProjects: mockProjects,
   },

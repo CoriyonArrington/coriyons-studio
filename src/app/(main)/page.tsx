@@ -1,6 +1,3 @@
-// ATTEMPT 5: Final cleanup.
-// - Removed the unused 'UxItem' interface definition.
-
 import Section from '@/src/components/common/section';
 import ContentSection from '@/src/components/common/content-section';
 import HeroCtaButton from '@/src/components/common/hero-cta-button';
@@ -16,10 +13,10 @@ import {
   Avatar,
   Box,
 } from '@chakra-ui/react';
-import { getFeaturedServices } from '@/src/lib/data/services';
-import { getFeaturedProjects } from '@/src/lib/data/projects';
-import { getFeaturedTestimonials } from '@/src/lib/data/testimonials';
-import { getFeaturedPosts } from '@/src/lib/data/posts';
+import { getFeaturedServices, type ServiceCardItem } from '@/src/lib/data/services';
+import { getFeaturedProjects, type ProjectCardItem } from '@/src/lib/data/projects';
+import { getFeaturedTestimonials, type HomepageTestimonial } from '@/src/lib/data/testimonials';
+import { getFeaturedPosts, type PostCardItem } from '@/src/lib/data/posts';
 import { getPageBySlug, getNavigablePages } from '@/src/lib/data/pages';
 import type { PageWithRelations, NavigablePageInfo } from '@/src/lib/data/pages';
 import PrevNextNavigation, { type NavLinkInfo as PrevNextNavLinkInfo } from '@/src/components/common/prev-next-navigation';
@@ -33,7 +30,6 @@ const SLUG = 'home';
 interface Cta { text: string; href: string; }
 interface HeroSectionContent { headline: string; subheadline: string; cta: Cta; }
 interface ContentSectionItemData { headline: string; body_paragraphs?: string[]; cta?: Cta; body_intro_paragraph?: string; }
-// FIX: Removed unused UxItem interface.
 interface HomeContent {
   hero_section: HeroSectionContent;
   why_our_studio_section: ContentSectionItemData;
@@ -60,7 +56,7 @@ export default async function HomePage() {
   let previousPageLink: PrevNextNavLinkInfo | undefined;
   let nextPageLink: PrevNextNavLinkInfo | undefined;
 
-  const currentPageIndex = navigablePages.findIndex((p) => p.slug === pageData.slug);
+  const currentPageIndex = navigablePages.findIndex((p: NavigablePageInfo) => p.slug === pageData.slug);
   if (currentPageIndex !== -1) {
     if (currentPageIndex > 0) {
       const prev = navigablePages[currentPageIndex - 1];
@@ -80,8 +76,8 @@ export default async function HomePage() {
     testimonials_section,
   } = pageData.content as unknown as HomeContent;
   
-  const relatedUxProblems = Array.isArray(pageData.ux_problems) ? pageData.ux_problems : [pageData.ux_problems].filter(Boolean);
-  const relatedUxSolutions = Array.isArray(pageData.ux_solutions) ? pageData.ux_solutions : [pageData.ux_solutions].filter(Boolean);
+  const relatedUxProblems = pageData.ux_problem_pages?.map(p => p.ux_problems).filter(Boolean) || [];
+  const relatedUxSolutions = pageData.ux_solution_pages?.map(s => s.ux_solutions).filter(Boolean) || [];
   
   const featuredUxProblem = relatedUxProblems[0] ?? null;
   const featuredUxSolution = relatedUxSolutions[0] ?? null;
@@ -150,7 +146,7 @@ export default async function HomePage() {
             <Heading as="h2" size="2xl" color="foreground">{services_section.headline}</Heading>
           </VStack>
            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: 6, md: 8 }}>
-            {featuredServices.map((service) => (
+            {featuredServices.map((service: ServiceCardItem) => (
                 <PostCard
                     key={service.id}
                     href={`/services/${service.slug}`}
@@ -176,14 +172,14 @@ export default async function HomePage() {
           {case_studies_section.body_intro_paragraph && ( <Text fontSize="lg" color="muted.foreground" maxW="lg" mx="auto">{case_studies_section.body_intro_paragraph}</Text> )}
         </VStack>
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: 6, md: 8 }}>
-          {featuredProjects.map((project) => (
+          {featuredProjects.map((project: ProjectCardItem) => (
             <PostCard
               key={project.id}
               href={`/projects/${project.slug}`}
               title={project.title}
               description={project.description}
               imageUrl={project.featured_image_url}
-              tags={project.tags}
+              tags={project.services?.map(s => ({id: s.id, name: s.title}))}
               tagColorScheme="blue"
               ctaText="View Project"
             />
@@ -194,7 +190,7 @@ export default async function HomePage() {
 
       <ContentSection id="testimonials" {...getContentSectionProps(testimonials_section)}>
         <VStack spacing={8} mt={8} alignItems="stretch">
-          {featuredTestimonials.map((testimonial) => (
+          {featuredTestimonials.map((testimonial: HomepageTestimonial) => (
             <Card key={testimonial.id} variant="outline" w="full" maxW="container.md" mx="auto">
               <CardBody>
                 {testimonial.avatar_url && ( <Avatar name={testimonial.name} src={testimonial.avatar_url} mb={3} size="md" /> )}
@@ -215,7 +211,7 @@ export default async function HomePage() {
           <Text fontSize="lg" color="muted.foreground" maxW="lg" mx="auto">Latest articles and insights on UX design and digital health.</Text>
         </VStack>
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: 6, md: 8 }}>
-          {featuredPosts.map((post) => (
+          {featuredPosts.map((post: PostCardItem) => (
             <PostCard
               key={post.id}
               href={`/blog/${post.slug}`}

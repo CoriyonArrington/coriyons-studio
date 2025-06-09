@@ -1,4 +1,3 @@
-// src/app/(main)/projects/view.tsx
 'use client';
 
 import React from 'react';
@@ -7,19 +6,19 @@ import Section from '@/src/components/common/section';
 import { VStack, SimpleGrid, Box, Heading, Text } from '@chakra-ui/react';
 import PostCard from '@/src/components/common/post-card';
 import PrevNextNavigation, { type NavLinkInfo } from '@/src/components/common/prev-next-navigation';
-import type { HomepageProject } from '@/src/lib/data/projects';
+import type { ProjectCardItem } from '@/src/lib/data/projects';
 import type { PageRow } from '@/src/lib/data/minimal_pages_schema';
 
 interface ProjectsViewProps {
   pageData: PageRow | null;
-  allProjects: HomepageProject[];
+  allProjects: ProjectCardItem[];
   previousPageLink?: NavLinkInfo;
   nextPageLink?: NavLinkInfo;
 }
 
 export default function ProjectsView({ pageData, allProjects, previousPageLink, nextPageLink }: ProjectsViewProps) {
   const cmsContent = pageData?.content as { intro_text?: string } | null;
-  const pageTitle = (pageData?.title as string) || 'Our Work & Case Studies';
+  const pageTitle = pageData?.title || 'Our Work & Case Studies';
 
   return (
     <Layout>
@@ -40,8 +39,8 @@ export default function ProjectsView({ pageData, allProjects, previousPageLink, 
                 href={`/projects/${project.slug}`}
                 title={project.title}
                 description={project.description}
-                imageUrl={project.featured_image_url}
-                tags={project.tags}
+                imageUrl={project.featured_image?.image_url}
+                tags={project.services?.map(s => ({id: s.id, name: s.title}))}
                 tagColorScheme="blue"
                 ctaText="View Project"
               />

@@ -8,7 +8,11 @@ export interface NavigablePageInfo {
   page_type: string;
 }
 
-export type PageWithRelations = PageRow & FaqPageJoin & UxProblemPageJoin & UxSolutionPageJoin;
+export type PageWithRelations = PageRow & {
+    ux_problem_pages: { ux_problems: UxProblemPageJoin['ux_problems'] }[];
+    ux_solution_pages: { ux_solutions: UxSolutionPageJoin['ux_solutions'] }[];
+    faq_pages: { faqs: FaqPageJoin['faqs'] }[];
+};
 
 export async function getPageBySlug(slug: string): Promise<PageWithRelations | null> {
     noStore();
@@ -55,7 +59,7 @@ export async function getCategorizedFooterPages() {
   const supabase = createClient();
   const { data, error } = await supabase
     .from('pages')
-    .select('title, slug, page_type, sort_order')
+    .select('title, slug, nav_title, page_type, sort_order')
     .in('status', ['PUBLISHED'])
     .in('page_type', ['MAIN', 'RESOURCES', 'SUPPORT', 'LEGAL']);
 
@@ -74,7 +78,10 @@ export async function getCategorizedFooterPages() {
   data.forEach(page => {
     const category = page.page_type as keyof typeof categorized;
     if (categorized[category]) {
-      categorized[category].push({ title: page.title, href: `/${page.slug}` });
+      categorized[category].push({ 
+        title: page.nav_title || page.title, // Use nav_title first, fallback to title
+        href: `/${page.slug === 'home' ? '' : page.slug}` // Handle homepage slug
+    });
     }
   });
   

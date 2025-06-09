@@ -11,7 +11,7 @@ import SiteFooter from "@/src/components/common/site-footer";
 import { Flex, Box } from "@chakra-ui/react";
 import "./globals.css";
 
-import { createServerClient } from "@/src/utils/supabase/server";
+import { createClient } from "@/src/utils/supabase/server";
 import { getCategorizedFooterPages } from "@/src/lib/data/pages";
 import type { Metadata } from "next";
 
@@ -30,7 +30,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createServerClient();
+  const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

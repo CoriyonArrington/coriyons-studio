@@ -1,35 +1,28 @@
-// FINAL VERSION: Applying all learned fixes for the new file.
-// - Removed explicit `any` and replaced with `unknown`.
-// - Correctly handled async/await, removing `await` from non-promise values.
-// - Implemented a robust data fetching pattern with explicit casting to resolve
-//   all implicit `any` and `unsafe-*` errors from Supabase.
-// - Cleaned up all unnecessary conditional checks (`!data`, `??`, `?.`).
-// - Added a local definition for `UxSolutionRow` to fix the import error.
-
-import { createClient as createServerClient } from '@/src/utils/supabase/server';
+import { createClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
-// FIX: Removed `UxSolutionRow` from the import as it's not exported from the module.
-import type { UxSolutionCardItem } from './ux_solutions';
 import type { Database } from '@/src/types/supabase';
 
+// Local type definitions to avoid circular imports
 export interface IconData {
   name: string;
   icon_library: string | null;
 }
 
-// FIX: Added a local definition for `UxSolutionRow` to resolve the root error.
-export type UxSolutionRow = {
+export interface UxSolutionCardItem {
   id: string;
   slug: string;
   title: string;
   description: string | null;
+  icon: IconData | null;
   featured: boolean | null;
   sort_order: number | null;
-  icons: IconData[] | null;
-};
+}
 
 export interface UxProblemContentJson {
-  [key: string]: unknown;
+  symptoms?: string[];
+  potential_causes?: string[];
+  real_world_examples?: Array<{ example: string; impact: string }>;
+  questions_to_ask?: string[];
 }
 
 export interface UxProblemCardItem {
@@ -47,24 +40,23 @@ export interface UxProblemDetail extends UxProblemCardItem {
   relatedSolutions: UxSolutionCardItem[] | null;
 }
 
-type UxProblemWithIconList = {
-  id: string;
-  slug: string;
-  title: string;
-  description: string | null;
-  featured: boolean | null;
-  sort_order: number | null;
+// Internal types for Supabase query results
+type UxProblemWithIconList = Database['public']['Tables']['ux_problems']['Row'] & {
   icons: IconData[] | null;
 };
 
-type UxProblemSolutionJoin = {
-  // This type now correctly references the local `UxSolutionRow`.
-  ux_solutions: UxSolutionRow | null;
-};
-
-type UxProblemWithSolutions = Database['public']['Tables']['ux_problems']['Row'] & {
-  ux_problem_solutions: UxProblemSolutionJoin[];
-  icons: IconData[] | null;
+type UxProblemWithSolutions = UxProblemWithIconList & {
+  ux_problem_solutions: {
+    ux_solutions: {
+      id: string;
+      slug: string;
+      title: string;
+      description: string | null;
+      featured: boolean | null;
+      sort_order: number | null;
+      icons: IconData[] | null;
+    } | null;
+  }[];
 };
 
 function getIcon(item: { icons: IconData[] | null }): IconData | null {
@@ -76,76 +68,47 @@ function getIcon(item: { icons: IconData[] | null }): IconData | null {
 
 export async function getAllUxProblems(): Promise<UxProblemCardItem[]> {
   noStore();
-  const supabase = createServerClient();
-
-  const response = await supabase
+  const supabase = createClient();
+  const { data, error } = await supabase
     .from('ux_problems')
     .select('id, slug, title, description, featured, sort_order, icons (name, icon_library)')
     .order('sort_order', { ascending: true });
 
-  if (response.error) {
-    console.error('Error fetching all UX problems:', response.error.message);
+  if (error) {
+    console.error('Error fetching all UX problems:', error.message);
     return [];
   }
-
-  const data = response.data as UxProblemWithIconList[];
-
-  return data.map(problem => {
-    const iconData = getIcon(problem);
-
-    return {
-      id: problem.id,
-      slug: problem.slug,
-      title: problem.title,
-      description: problem.description,
-      icon: iconData,
-      featured: problem.featured,
-      sort_order: problem.sort_order,
-    };
-  });
+  return data.map(p => ({ ...p, icon: getIcon(p as any) }));
 }
 
 export async function getUxProblemBySlug(slug: string): Promise<UxProblemDetail | null> {
   noStore();
-  const supabase = createServerClient();
-
-  const response = await supabase
+  const supabase = createClient();
+  const { data, error } = await supabase
     .from('ux_problems')
     .select('*, icons (name, icon_library), ux_problem_solutions(ux_solutions!inner(*, icons(name, icon_library)))')
     .eq('slug', slug)
     .single();
 
-  if (response.error) {
-    if (response.error.code === 'PGRST116') {
-      console.warn(`UX problem with slug "${slug}" not found.`);
-      return null;
-    }
-    console.error(`Error fetching UX problem by slug "${slug}":`, response.error.message);
+  if (error) {
+    if (error.code !== 'PGRST116') console.error(`Error fetching UX problem by slug "${slug}":`, error.message);
     return null;
   }
 
-  if (!response.data) {
-    return null;
-  }
-
-  const typedData = response.data as UxProblemWithSolutions;
+  const typedData = data as unknown as UxProblemWithSolutions;
   
-  const problemIconData = getIcon(typedData);
-
-  // With `UxSolutionRow` now correctly typed, all `unsafe-*` errors are resolved.
   const relatedSolutions = typedData.ux_problem_solutions
     .map(joinEntry => {
       const solution = joinEntry.ux_solutions;
       if (!solution) return null;
-
-      const solutionIcon = getIcon(solution);
-
+      
+      // Explicitly create an object matching UxSolutionCardItem
       return {
         id: solution.id,
         slug: solution.slug,
         title: solution.title,
         description: solution.description,
-        icon: solutionIcon,
+        icon: getIcon(solution),
         featured: solution.featured,
         sort_order: solution.sort_order,
       };
@@ -157,7 +120,7 @@ export async function getUxProblemBySlug(slug: string): Promise<UxProblemDetail 
     slug: typedData.slug,
     title: typedData.title,
     description: typedData.description,
-    icon: problemIconData,
+    icon: getIcon(typedData),
     featured: typedData.featured,
     sort_order: typedData.sort_order,
     content: typedData.content as UxProblemContentJson | null,

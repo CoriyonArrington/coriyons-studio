@@ -20,7 +20,6 @@ export interface ServiceDetail extends ServiceCardItem {
   relatedTestimonials: HomepageTestimonial[] | null;
 }
 
-// Self-contained types for Supabase queries
 type ServiceRow = {
     id: string;
     slug: string;
@@ -47,7 +46,6 @@ type ServiceWithTestimonials = ServiceRow & {
     }[];
 };
 
-
 export async function getAllServices(): Promise<ServiceCardItem[]> {
   noStore();
   const supabase = createClient();
@@ -62,6 +60,23 @@ export async function getAllServices(): Promise<ServiceCardItem[]> {
     return [];
   }
 
+  return data;
+}
+
+export async function getFeaturedServices(limit: number = 3): Promise<ServiceCardItem[]> {
+  noStore();
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('services')
+    .select('id, slug, title, description, offering_type, featured_image_url')
+    .eq('featured', true)
+    .order('sort_order', { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching featured services:', error.message);
+    return [];
+  }
   return data;
 }
 
