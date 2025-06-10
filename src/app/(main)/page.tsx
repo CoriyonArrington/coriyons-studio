@@ -58,7 +58,7 @@ export default async function HomePage() {
   let nextPageLink: PrevNextNavLinkInfo | undefined;
 
   const currentPageIndex = navigablePages.findIndex((p: NavigablePageInfo) => p.slug === pageData.slug);
-  if (currentPageIndex !== -1) {
+  if (currentPageIndex > -1) {
     if (currentPageIndex > 0) {
       const prev = navigablePages[currentPageIndex - 1];
       previousPageLink = { slug: prev.slug, title: prev.title, categoryLabel: mapPageTypeToCategoryLabel(prev.page_type) };
@@ -68,7 +68,7 @@ export default async function HomePage() {
       nextPageLink = { slug: next.slug, title: next.title, categoryLabel: mapPageTypeToCategoryLabel(next.page_type) };
     }
   }
-  
+
   const {
     hero_section,
     why_our_studio_section,
@@ -76,11 +76,11 @@ export default async function HomePage() {
     case_studies_section,
     testimonials_section,
   } = pageData.content as unknown as HomeContent;
-  
-  // FIX: Correctly flatten and type the related items to ensure we get a single object.
-  const relatedUxProblems = pageData.ux_problem_pages?.flatMap(p => p.ux_problems).filter((p): p is UxProblemRow => !!p) || [];
-  const relatedUxSolutions = pageData.ux_solution_pages?.flatMap(s => s.ux_solutions).filter((s): s is UxSolutionRow => !!s) || [];
-  
+
+  // FIX: Removed unnecessary optional chaining (?.) as pageData is guaranteed to exist here.
+  const relatedUxProblems = pageData.ux_problem_pages.flatMap(p => p.ux_problems).filter((p): p is UxProblemRow => !!p);
+  const relatedUxSolutions = pageData.ux_solution_pages.flatMap(s => s.ux_solutions).filter((s): s is UxSolutionRow => !!s);
+
   const featuredUxProblem = relatedUxProblems[0] ?? null;
   const featuredUxSolution = relatedUxSolutions[0] ?? null;
 
@@ -117,30 +117,28 @@ export default async function HomePage() {
       </Section>
 
       <ContentSection id="why_our_studio" {...getContentSectionProps(why_our_studio_section)} variant="subtle" ctaRightIcon>
-        {(featuredUxProblem || featuredUxSolution) && (
-          <Box mt={12} w="full">
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={8} w="full">
-              {featuredUxProblem && (
-                <FeatureCard
-                  href={`/ux-problems/${featuredUxProblem.slug}`}
-                  iconName={featuredUxProblem.icons?.[0]?.name}
-                  iconColor="orange.500"
-                  title={featuredUxProblem.title}
-                  description={featuredUxProblem.description}
-                />
-              )}
-              {featuredUxSolution && (
-                <FeatureCard
-                  href={`/ux-solutions/${featuredUxSolution.slug}`}
-                  iconName={featuredUxSolution.icons?.[0]?.name}
-                  iconColor="green.500"
-                  title={featuredUxSolution.title}
-                  description={featuredUxSolution.description}
-                />
-              )}
-            </SimpleGrid>
-          </Box>
-        )}
+        <Box mt={12} w="full">
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={8} w="full">
+            {featuredUxProblem && (
+              <FeatureCard
+                href={`/ux-problems/${featuredUxProblem.slug}`}
+                iconName={featuredUxProblem.icons?.[0]?.name}
+                iconColor="orange.500"
+                title={featuredUxProblem.title}
+                description={featuredUxProblem.description}
+              />
+            )}
+            {featuredUxSolution && (
+              <FeatureCard
+                href={`/ux-solutions/${featuredUxSolution.slug}`}
+                iconName={featuredUxSolution.icons?.[0]?.name}
+                iconColor="green.500"
+                title={featuredUxSolution.title}
+                description={featuredUxSolution.description}
+              />
+            )}
+          </SimpleGrid>
+        </Box>
       </ContentSection>
       
       <Section id="featured-services" py={{ base: 12, md: 20 }}>
@@ -148,6 +146,7 @@ export default async function HomePage() {
             <Heading as="h2" size="2xl" color="foreground">{services_section.headline}</Heading>
           </VStack>
            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: 6, md: 8 }}>
+            {/* FIX: Removed unnecessary check as `map` on an empty array is safe. */}
             {featuredServices.map((service: ServiceCardItem) => (
                 <PostCard
                     key={service.id}
@@ -161,7 +160,7 @@ export default async function HomePage() {
                 />
             ))}
            </SimpleGrid>
-            {services_section.cta?.text && (
+            {services_section.cta && (
                 <VStack mt={12}>
                     <HeroCtaButton href={services_section.cta.href || '#'}>{services_section.cta.text}</HeroCtaButton>
                 </VStack>
@@ -174,6 +173,7 @@ export default async function HomePage() {
           {case_studies_section.body_intro_paragraph && ( <Text fontSize="lg" color="muted.foreground" maxW="lg" mx="auto">{case_studies_section.body_intro_paragraph}</Text> )}
         </VStack>
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: 6, md: 8 }}>
+          {/* FIX: Removed unnecessary check. */}
           {featuredProjects.map((project: ProjectCardItem) => (
             <PostCard
               key={project.id}
@@ -187,7 +187,7 @@ export default async function HomePage() {
             />
           ))}
         </SimpleGrid>
-        {case_studies_section.cta?.text && ( <VStack mt={12}><HeroCtaButton href={case_studies_section.cta.href || '#'}>{case_studies_section.cta.text}</HeroCtaButton></VStack> )}
+        {case_studies_section.cta && ( <VStack mt={12}><HeroCtaButton href={case_studies_section.cta.href || '#'}>{case_studies_section.cta.text}</HeroCtaButton></VStack> )}
       </Section>
 
       <ContentSection id="testimonials" {...getContentSectionProps(testimonials_section)}>
@@ -199,7 +199,7 @@ export default async function HomePage() {
                 <Text fontSize="lg" fontStyle="italic" color="foreground">&quot;{testimonial.quote}&quot;</Text>
                 <VStack alignItems="flex-end" mt={4} spacing={0}>
                   <Text fontWeight="semibold" color="foreground">— {testimonial.name}</Text>
-                  {(testimonial.role || testimonial.company_name) && ( <Text fontSize="sm" color="muted.foreground">{testimonial.role}{testimonial.role && testimonial.company_name ? ', ' : ''}{testimonial.company_name}</Text> )}
+                  {testimonial.role && ( <Text fontSize="sm" color="muted.foreground">{testimonial.role}{testimonial.company_name ? `, ${testimonial.company_name}` : ''}</Text> )}
                 </VStack>
               </CardBody>
             </Card>

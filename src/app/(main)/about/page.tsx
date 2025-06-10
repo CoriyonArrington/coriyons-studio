@@ -1,4 +1,3 @@
-// src/app/(main)/about/page.tsx
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
 import {
@@ -14,6 +13,7 @@ import PrevNextNavigation, {
   type NavLinkInfo as PrevNextNavLinkInfo,
 } from '@/src/components/common/prev-next-navigation';
 import {
+  getPageBySlug,
   getNavigablePages,
   type NavigablePageInfo,
 } from '@/src/lib/data/pages';
@@ -45,9 +45,8 @@ interface AboutPageCmsContent {
   [key: string]: unknown;
 }
 
-// A specific type for the content blocks from the CMS
 interface ContentBlock {
-  type: string; // Simplified from ('header' | 'paragraph' | string)
+  type: string;
   data: {
     level?: number;
     text?: string;
@@ -62,7 +61,7 @@ interface AboutPageProps {
 // --- Page Component ---
 export default async function AboutPage({ params: _params }: AboutPageProps) {
   const [pageCmsData, navigablePages, featuredTestimonials] = await Promise.all([
-    getPageDataBySlug(SLUG),
+    getPageBySlug(SLUG),
     getNavigablePages(),
     getFeaturedTestimonials(3),
   ]);
@@ -192,7 +191,7 @@ export default async function AboutPage({ params: _params }: AboutPageProps) {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const pageData = await getPageDataBySlug(SLUG);
+  const pageData = await getPageBySlug(SLUG);
 
   if (!pageData) {
     return { title: "About | Coriyon's Studio" };
@@ -211,8 +210,4 @@ export async function generateMetadata(): Promise<Metadata> {
       images: pageData.og_image_url ? [{ url: pageData.og_image_url }] : undefined,
     },
   };
-}
-
-function getPageDataBySlug(SLUG: string): any {
-  throw new Error('Function not implemented.');
 }
