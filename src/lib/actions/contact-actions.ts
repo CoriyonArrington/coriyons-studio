@@ -1,7 +1,3 @@
-// ATTEMPT #15: Adding the required description to the suppression comment.
-// Change 1: Added a descriptive comment to the `@ts-expect-error` directive. The linter requires this to explain why the error is being suppressed. This resolves the `ban-ts-comment` error.
-// Change 2: With the directive now correctly formatted, it will successfully suppress the persistent `no-unsafe-assignment` false positive on the `catch` clause.
-
 'use server';
 
 import { createClient } from '@supabase/supabase-js'; 
@@ -22,7 +18,6 @@ export async function submitContactForm(
   _prevState: SubmitContactFormState | null,
   formData: FormData
 ): Promise<SubmitContactFormState> {
-  const headersList = await headers();
   
   if (!supabaseUrl || !supabaseServiceRoleKey) {
     console.error("Supabase URL or Service Role Key is missing from environment variables.");
@@ -61,6 +56,7 @@ export async function submitContactForm(
   }
 
   try {
+    const headersList = await headers(); // Await the headers function
     const { data, error } = await supabaseAdmin 
       .from('contact_submissions')
       .insert([
@@ -96,7 +92,6 @@ export async function submitContactForm(
       submissionId: data.id,
     };
 
-  // @ts-expect-error - The linter has a persistent false positive on this type-safe catch clause.
   } catch (e: unknown) {
     if (e instanceof Error) {
       console.error('Unexpected error in submitContactForm:', e.message);
@@ -105,7 +100,6 @@ export async function submitContactForm(
         message: `A server error occurred: ${e.message}`,
       };
     }
-    // Safely handle the 'unknown' type by converting it to a string.
     console.error('Unexpected non-Error exception in submitContactForm:', String(e));
     return {
       success: false,

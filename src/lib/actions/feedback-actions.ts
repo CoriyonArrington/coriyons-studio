@@ -1,9 +1,7 @@
-// FINAL VERSION: Added a descriptive TODO comment for the disabled linter rule.
-
 'use server';
 
 import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js';
-import { createServerClient } from '@/src/utils/supabase/server';
+import { createClient } from '@/src/utils/supabase/server';
 import { FeedbackFormSchema, type FeedbackFormData } from '@/src/lib/schemas/feedback-form-schema';
 import { headers } from 'next/headers';
 import type { Database } from '@/src/types/supabase';
@@ -24,7 +22,6 @@ export async function submitFeedbackForm(
   _prevState: SubmitFeedbackFormState | null,
   formData: FormData
 ): Promise<SubmitFeedbackFormState> {
-  const headersList = await headers();
 
   if (!supabaseUrl || !supabaseServiceRoleKey) {
     console.error('Supabase URL or Service Role Key is missing from environment variables.');
@@ -42,7 +39,7 @@ export async function submitFeedbackForm(
     }
   );
 
-  const supabaseUserClient = await createServerClient();
+  const supabaseUserClient = await createClient();
   const { data: { user } } = await supabaseUserClient.auth.getUser();
 
   const rawFormData = {
@@ -64,24 +61,22 @@ export async function submitFeedbackForm(
   }
 
   const validatedData = validationResult.data;
-
-  // TODO(v2-linter-upgrade): Re-evaluate this rule after the next ESLint plugin update.
-  // This is a known false positive where the linter incorrectly flags this object assignment.
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const dataToInsert: FeedbackSubmissionInsert = {
-    clarity_rating: validatedData.clarity_rating,
-    usefulness_rating: validatedData.usefulness_rating,
-    satisfaction_rating: validatedData.satisfaction_rating,
-    comments: validatedData.comments,
-    source_url: headersList.get('referer') || 'Unknown source',
-    ip_address: headersList.get('x-forwarded-for') || headersList.get('remote-addr'),
-    user_agent: headersList.get('user-agent') || 'Unknown agent',
-    user_id: user?.id || null,
-    feedback_type: validatedData.feedback_type || undefined,
-    email: validatedData.email || undefined,
-  };
-
+  
   try {
+    const headersList = await headers(); // Await the headers function
+    const dataToInsert: FeedbackSubmissionInsert = {
+      clarity_rating: validatedData.clarity_rating,
+      usefulness_rating: validatedData.usefulness_rating,
+      satisfaction_rating: validatedData.satisfaction_rating,
+      comments: validatedData.comments,
+      source_url: headersList.get('referer') || 'Unknown source',
+      ip_address: headersList.get('x-forwarded-for') || headersList.get('remote-addr'),
+      user_agent: headersList.get('user-agent') || 'Unknown agent',
+      user_id: user?.id || null,
+      feedback_type: validatedData.feedback_type || undefined,
+      email: validatedData.email || undefined,
+    };
+
     const { data: submissionData, error } = await supabaseAdmin
       .from('feedback_submissions')
       .insert([dataToInsert])
@@ -113,7 +108,7 @@ export async function submitFeedbackForm(
       console.error('Unexpected error in submitFeedbackForm:', e);
       return {
         success: false,
-        message: 'A server error occurred. Please try again later.',
+        message: `A server error occurred: ${e.message}`,
       };
     }
     return {
