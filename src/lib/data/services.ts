@@ -1,7 +1,11 @@
+// src/lib/data/services.ts
 import { createClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { HomepageTestimonial } from './testimonials';
+import type { Database } from '@/src/types/supabase';
+import type { PostgrestSingleResponse } from '@supabase/supabase-js';
 
+// --- TYPE DEFINITIONS ---
 export interface ServiceContentJson {
   [key: string]: unknown;
 }
@@ -20,32 +24,16 @@ export interface ServiceDetail extends ServiceCardItem {
   relatedTestimonials: HomepageTestimonial[] | null;
 }
 
-type ServiceRow = {
-    id: string;
-    slug: string;
-    title: string;
-    description: string | null;
-    offering_type: string | null;
-    featured_image_url: string | null;
-    content: unknown;
-};
+// --- Internal Types for Supabase Responses ---
+type TestimonialRow = Database['public']['Tables']['testimonials']['Row'];
 
-type TestimonialRow = {
-    id: string;
-    quote: string;
-    name: string;
-    role: string;
-    company_name: string | null;
-    avatar_url: string | null;
-    sort_order: number | null;
-};
-
-type ServiceWithTestimonials = ServiceRow & {
+type RawServiceWithTestimonials = Database['public']['Tables']['services']['Row'] & {
     testimonial_services: {
         testimonials: TestimonialRow | null;
     }[];
 };
 
+// --- DATA FETCHING FUNCTIONS ---
 export async function getAllServices(): Promise<ServiceCardItem[]> {
   noStore();
   const supabase = createClient();
@@ -84,7 +72,8 @@ export async function getServiceBySlug(slug: string): Promise<ServiceDetail | nu
   noStore();
   const supabase = createClient();
 
-  const { data, error } = await supabase
+  // FIX: Explicitly type the response to fix unsafe destructuring.
+  const { data, error }: PostgrestSingleResponse<RawServiceWithTestimonials> = await supabase
     .from('services')
     .select('*, testimonial_services(testimonials(*))')
     .eq('slug', slug)
@@ -97,7 +86,7 @@ export async function getServiceBySlug(slug: string): Promise<ServiceDetail | nu
     return null;
   }
   
-  const serviceData = data as ServiceWithTestimonials;
+  const serviceData = data;
 
   const relatedTestimonials = serviceData.testimonial_services
     .map(join => join.testimonials)
