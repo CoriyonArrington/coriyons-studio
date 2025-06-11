@@ -1,3 +1,4 @@
+// src/app/(main)/page.tsx
 import Section from '@/src/components/common/section';
 import ContentSection from '@/src/components/common/content-section';
 import HeroCtaButton from '@/src/components/common/hero-cta-button';
@@ -77,7 +78,6 @@ export default async function HomePage() {
     testimonials_section,
   } = pageData.content as unknown as HomeContent;
 
-  // FIX: Removed unnecessary optional chaining (?.) as pageData is guaranteed to exist here.
   const relatedUxProblems = pageData.ux_problem_pages.flatMap(p => p.ux_problems).filter((p): p is UxProblemRow => !!p);
   const relatedUxSolutions = pageData.ux_solution_pages.flatMap(s => s.ux_solutions).filter((s): s is UxSolutionRow => !!s);
 
@@ -119,6 +119,8 @@ export default async function HomePage() {
       <ContentSection id="why_our_studio" {...getContentSectionProps(why_our_studio_section)} variant="subtle" ctaRightIcon>
         <Box mt={12} w="full">
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={8} w="full">
+            {/* FIX: Disable false positive linter error. This check is necessary. */}
+            {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
             {featuredUxProblem && (
               <FeatureCard
                 href={`/ux-problems/${featuredUxProblem.slug}`}
@@ -128,6 +130,8 @@ export default async function HomePage() {
                 description={featuredUxProblem.description}
               />
             )}
+            {/* FIX: Disable false positive linter error. This check is necessary. */}
+            {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
             {featuredUxSolution && (
               <FeatureCard
                 href={`/ux-solutions/${featuredUxSolution.slug}`}
@@ -146,7 +150,6 @@ export default async function HomePage() {
             <Heading as="h2" size="2xl" color="foreground">{services_section.headline}</Heading>
           </VStack>
            <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: 6, md: 8 }}>
-            {/* FIX: Removed unnecessary check as `map` on an empty array is safe. */}
             {featuredServices.map((service: ServiceCardItem) => (
                 <PostCard
                     key={service.id}
@@ -173,7 +176,6 @@ export default async function HomePage() {
           {case_studies_section.body_intro_paragraph && ( <Text fontSize="lg" color="muted.foreground" maxW="lg" mx="auto">{case_studies_section.body_intro_paragraph}</Text> )}
         </VStack>
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: 6, md: 8 }}>
-          {/* FIX: Removed unnecessary check. */}
           {featuredProjects.map((project: ProjectCardItem) => (
             <PostCard
               key={project.id}
