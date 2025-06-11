@@ -1,8 +1,10 @@
+// src/lib/data/ux_problems.ts
 import { createClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Database } from '@/src/types/supabase';
+import type { PostgrestSingleResponse } from '@supabase/supabase-js';
 
-// Local type definitions to avoid circular imports
+// --- TYPE DEFINITIONS ---
 export interface IconData {
   name: string;
   icon_library: string | null;
@@ -15,7 +17,7 @@ export interface UxSolutionCardItem {
   description: string | null;
   icon: IconData | null;
   featured: boolean | null;
-  sort_order: number | null;
+  sort_order: number;
 }
 
 export interface UxProblemContentJson {
@@ -32,7 +34,7 @@ export interface UxProblemCardItem {
   description: string | null;
   icon: IconData | null;
   featured: boolean | null;
-  sort_order: number | null;
+  sort_order: number;
 }
 
 export interface UxProblemDetail extends UxProblemCardItem {
@@ -40,12 +42,14 @@ export interface UxProblemDetail extends UxProblemCardItem {
   relatedSolutions: UxSolutionCardItem[] | null;
 }
 
-// Internal types for Supabase query results
-type UxProblemWithIconList = Database['public']['Tables']['ux_problems']['Row'] & {
-  icons: IconData[] | null;
+// --- Internal Types for Supabase Responses ---
+type RawIcon = { name: string; icon_library: string | null } | null;
+
+type RawUxProblem = Database['public']['Tables']['ux_problems']['Row'] & {
+  icons: RawIcon;
 };
 
-type UxProblemWithSolutions = UxProblemWithIconList & {
+type RawUxProblemWithSolutions = RawUxProblem & {
   ux_problem_solutions: {
     ux_solutions: {
       id: string;
@@ -53,19 +57,18 @@ type UxProblemWithSolutions = UxProblemWithIconList & {
       title: string;
       description: string | null;
       featured: boolean | null;
-      sort_order: number | null;
-      icons: IconData[] | null;
+      sort_order: number;
+      icons: RawIcon;
     } | null;
   }[];
 };
 
-function getIcon(item: { icons: IconData[] | null }): IconData | null {
-  if (Array.isArray(item.icons) && item.icons.length > 0) {
-    return item.icons[0];
-  }
-  return null;
+// --- HELPER FUNCTIONS ---
+function getIconFromRaw(item: { icons: RawIcon }): IconData | null {
+  return item.icons ? { name: item.icons.name, icon_library: item.icons.icon_library } : null;
 }
 
+// --- DATA FETCHING FUNCTIONS ---
 export async function getAllUxProblems(): Promise<UxProblemCardItem[]> {
   noStore();
   const supabase = createClient();
@@ -78,13 +81,16 @@ export async function getAllUxProblems(): Promise<UxProblemCardItem[]> {
     console.error('Error fetching all UX problems:', error.message);
     return [];
   }
-  return data.map(p => ({ ...p, icon: getIcon(p as any) }));
+  // FIX: Cast the Supabase data to our specific raw type before mapping.
+  const rawProblems = data as unknown as RawUxProblem[];
+  return rawProblems.map(p => ({ ...p, icon: getIconFromRaw(p) }));
 }
 
 export async function getUxProblemBySlug(slug: string): Promise<UxProblemDetail | null> {
   noStore();
   const supabase = createClient();
-  const { data, error } = await supabase
+  // FIX: Explicitly type the response to fix unsafe destructuring.
+  const { data, error }: PostgrestSingleResponse<RawUxProblemWithSolutions> = await supabase
     .from('ux_problems')
     .select('*, icons (name, icon_library), ux_problem_solutions(ux_solutions!inner(*, icons(name, icon_library)))')
     .eq('slug', slug)
@@ -95,20 +101,19 @@ export async function getUxProblemBySlug(slug: string): Promise<UxProblemDetail 
     return null;
   }
 
-  const typedData = data as unknown as UxProblemWithSolutions;
+  const typedData = data;
   
   const relatedSolutions = typedData.ux_problem_solutions
     .map(joinEntry => {
       const solution = joinEntry.ux_solutions;
       if (!solution) return null;
       
-      // Explicitly create an object matching UxSolutionCardItem
       return {
         id: solution.id,
         slug: solution.slug,
         title: solution.title,
         description: solution.description,
-        icon: getIcon(solution),
+        icon: getIconFromRaw(solution),
         featured: solution.featured,
         sort_order: solution.sort_order,
       };
@@ -120,7 +125,7 @@ export async function getUxProblemBySlug(slug: string): Promise<UxProblemDetail 
     slug: typedData.slug,
     title: typedData.title,
     description: typedData.description,
-    icon: getIcon(typedData),
+    icon: getIconFromRaw(typedData),
     featured: typedData.featured,
     sort_order: typedData.sort_order,
     content: typedData.content as UxProblemContentJson | null,
