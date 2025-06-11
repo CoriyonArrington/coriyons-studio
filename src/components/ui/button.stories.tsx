@@ -1,17 +1,15 @@
+// src/components/ui/button.stories.tsx
 import type { Meta, StoryObj } from '@storybook/react';
 import { userEvent, within } from '@storybook/testing-library';
-// 👇 Change this import
 import { Button } from '@chakra-ui/react';
 
-// 📘 Storybook metadata for the Button component
 const meta: Meta<typeof Button> = {
-  title: 'UI/Themed Button', // Renamed for clarity
+  title: 'UI/Themed Button',
   component: Button,
   tags: ['autodocs'],
   argTypes: {
     colorScheme: {
       control: 'select',
-      // These should match your theme's color schemes
       options: ['primary', 'secondary', 'accent', 'destructive', 'blue', 'green', 'red', 'purple'],
     },
     variant: {
@@ -31,7 +29,6 @@ const meta: Meta<typeof Button> = {
 export default meta;
 type Story = StoryObj<typeof Button>;
 
-// ✅ Default interactive button with hover + click simulation
 export const Default: Story = {
   args: {
     children: 'Click me',
@@ -41,14 +38,14 @@ export const Default: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const button = await canvas.getByRole('button', { name: /click me/i });
+    // FIX: Removed unnecessary `await` from synchronous `getByRole`.
+    const button = canvas.getByRole('button', { name: /click me/i });
 
     await userEvent.hover(button);
     await userEvent.click(button);
   },
 };
 
-// 🚫 Disabled state (no interaction)
 export const Disabled: Story = {
   args: {
     children: 'Disabled',
@@ -56,16 +53,14 @@ export const Disabled: Story = {
   },
 };
 
-// ⏳ Loading spinner state
 export const Loading: Story = {
   args: {
-    children: 'Submitting', // Children are often ignored when loading
-    loadingText: 'Loading...', // This text is shown with the spinner
+    children: 'Submitting',
+    loadingText: 'Loading...',
     isLoading: true,
   },
 };
 
-// 🧪 Custom variant for theme showcase
 export const ThemedOutline: Story = {
   args: {
     children: 'Outline CTA',
