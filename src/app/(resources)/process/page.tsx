@@ -15,7 +15,6 @@ import { getIcon } from '@/src/lib/data/icons';
 
 const SLUG = 'process';
 
-// A simple, local function to render an icon without a separate component file.
 const renderIcon = (name: string | null | undefined, props: object) => {
   const IconComponent = getIcon(name);
   return <Icon as={IconComponent} {...props} />;
@@ -100,7 +99,12 @@ export default async function ProcessPage() {
                <Heading as="h2" size="xl" mb={10} textAlign="center">Related Questions</Heading>
                <Accordion allowMultiple maxW="container.md" mx="auto">
                  {cmsContent.relatedFaqs.map(faq => (
-                   <AccordionItem key={faq.id} mb={2}><h2><AccordionButton _expanded={{ bg: 'blue.600', color: 'white' }}><Box as="span" flex="1" textAlign="left" fontWeight="semibold" fontSize="lg">{faq.question}</Box><AccordionIcon /></AccordionButton></h2><AccordionPanel pb={4} pt={4} borderWidth="1px" borderTopWidth="0" borderColor="border">{faq.answer?.blocks?.map(block => <Text key={block.id}>{block.data.text}</Text>)}</AccordionPanel></AccordionItem>
+                   <AccordionItem key={faq.id} mb={2}><h2><AccordionButton _expanded={{ bg: 'blue.600', color: 'white' }}><Box as="span" flex="1" textAlign="left" fontWeight="semibold" fontSize="lg">{faq.question}</Box><AccordionIcon /></AccordionButton></h2>
+                   <AccordionPanel pb={4} pt={4} borderWidth="1px" borderTopWidth="0" borderColor="border">
+                    {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
+                    {faq.answer?.blocks?.map(block => <Text key={block.id}>{block.data.text}</Text>)}
+                   </AccordionPanel>
+                   </AccordionItem>
                  ))}
                </Accordion>
              </Box>
