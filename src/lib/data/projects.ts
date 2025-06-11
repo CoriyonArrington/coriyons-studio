@@ -140,8 +140,6 @@ export async function getProjectBySlug(slug: string): Promise<ProjectDetail | nu
     return null;
   }
   
-  if (!data) return null;
-
   const cardData = mapRawProjectToCard(data);
   const testimonial = data.testimonials?.[0] || null;
 
