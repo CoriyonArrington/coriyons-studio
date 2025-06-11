@@ -1,3 +1,4 @@
+// src/components/common/__tests__/content-section.test.tsx
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -5,41 +6,34 @@ import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { axe } from 'jest-axe';
 import ContentSection, { type ContentSectionProps } from '../content-section';
 import baseTheme from '@/src/lib/theme';
+import type { LinkProps as NextLinkProps } from 'next/link';
 
-// Define a clear interface for the mock Link's props
-interface MockLinkProps {
-  children: React.ReactNode;
-  href: string;
-  [key: string]: any; // Allow any other props
-}
+// FIX: A fully type-safe mock for the Next.js Link component with displayName and proper href handling.
+vi.mock('next/link', () => {
+  const MockLink = React.forwardRef<
+    HTMLAnchorElement,
+    NextLinkProps & { children: React.ReactNode }
+  >(({ children, href, ...props }, ref) => {
+    
+    // This handles href being an object, which prevents the '[object Object]' error.
+    const linkHref = typeof href === 'string' ? href : href.pathname || '';
+    
+    return (
+      <a href={linkHref} {...props} ref={ref}>
+        {children}
+      </a>
+    );
+  });
+  
+  // This resolves the 'missing display name' error.
+  MockLink.displayName = 'MockNextLink';
 
-vi.mock('next/link', () => ({
-  default: React.forwardRef<HTMLAnchorElement, MockLinkProps>(
-      ({ children, href, ...props }, ref) => {
-          if (React.isValidElement(children)) {
-              return React.cloneElement(children as React.ReactElement, { ...props, href, ref });
-          }
-          return (
-              <a href={href} ref={ref} {...props}>
-                  {children}
-              </a>
-          );
-      }
-  )
-}));
-(vi.mocked(require('next/link')) as any).default.displayName = 'MockNextLink';
+  return { default: MockLink };
+});
 
 
-const renderWithChakra = (ui: React.ReactElement, colorMode: 'light' | 'dark' = 'light') => {
-  const theme = extendTheme(
-    baseTheme, 
-    {
-      config: { 
-        initialColorMode: colorMode, 
-        useSystemColorMode: false 
-      },
-    }
-  );
+const renderWithChakra = (ui: React.ReactElement) => {
+  const theme = extendTheme(baseTheme);
   return render(<ChakraProvider theme={theme}>{ui}</ChakraProvider>);
 };
 
