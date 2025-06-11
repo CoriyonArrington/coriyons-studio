@@ -1,7 +1,10 @@
+// src/lib/data/projects.ts
 import { createClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
+import type { Database } from '@/src/types/supabase';
+import type { PostgrestSingleResponse } from '@supabase/supabase-js';
 
-// --- Core & Related Type Definitions ---
+// --- TYPE DEFINITIONS ---
 
 export interface IconData {
   name: string;
@@ -40,53 +43,45 @@ export interface ProjectDetail extends ProjectCardItem {
   other_images: { url: string; alt?: string }[] | null;
 }
 
-// --- Internal Types ---
-type ServiceRow = { id: string; slug: string; title: string; icons: IconData[] | null };
+// --- Internal Types for Supabase Responses ---
+type RawIcon = { name: string; icon_library: string | null; } | null;
+type ServiceRow = { id: string; slug: string; title: string; icons: RawIcon };
 type TestimonialRow = { id: string; quote: string; name: string; };
 
-type ProjectWithDetails = {
-  id: string;
-  slug: string;
-  title: string;
-  description: string | null;
-  featured_image_url: string | null;
-  content: unknown;
+type RawProject = Database['public']['Tables']['projects']['Row'] & {
   project_services: { services: ServiceRow | null; }[];
-  project_testimonials: { testimonials: TestimonialRow | null; }[];
+  testimonials: TestimonialRow[] | null;
   other_images: { url: string; alt?: string }[] | null;
 };
 
-// --- Helper Functions ---
-function getIcon(item: { icons: IconData[] | null }): IconData | null {
-  if (Array.isArray(item.icons) && item.icons.length > 0) return item.icons[0];
-  return null;
+
+// --- HELPER FUNCTIONS ---
+function getIconFromRaw(item: { icons: RawIcon }): IconData | null {
+  return item.icons ? { name: item.icons.name, icon_library: item.icons.icon_library } : null;
 }
 
-function mapRawProjects(rawProjects: any[]): ProjectCardItem[] {
-    return rawProjects.map((project): ProjectCardItem => {
-        const services = project.project_services
-            // FIX: Added explicit type to the 'ps' parameter to resolve implicit any error.
-            .map((ps: { services: ServiceRow | null }) => ps.services)
-            .filter((s: ServiceRow | null): s is ServiceRow => s !== null)
-            .map((service: ServiceRow) => ({
-                id: service.id,
-                title: service.title,
-                slug: service.slug,
-                icon: getIcon(service),
-            }));
+function mapRawProjectToCard(project: RawProject): ProjectCardItem {
+    const services = project.project_services
+        .map((ps) => ps.services)
+        .filter((s): s is ServiceRow => s !== null)
+        .map((service) => ({
+            id: service.id,
+            title: service.title,
+            slug: service.slug,
+            icon: getIconFromRaw(service),
+        }));
 
-        return {
-            id: project.id,
-            slug: project.slug,
-            title: project.title,
-            description: project.description,
-            featured_image_url: project.featured_image_url,
-            services: services.length > 0 ? services : null,
-        };
-    });
+    return {
+        id: project.id,
+        slug: project.slug,
+        title: project.title,
+        description: project.description,
+        featured_image_url: project.featured_image_url,
+        services: services.length > 0 ? services : null,
+    };
 }
 
-// --- Data Fetching Functions ---
+// --- DATA FETCHING FUNCTIONS ---
 const PROJECT_CARD_SELECT_QUERY = `
     id, slug, title, description, featured_image_url,
     project_services ( services ( id, slug, title, icons ( name, icon_library )))
@@ -104,7 +99,7 @@ export async function getAllProjects(): Promise<ProjectCardItem[]> {
     console.error('Error fetching all projects:', error.message);
     return [];
   }
-  return mapRawProjects(data);
+  return (data as unknown as RawProject[]).map(mapRawProjectToCard);
 }
 
 export async function getFeaturedProjects(limit: number = 3): Promise<ProjectCardItem[]> {
@@ -121,19 +116,19 @@ export async function getFeaturedProjects(limit: number = 3): Promise<ProjectCar
         console.error('Error fetching featured projects:', error.message);
         return [];
     }
-    return mapRawProjects(data);
+    return (data as unknown as RawProject[]).map(mapRawProjectToCard);
 }
 
 export async function getProjectBySlug(slug: string): Promise<ProjectDetail | null> {
   noStore();
   const supabase = createClient();
 
-  const { data, error } = await supabase
+  const { data, error }: PostgrestSingleResponse<RawProject> = await supabase
     .from('projects')
     .select(`
       *,
       project_services ( services ( *, icons ( name, icon_library ) ) ),
-      project_testimonials ( testimonials ( id, quote, name ) )
+      testimonials ( id, quote, name )
     `)
     .eq('slug', slug)
     .single();
@@ -144,30 +139,16 @@ export async function getProjectBySlug(slug: string): Promise<ProjectDetail | nu
     }
     return null;
   }
-
-  const typedData = data as ProjectWithDetails;
   
-  const services = typedData.project_services
-    .map(ps => ps.services)
-    .filter((s): s is ServiceRow => s !== null)
-    .map(service => ({
-        id: service.id,
-        slug: service.slug,
-        title: service.title,
-        icon: getIcon(service),
-    }));
+  if (!data) return null;
 
-  const testimonial = typedData.project_testimonials[0]?.testimonials || null;
+  const cardData = mapRawProjectToCard(data);
+  const testimonial = data.testimonials?.[0] || null;
 
   return {
-    id: typedData.id,
-    slug: typedData.slug,
-    title: typedData.title,
-    description: typedData.description,
-    featured_image_url: typedData.featured_image_url,
-    services: services.length > 0 ? services : null,
-    content: typedData.content as ProjectContentJson | null,
+    ...cardData,
+    content: data.content as ProjectContentJson | null,
     testimonial: testimonial,
-    other_images: typedData.other_images, 
+    other_images: data.other_images, 
   };
 }
