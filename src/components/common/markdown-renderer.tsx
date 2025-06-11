@@ -1,3 +1,4 @@
+// src/components/common/markdown-renderer.tsx
 'use client';
 
 import React from 'react';
@@ -5,7 +6,6 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
   Heading,
-  Text,
   chakra,
   UnorderedList,
   OrderedList,
