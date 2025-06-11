@@ -1,7 +1,10 @@
+// src/lib/data/faqs.ts
 import { createClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
+import type { Database } from '@/src/types/supabase';
 
-// A single block of content within an answer
+// --- TYPE DEFINITIONS ---
+
 export interface FAQAnswerBlock {
   id?: string;
   type: string;
@@ -13,19 +16,16 @@ export interface FAQAnswerBlock {
   };
 }
 
-// The structure of the 'answer' JSONB field
 export interface FAQAnswerContent {
   blocks: FAQAnswerBlock[];
 }
 
-// A single FAQ item
 export interface FAQItem {
   id: string;
   question: string;
   answer: FAQAnswerContent | null;
 }
 
-// A category containing its associated FAQ items
 export interface FAQCategoryWithItems {
   id: string;
   name: string;
@@ -35,6 +35,13 @@ export interface FAQCategoryWithItems {
   faqs: FAQItem[];
 }
 
+// Internal type for the raw row returned from Supabase
+type FaqCategoryWithFaqsRow = Database['public']['Tables']['faq_categories']['Row'] & {
+  faqs: (Database['public']['Tables']['faqs']['Row'])[]
+};
+
+// --- DATA FETCHING FUNCTION ---
+
 export async function getFAQsGroupedByCategory(): Promise<FAQCategoryWithItems[]> {
   noStore();
   const supabase = createClient();
@@ -43,16 +50,30 @@ export async function getFAQsGroupedByCategory(): Promise<FAQCategoryWithItems[]
     .from('faq_categories')
     .select(`
       *,
-      faqs ( * )
+      faqs ( id, question, answer, sort_order )
     `)
     .order('sort_order', { ascending: true })
-    .order('sort_order', { foreignTable: 'faqs', ascending: true });
+    .order('sort_order', { referencedTable: 'faqs', ascending: true });
 
   if (error) {
     console.error('Error fetching FAQs grouped by category:', error.message);
     return [];
   }
 
-  // Filter out any categories that might not have FAQs associated with them
-  return (data as any[]).filter(category => category.faqs && category.faqs.length > 0) as FAQCategoryWithItems[];
+  const typedData = data as unknown as FaqCategoryWithFaqsRow[];
+  
+  // FIX: Perform a safe transformation to match the expected return type
+  const processedData: FAQCategoryWithItems[] = typedData
+    .filter(category => category.faqs.length > 0) // FIX: Removed redundant `category.faqs &&`
+    .map(category => ({
+      ...category,
+      // FIX: Explicitly cast the `answer` property for each FAQ item
+      faqs: category.faqs.map(faq => ({
+        id: faq.id,
+        question: faq.question,
+        answer: faq.answer as FAQAnswerContent | null,
+      })),
+    }));
+
+  return processedData;
 }
