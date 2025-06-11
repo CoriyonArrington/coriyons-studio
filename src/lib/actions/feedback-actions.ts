@@ -1,8 +1,14 @@
+// src/lib/actions/feedback-actions.ts
 'use server';
 
-import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js';
+import {
+  createClient as createSupabaseAdminClient,
+} from '@supabase/supabase-js';
 import { createClient } from '@/src/utils/supabase/server';
-import { FeedbackFormSchema, type FeedbackFormData } from '@/src/lib/schemas/feedback-form-schema';
+import {
+  FeedbackFormSchema,
+  type FeedbackFormData,
+} from '@/src/lib/schemas/feedback-form-schema';
 import { headers } from 'next/headers';
 import type { Database } from '@/src/types/supabase';
 
@@ -16,15 +22,17 @@ type SubmitFeedbackFormState = {
   submissionId?: string;
 };
 
-type FeedbackSubmissionInsert = Database['public']['Tables']['feedback_submissions']['Insert'];
+type FeedbackSubmissionInsert =
+  Database['public']['Tables']['feedback_submissions']['Insert'];
 
 export async function submitFeedbackForm(
   _prevState: SubmitFeedbackFormState | null,
   formData: FormData
 ): Promise<SubmitFeedbackFormState> {
-
   if (!supabaseUrl || !supabaseServiceRoleKey) {
-    console.error('Supabase URL or Service Role Key is missing from environment variables.');
+    console.error(
+      'Supabase URL or Service Role Key is missing from environment variables.'
+    );
     return {
       success: false,
       message: 'Server configuration error. Please contact support.',
@@ -34,14 +42,15 @@ export async function submitFeedbackForm(
   const supabaseAdmin = createSupabaseAdminClient(
     supabaseUrl,
     supabaseServiceRoleKey,
-    {
-      auth: { persistSession: false, autoRefreshToken: false },
-    }
+    { auth: { persistSession: false, autoRefreshToken: false } }
   );
 
-  const supabaseUserClient = await createClient();
-  const { data: { user } } = await supabaseUserClient.auth.getUser();
+  const supabaseUserClient = createClient();
+  const {
+    data: { user },
+  } = await supabaseUserClient.auth.getUser();
 
+  // 1. Extract and validate form data
   const rawFormData = {
     clarity_rating: formData.get('clarity_rating'),
     usefulness_rating: formData.get('usefulness_rating'),
@@ -61,59 +70,50 @@ export async function submitFeedbackForm(
   }
 
   const validatedData = validationResult.data;
-  
+
   try {
-    const headersList = await headers(); // Await the headers function
+    // 2. Await headers() so we get ReadonlyHeaders
+    const headersList = await headers();
+
     const dataToInsert: FeedbackSubmissionInsert = {
-      clarity_rating: validatedData.clarity_rating,
-      usefulness_rating: validatedData.usefulness_rating,
-      satisfaction_rating: validatedData.satisfaction_rating,
-      comments: validatedData.comments,
-      source_url: headersList.get('referer') || 'Unknown source',
-      ip_address: headersList.get('x-forwarded-for') || headersList.get('remote-addr'),
-      user_agent: headersList.get('user-agent') || 'Unknown agent',
-      user_id: user?.id || null,
-      feedback_type: validatedData.feedback_type || undefined,
-      email: validatedData.email || undefined,
+      ...validatedData,
+      source_url: headersList.get('referer') ?? 'Unknown source',
+      ip_address:
+        headersList.get('x-forwarded-for') ??
+        headersList.get('remote-addr') ??
+        undefined,
+      user_agent: headersList.get('user-agent') ?? 'Unknown agent',
+      user_id: user?.id ?? null,
     };
 
-    const { data: submissionData, error } = await supabaseAdmin
+    // 3. Insert and select only `id`, typing the returned row via .single<>
+    const response = await supabaseAdmin
       .from('feedback_submissions')
       .insert([dataToInsert])
       .select('id')
-      .single();
+      .single<{ id: string }>();
 
-    if (error) {
-      console.error('Supabase error inserting feedback submission:', error);
+    if (response.error) {
+      console.error('Supabase error inserting feedback:', response.error);
       return {
         success: false,
-        message: `An error occurred: ${error.message}. Please try again.`,
+        message: `Database error: ${response.error.message}`,
       };
     }
 
-    if (submissionData.id) {
-      return {
-        success: true,
-        message: 'Thank you for your feedback!',
-        submissionId: submissionData.id,
-      };
-    }
-
+    // 4. Return success (response.data is non-null here)
     return {
-      success: false,
-      message: 'An unexpected issue occurred after attempting submission.',
+      success: true,
+      message: 'Thank you for your feedback!',
+      submissionId: response.data.id,
     };
-  } catch (e) {
-    if (e instanceof Error) {
-      console.error('Unexpected error in submitFeedbackForm:', e);
-      return {
-        success: false,
-        message: `A server error occurred: ${e.message}`,
-      };
-    }
+  } catch (e: unknown) {
+    const message =
+      e instanceof Error ? e.message : 'An unknown server error occurred.';
+    console.error('Unexpected error in submitFeedbackForm:', message);
     return {
       success: false,
-      message: 'An unknown server error occurred.',
+      message: `A server error occurred: ${message}`,
     };
   }
 }
