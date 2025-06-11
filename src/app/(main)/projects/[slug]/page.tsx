@@ -1,3 +1,5 @@
+// src/app/(main)/projects/[slug]/page.tsx
+
 import { notFound } from 'next/navigation';
 import { getProjectBySlug, getAllProjects } from '@/src/lib/data/projects';
 import Layout from '@/src/components/common/layout';
@@ -175,7 +177,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 href={`/services/${service.slug}`}
                 title={service.title}
                 description={null}
-                tags={service.icon ? [{ id: service.id, name: 'Service' }] : []}
+                // FIX: Removed reference to `service.icon`
+                tags={[{ id: service.id, name: 'Service' }]}
                 tagColorScheme={'teal'}
               />
             ))}

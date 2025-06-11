@@ -1,3 +1,4 @@
+// src/app/(main)/projects/page.stories.tsx
 import type { Meta, StoryObj } from '@storybook/react';
 import ProjectsView from './view';
 import type { ProjectCardItem } from '@/src/lib/data/projects';
@@ -11,8 +12,9 @@ const mockProjects: ProjectCardItem[] = [
     description: 'Designed and prototyped an MVP for a health-tech startup, focusing on core user flows to validate the concept with target users and secure initial funding.',
     featured_image_url: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=800&q=60',
     services: [
-        {id: '1', title: 'UX Design', slug: 'ux-design', icon: null}, 
-        {id: '2', title: 'Prototyping', slug: 'prototyping', icon: null}
+        // FIX: Removed invalid `icon` property
+        {id: '1', title: 'UX Design', slug: 'ux-design'}, 
+        {id: '2', title: 'Prototyping', slug: 'prototyping'}
     ]
   },
   {
@@ -21,7 +23,8 @@ const mockProjects: ProjectCardItem[] = [
     title: 'Mobile Wellness App UX Overhaul',
     description: 'Redesigned a wellness app to improve user engagement and satisfaction through an intuitive, personalized experience.',
     featured_image_url: 'https://images.unsplash.com/photo-1555066931-4365d1469c9b?auto=format&fit=crop&w=800&q=60',
-    services: [{id: '3', title: 'UI/UX Redesign', slug: 'ui-ux-redesign', icon: null}]
+    // FIX: Removed invalid `icon` property
+    services: [{id: '3', title: 'UI/UX Redesign', slug: 'ui-ux-redesign'}]
   },
 ];
 

@@ -6,20 +6,15 @@ import type { PostgrestSingleResponse } from '@supabase/supabase-js';
 
 // --- TYPE DEFINITIONS ---
 
-export interface IconData {
-  name: string;
-  icon_library: string | null;
-}
-
 export interface ProjectContentJson {
   [key:string]: unknown;
 }
 
+// FIX: Removed the `icon` property as it doesn't exist in the schema relationship.
 export interface ProjectService {
   id: string;
   title: string;
   slug: string;
-  icon: IconData | null;
 }
 
 export interface ProjectTestimonial {
@@ -44,8 +39,7 @@ export interface ProjectDetail extends ProjectCardItem {
 }
 
 // --- Internal Types for Supabase Responses ---
-type RawIcon = { name: string; icon_library: string | null; } | null;
-type ServiceRow = { id: string; slug: string; title: string; icons: RawIcon };
+type ServiceRow = { id: string; slug: string; title: string; };
 type TestimonialRow = { id: string; quote: string; name: string; };
 
 type RawProject = Database['public']['Tables']['projects']['Row'] & {
@@ -56,10 +50,6 @@ type RawProject = Database['public']['Tables']['projects']['Row'] & {
 
 
 // --- HELPER FUNCTIONS ---
-function getIconFromRaw(item: { icons: RawIcon }): IconData | null {
-  return item.icons ? { name: item.icons.name, icon_library: item.icons.icon_library } : null;
-}
-
 function mapRawProjectToCard(project: RawProject): ProjectCardItem {
     const services = project.project_services
         .map((ps) => ps.services)
@@ -68,7 +58,6 @@ function mapRawProjectToCard(project: RawProject): ProjectCardItem {
             id: service.id,
             title: service.title,
             slug: service.slug,
-            icon: getIconFromRaw(service),
         }));
 
     return {
@@ -82,9 +71,10 @@ function mapRawProjectToCard(project: RawProject): ProjectCardItem {
 }
 
 // --- DATA FETCHING FUNCTIONS ---
+// FIX: Removed the invalid `icons` join from the services query.
 const PROJECT_CARD_SELECT_QUERY = `
     id, slug, title, description, featured_image_url,
-    project_services ( services ( id, slug, title, icons ( name, icon_library )))
+    project_services ( services ( id, slug, title ))
 `;
 
 export async function getAllProjects(): Promise<ProjectCardItem[]> {
@@ -123,11 +113,12 @@ export async function getProjectBySlug(slug: string): Promise<ProjectDetail | nu
   noStore();
   const supabase = createClient();
 
+  // FIX: Removed the invalid `icons` join from the services query in this function as well.
   const { data, error }: PostgrestSingleResponse<RawProject> = await supabase
     .from('projects')
     .select(`
       *,
-      project_services ( services ( *, icons ( name, icon_library ) ) ),
+      project_services ( services ( id, slug, title ) ),
       testimonials ( id, quote, name )
     `)
     .eq('slug', slug)
