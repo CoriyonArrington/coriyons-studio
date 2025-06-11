@@ -1,6 +1,8 @@
+// src/lib/data/pages.ts
 import { createClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
 import type { PageRow, FaqPageJoin, UxProblemPageJoin, UxSolutionPageJoin } from './minimal_pages_schema';
+import type { PostgrestSingleResponse } from '@supabase/supabase-js';
 
 // --- Exported Types ---
 export type FooterCategory = 'MAIN' | 'RESOURCES' | 'SUPPORT' | 'LEGAL';
@@ -19,11 +21,20 @@ export type PageWithRelations = PageRow & {
     faq_pages: { faqs: FaqPageJoin['faqs'] }[];
 };
 
+// --- Internal Types for Supabase Responses ---
+type RawFooterPage = {
+    title: string;
+    slug: string;
+    nav_title: string | null;
+    page_type: string;
+};
+
 // --- Data Fetching Functions ---
 export async function getPageBySlug(slug: string): Promise<PageWithRelations | null> {
     noStore();
     const supabase = createClient();
-    const { data, error } = await supabase
+    // FIX: Explicitly type the response to fix unsafe destructuring.
+    const { data, error }: PostgrestSingleResponse<PageWithRelations> = await supabase
       .from('pages')
       .select(`
         *,
@@ -40,7 +51,7 @@ export async function getPageBySlug(slug: string): Promise<PageWithRelations | n
       }
       return null;
     }
-    return data as PageWithRelations;
+    return data;
 }
 
 export async function getNavigablePages(): Promise<NavigablePageInfo[]> {
@@ -80,15 +91,17 @@ export async function getCategorizedFooterPages(): Promise<CategorizedFooterPage
     console.error('Error fetching footer pages:', error);
     return categorized;
   }
+  
+  // FIX: Cast the Supabase data to our specific raw type.
+  const typedData = data as RawFooterPage[];
 
-  data.forEach(page => {
+  typedData.forEach(page => {
     const category = page.page_type as FooterCategory;
-    if (categorized[category]) {
-      categorized[category].push({ 
+    // FIX: Removed redundant `if (categorized[category])` check.
+    categorized[category].push({ 
         title: page.nav_title || page.title,
         href: `/${page.slug === 'home' ? '' : page.slug}`
     });
-    }
   });
   
   Object.values(categorized).forEach(arr => arr.sort((a, b) => a.title.localeCompare(b.title)));
