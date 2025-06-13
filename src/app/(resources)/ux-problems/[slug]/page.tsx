@@ -1,44 +1,65 @@
 // src/app/(resources)/ux-problems/[slug]/page.tsx
-// NO 'use client' - Server Component
-// - Added section to display Related Solutions.
-
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
-import { Heading, Text } from '@/src/components/typography';
-import { Box, VStack, UnorderedList, ListItem, HStack, Divider, SimpleGrid } from '@chakra-ui/react';
 import {
-    getUxProblemBySlug,
-    getAllUxProblems,
-    // type UxProblemDetail, // Removed
-    // type UxProblemCardItem, // Removed
-    // type UxProblemContentJson, // Removed
-    // type IconData // Removed
+  Box,
+  VStack,
+  UnorderedList,
+  ListItem,
+  HStack,
+  Divider,
+  SimpleGrid,
+  Card,
+  CardHeader,
+  CardBody,
+  Heading,
+  Text,
+  CardFooter,
+} from '@chakra-ui/react';
+import {
+  getUxProblemBySlug,
+  getAllUxProblems,
 } from '@/src/lib/data/ux_problems';
-import type { UxSolutionCardItem } from '@/src/lib/data/ux_solutions'; 
-import { UICard, UICardHeader, UICardBody, UICardHeading, UICardText, UICardFooter } from '@/src/components/ui/card'; 
-import HeroCtaButton from '@/src/components/common/hero-cta-button'; 
+import type { UxSolutionCardItem } from '@/src/lib/data/ux_solutions';
+import HeroCtaButton from '@/src/components/common/hero-cta-button';
 import { notFound } from 'next/navigation';
 import type { Metadata, ResolvingMetadata } from 'next';
-// import NextLink from 'next/link'; // NextLink removed
-import PrevNextNavigation, { type NavLinkInfo as PrevNextNavLinkInfo } from '@/src/components/common/prev-next-navigation';
+import PrevNextNavigation, {
+  type NavLinkInfo as PrevNextNavLinkInfo,
+} from '@/src/components/common/prev-next-navigation';
 import React from 'react';
 import * as LucideIcons from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
 
-const DynamicLucideIcon: React.FC<{ name: string | undefined | null; } & Omit<LucideProps, 'ref' | 'children'>> = ({ name, ...props }) => {
-  if (!name) {
-    return <LucideIcons.AlertTriangle {...props} />;
-  }
-  if (Object.prototype.hasOwnProperty.call(LucideIcons, name)) {
+const DynamicLucideIcon: React.FC<
+  { name: string | undefined | null } & Omit<LucideProps, 'ref' | 'children'>
+> = ({ name, ...props }) => {
+  if (name && Object.prototype.hasOwnProperty.call(LucideIcons, name)) {
+    // Disable rules for creating the 'any' typed variable
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const IconComponent = (LucideIcons as any)[name];
-    if (IconComponent && (typeof IconComponent === 'function' || (typeof IconComponent === 'object' && IconComponent.$$typeof === Symbol.for('react.forward_ref')))) {
-      return React.createElement(IconComponent as React.ComponentType<LucideProps>, props);
+    if (typeof IconComponent === 'function') {
+      // Disable rule for using the 'any' typed variable as an argument
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      return React.createElement(IconComponent, props);
     }
   }
   if (process.env.NODE_ENV === 'development') {
-    console.warn(`Lucide icon "${name}" not found or invalid in ux-problems/[slug]/page.tsx. Rendering fallback 'AlertTriangle'.`);
+    console.warn(
+      `Lucide icon "${name ?? '??'}" not found or invalid in ux-problems/[slug]/page.tsx. Rendering fallback 'AlertTriangle'.`,
+    );
   }
-  return <LucideIcons.AlertTriangle {...props} />;
+  
+  // Disable rules for the fallback icon lookup
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+  const FallbackIcon = (LucideIcons as any)['AlertTriangle'];
+  if (typeof FallbackIcon === 'function') {
+    // Disable rule for using the 'any' typed variable as an argument
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return React.createElement(FallbackIcon, props);
+  }
+
+  return null;
 };
 
 interface UxProblemDetailPageProps {
@@ -61,7 +82,9 @@ const renderContentSection = (title: string, items: string[] | undefined) => {
   );
 };
 
-const renderRealWorldExamples = (examples: Array<{ example: string; impact: string }> | undefined) => {
+const renderRealWorldExamples = (
+  examples: Array<{ example: string; impact: string }> | undefined,
+) => {
   if (!examples || examples.length === 0) return null;
   return (
     <Box mt={6}>
@@ -70,9 +93,11 @@ const renderRealWorldExamples = (examples: Array<{ example: string; impact: stri
       </Heading>
       <VStack spacing={4} alignItems="stretch">
         {examples.map((ex, index) => (
-          <Box key={index} p={4} borderWidth="1px" borderRadius="md" borderColor="border.subtle">
+          <Box key={index} p={4} borderWidth="1px" borderRadius="md" bg="blackAlpha.50" _dark={{bg: "whiteAlpha.50"}}>
             <Text fontWeight="semibold">Example: {ex.example}</Text>
-            <Text fontSize="sm" color="muted.foreground">Impact: {ex.impact}</Text>
+            <Text fontSize="sm" color="muted.foreground">
+              Impact: {ex.impact}
+            </Text>
           </Box>
         ))}
       </VStack>
@@ -83,8 +108,8 @@ const renderRealWorldExamples = (examples: Array<{ example: string; impact: stri
 export default async function UxProblemDetailPage({ params }: UxProblemDetailPageProps) {
   const { slug } = params;
   const [problem, allUxProblemsForNav] = await Promise.all([
-    getUxProblemBySlug(slug), 
-    getAllUxProblems()
+    getUxProblemBySlug(slug),
+    getAllUxProblems(),
   ]);
 
   if (!problem) {
@@ -94,16 +119,24 @@ export default async function UxProblemDetailPage({ params }: UxProblemDetailPag
   let previousProblemLink: PrevNextNavLinkInfo | undefined;
   let nextProblemLink: PrevNextNavLinkInfo | undefined;
 
-  if (allUxProblemsForNav && allUxProblemsForNav.length > 0) {
-    const currentIndex = allUxProblemsForNav.findIndex(p => p.slug === problem.slug);
+  if (allUxProblemsForNav.length > 0) {
+    const currentIndex = allUxProblemsForNav.findIndex((p) => p.slug === problem.slug);
     if (currentIndex !== -1) {
       if (currentIndex > 0) {
         const prevProblem = allUxProblemsForNav[currentIndex - 1];
-        previousProblemLink = { slug: prevProblem.slug, title: prevProblem.title, categoryLabel: "Previous Problem" };
+        previousProblemLink = {
+          slug: prevProblem.slug,
+          title: prevProblem.title,
+          categoryLabel: 'Previous Problem',
+        };
       }
       if (currentIndex < allUxProblemsForNav.length - 1) {
         const nextProblem = allUxProblemsForNav[currentIndex + 1];
-        nextProblemLink = { slug: nextProblem.slug, title: nextProblem.title, categoryLabel: "Next Problem" };
+        nextProblemLink = {
+          slug: nextProblem.slug,
+          title: nextProblem.title,
+          categoryLabel: 'Next Problem',
+        };
       }
     }
   }
@@ -115,10 +148,10 @@ export default async function UxProblemDetailPage({ params }: UxProblemDetailPag
       <Section as="article" py={{ base: 10, md: 16 }} px={{ base: 4, md: 8 }}>
         <VStack spacing={8} alignItems="stretch" maxW="container.lg" mx="auto">
           <VStack spacing={3} alignItems="center" textAlign="center" mb={8}>
-            {icon && icon.name && (
+            {icon?.name && (
               <Box mb={2}>
                 <DynamicLucideIcon
-                  name={icon.icon_library === 'lucide-react' ? icon.name : undefined}
+                  name={icon.name}
                   size={40}
                   color="var(--chakra-colors-primary-500)"
                   strokeWidth={2.5}
@@ -138,10 +171,10 @@ export default async function UxProblemDetailPage({ params }: UxProblemDetailPag
 
           {content ? (
             <Box>
-              {renderContentSection("Common Symptoms", content.symptoms)}
-              {renderContentSection("Potential Causes", content.potential_causes)}
+              {renderContentSection('Common Symptoms', content.symptoms)}
+              {renderContentSection('Potential Causes', content.potential_causes)}
               {renderRealWorldExamples(content.real_world_examples)}
-              {renderContentSection("Key Questions to Ask", content.questions_to_ask)}
+              {renderContentSection('Key Questions to Ask', content.questions_to_ask)}
             </Box>
           ) : (
             <Text>Detailed content for this UX problem is not yet available.</Text>
@@ -154,31 +187,31 @@ export default async function UxProblemDetailPage({ params }: UxProblemDetailPag
               </Heading>
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                 {relatedSolutions.map((solution: UxSolutionCardItem) => (
-                  <UICard key={solution.id} variant="outlineFilled" h="full" display="flex" flexDirection="column">
-                    <UICardHeader>
+                  <Card key={solution.id} variant="outline" h="full" display="flex" flexDirection="column">
+                    <CardHeader>
                       <HStack spacing={3} alignItems="center">
-                        {solution.icon && solution.icon.name && (
+                        {solution.icon?.name && (
                            <DynamicLucideIcon
-                             name={solution.icon.icon_library === 'lucide-react' ? solution.icon.name : undefined}
+                             name={solution.icon.name}
                              size={22}
                              color="var(--chakra-colors-green-500)" 
                              strokeWidth={2.5}
                            />
                         )}
-                        <UICardHeading size="md" as="h3">{solution.title}</UICardHeading>
+                        <Heading size="md" as="h3">{solution.title}</Heading>
                       </HStack>
-                    </UICardHeader>
-                    <UICardBody flexGrow={1}>
-                      <UICardText color="muted.foreground" mb={4} noOfLines={3}>
+                    </CardHeader>
+                    <CardBody flexGrow={1}>
+                      <Text color="muted.foreground" mb={4} noOfLines={3}>
                         {solution.description || "Learn more about this solution."}
-                      </UICardText>
-                    </UICardBody>
-                    <UICardFooter>
+                      </Text>
+                    </CardBody>
+                    <CardFooter>
                       <HeroCtaButton href={`/ux-solutions/${solution.slug}`} size="sm" variant="outline" width="full">
                         Explore Solution
                       </HeroCtaButton>
-                    </UICardFooter>
-                  </UICard>
+                    </CardFooter>
+                  </Card>
                 ))}
               </SimpleGrid>
             </Box>
@@ -192,10 +225,10 @@ export default async function UxProblemDetailPage({ params }: UxProblemDetailPag
 
 export async function generateMetadata(
   { params }: UxProblemDetailPageProps,
-  _parent: ResolvingMetadata // parent renamed to _parent
+  _parent: ResolvingMetadata
 ): Promise<Metadata> {
   const slug = params.slug;
-  const problem = await getUxProblemBySlug(slug); 
+  const problem = await getUxProblemBySlug(slug);
 
   if (!problem) {
     return {

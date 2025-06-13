@@ -1,4 +1,6 @@
-// src/components/admin/__tests__/typography-showcase.test.tsx
+// ATTEMPT #1: Using `extendTheme` idiomatically to resolve unsafe assignment.
+// Change 1: Refactored the `extendTheme` call to pass `baseTheme` as a separate argument instead of using the spread operator. This is the idiomatic and type-safe way to extend the theme in Chakra UI and resolves the `no-unsafe-assignment` error.
+
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -8,10 +10,12 @@ import TypographyShowcase from '../typography-showcase';
 import baseTheme from '@/src/lib/theme';
 
 const renderWithChakra = (ui: React.ReactElement) => {
-  const theme = extendTheme({
-    ...baseTheme,
-    config: { ...baseTheme.config, initialColorMode: 'light', useSystemColorMode: false },
-  });
+  const theme = extendTheme(
+    baseTheme,
+    {
+      config: { initialColorMode: 'light', useSystemColorMode: false },
+    }
+  );
   return render(<ChakraProvider theme={theme}>{ui}</ChakraProvider>);
 };
 

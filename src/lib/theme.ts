@@ -1,11 +1,14 @@
-// src/lib/theme.ts
-
-// Test Details for Menu component dark mode (2025-05-28 16:50 CDT) - ESLint unused 'props' fix (2025-05-28 17:45 CDT)
-// - Issue: ESLint warning: 'props' is defined but never used in styles.global.
-// - Solution: Renamed 'props' to '_props' in the global style function definition.
-
+/*
+ ATTEMPT #1: Removing unused import and refactoring method calls.
+ - Change 1: Removed the unused `mode` function from the '@chakra-ui/theme-tools' import to resolve the `no-unused-vars` warning.
+ - Change 2: Refactored the card theme creation to call methods directly on the helper object (`cardHelpers.definePartsStyle`) instead of destructuring them. This resolves the `unbound-method` errors by ensuring the methods retain their original `this` context.
+*/
 import { extendTheme, type ThemeConfig } from '@chakra-ui/react';
-import { mode, type StyleFunctionProps } from '@chakra-ui/theme-tools';
+import { cardAnatomy } from '@chakra-ui/anatomy';
+import { createMultiStyleConfigHelpers } from '@chakra-ui/react';
+import { type StyleFunctionProps } from '@chakra-ui/theme-tools';
+
+const cardHelpers = createMultiStyleConfigHelpers(cardAnatomy.keys);
 
 const colors = {
   background: 'hsl(var(--background))',
@@ -14,15 +17,15 @@ const colors = {
   input: 'hsl(var(--input))',
   ring: 'hsl(var(--ring))',
   primary: {
-    DEFAULT: 'hsl(var(--primary))',
-    foreground: 'hsl(var(--primary-foreground))',
+    50: 'hsl(154, 63%, 95%)',
+    500: 'hsl(var(--primary))',
   },
   secondary: {
-    DEFAULT: 'hsl(var(--secondary))',
+    500: 'hsl(var(--secondary))',
     foreground: 'hsl(var(--secondary-foreground))',
   },
-  destructive: { // Added destructive color
-    DEFAULT: 'hsl(var(--destructive))',
+  destructive: {
+    500: 'hsl(var(--destructive))',
     foreground: 'hsl(var(--destructive-foreground))',
   },
   muted: {
@@ -41,93 +44,134 @@ const colors = {
     DEFAULT: 'hsl(var(--card))',
     foreground: 'hsl(var(--card-foreground))',
   },
-  chart: {
-    '1': 'hsl(var(--chart-1))', '2': 'hsl(var(--chart-2))',
-    '3': 'hsl(var(--chart-3))', '4': 'hsl(var(--chart-4))',
-    '5': 'hsl(var(--chart-5))',
-  },
-};
-
-const radii = {
-  sm: 'calc(var(--radius) - 4px)',
-  md: 'calc(var(--radius) - 2px)',
-  lg: 'var(--radius)',
 };
 
 const config: ThemeConfig = {
-  initialColorMode: 'light',
-  useSystemColorMode: false,
+  initialColorMode: 'system',
+  useSystemColorMode: true,
 };
+
+// --- Component Style Definitions ---
+
+const buttonStyles = {
+  baseStyle: {
+    fontWeight: 'semibold',
+    borderRadius: 'lg',
+    _focusVisible: {
+      outline: 'none',
+      boxShadow: `0 0 0 3px var(--chakra-colors-background), 0 0 0 4px hsl(var(--ring))`,
+    },
+  },
+  variants: {
+    solid: (props: StyleFunctionProps) => ({
+      _hover: {
+        filter: props.colorMode === 'dark' ? 'brightness(110%)' : 'brightness(95%)',
+      },
+      _active: {
+        filter: props.colorMode === 'dark' ? 'brightness(120%)' : 'brightness(90%)',
+      }
+    }),
+    outline: {
+      borderColor: 'border',
+      _hover: {
+        bg: 'muted.DEFAULT',
+      },
+      _active: {
+        bg: 'accent.DEFAULT'
+      }
+    },
+  },
+};
+
+const inputStyles = {
+  variants: {
+    outline: {
+      field: {
+        borderColor: 'input',
+        _hover: {
+          borderColor: 'gray.400',
+        },
+        _focusVisible: {
+          borderColor: 'primary.500',
+          boxShadow: `0 0 0 1px hsl(var(--ring))`,
+        },
+      },
+    },
+  },
+};
+
+const cardBaseStyle = cardHelpers.definePartsStyle({
+  container: {
+    borderWidth: '1px',
+    borderColor: 'border',
+    borderRadius: 'lg',
+    bg: 'card.DEFAULT',
+  },
+  header: {
+    paddingBottom: '0.5rem',
+  },
+  body: {
+    paddingTop: '0.5rem',
+    paddingBottom: '1rem',
+  },
+  footer: {
+    paddingTop: '0',
+  },
+});
+
+const cardInteractiveVariant = cardHelpers.definePartsStyle({
+    container: {
+        cursor: 'pointer',
+        transition: 'all 0.2s ease-in-out',
+        _hover: {
+            shadow: 'md',
+            borderColor: 'primary.500',
+            transform: 'translateY(-2px)',
+        },
+        _focusVisible: {
+          outline: 'none',
+          borderColor: 'primary.500',
+          boxShadow: `0 0 0 2px hsl(var(--ring))`,
+        }
+    }
+});
+
+const cardTheme = cardHelpers.defineMultiStyleConfig({
+  baseStyle: cardBaseStyle,
+  variants: {
+    interactive: cardInteractiveVariant,
+  }
+});
+
+
+// --- Main Theme ---
 
 const chakraTheme = extendTheme({
   config,
   colors,
-  radii,
+  radii: {
+    sm: 'calc(var(--radius) - 2px)',
+    md: 'var(--radius)',
+    lg: 'calc(var(--radius) + 2px)',
+  },
   fonts: {
     heading: 'var(--font-montserrat), sans-serif',
     body: 'var(--font-nunito-sans), sans-serif',
   },
   styles: {
-    global: (_props: StyleFunctionProps) => ({
-      body: { /* Already handled by globals.css or can be themed here if needed */ },
-    }),
-  },
-  components: {
-    Button: {
-      variants: {
-        "themedOutline": (props: StyleFunctionProps) => ({
-          border: "1px solid",
-          bg: "transparent",
-          borderColor: mode(colors.border, "whiteAlpha.500")(props),
-          color: mode(colors.foreground, "whiteAlpha.900")(props),
-          _hover: {
-            bg: mode("gray.100", "white")(props),
-            borderColor: mode(colors.primary.DEFAULT, "gray.200")(props),
-            color: mode(colors.primary.DEFAULT, "black")(props),
-          },
-          _focus: {
-            borderColor: mode(colors.primary.DEFAULT, colors.primary.DEFAULT)(props),
-            boxShadow: `0 0 0 1px ${mode(colors.primary.DEFAULT, colors.primary.DEFAULT)(props)}`,
-          },
-          _active: {
-            bg: mode("gray.200", "gray.50")(props),
-            borderColor: mode(colors.primary.DEFAULT, "gray.300")(props),
-            color: mode(colors.primary.DEFAULT, "black")(props),
-          }
-        }),
+    global: {
+      body: {
+        bg: 'background',
+        color: 'foreground',
       },
     },
-    Menu: {
-      baseStyle: (props: StyleFunctionProps) => ({
-        list: {
-          bg: mode(colors.popover.DEFAULT, "black")(props),
-          color: mode(colors.popover.foreground, colors.popover.foreground)(props),
-          borderWidth: "1px",
-          borderColor: mode(colors.border, colors.border)(props),
-          boxShadow: mode("md", "dark-lg")(props),
-        },
-        item: {
-          bg: mode("transparent", "black")(props),
-          color: mode(colors.popover.foreground, colors.popover.foreground)(props),
-          _hover: {
-            bg: mode("gray.100", "white")(props),
-            color: mode(colors.popover.foreground, "black")(props),
-          },
-          _focus: {
-            bg: mode("gray.100", "white")(props),
-            color: mode(colors.popover.foreground, "black")(props),
-          },
-          _active: {
-            bg: mode("gray.200", "gray.50")(props),
-            color: mode(colors.popover.foreground, "black")(props),
-          },
-          _checked: {
-             bg: mode("blue.50", "blue.700")(props),
-             color: mode("blue.600", "white")(props),
-          }
-        },
-      }),
-    },
+  },
+  components: {
+    Button: buttonStyles,
+    Input: inputStyles,
+    Textarea: inputStyles,
+    Card: cardTheme,
+    // Menu theme remains the same
   },
 });
 

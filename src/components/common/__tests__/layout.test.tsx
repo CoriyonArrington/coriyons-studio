@@ -1,6 +1,9 @@
-// src/components/common/__tests__/layout.test.tsx
+// ATTEMPT 1: Using extendTheme idiomatically to resolve unsafe assignment.
+// - Instead of spreading `baseTheme`, it is now passed as a separate argument
+//   to `extendTheme`, which is the intended and type-safe usage pattern.
+
 import React from 'react';
-import { describe, it, expect } from 'vitest'; // Removed 'vi'
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { axe } from 'jest-axe';
@@ -8,10 +11,16 @@ import Layout from '../layout';
 import baseTheme from '@/src/lib/theme';
 
 const renderWithChakra = (ui: React.ReactElement, colorMode: 'light' | 'dark' = 'light') => {
-  const theme = extendTheme({
-    ...baseTheme,
-    config: { ...baseTheme.config, initialColorMode: colorMode, useSystemColorMode: false },
-  });
+  // FIX: Pass theme objects as separate arguments instead of using the spread operator.
+  const theme = extendTheme(
+    baseTheme,
+    {
+      config: { 
+        initialColorMode: colorMode, 
+        useSystemColorMode: false 
+      },
+    }
+  );
   return render(<ChakraProvider theme={theme}>{ui}</ChakraProvider>);
 };
 
@@ -34,10 +43,7 @@ describe('Layout Component (common/layout.tsx)', () => {
       </Layout>
     );
     const flexElement = container.firstChild as HTMLElement;
-    expect(flexElement).toBeInTheDocument(); // Check if the root Flex element exists
-    // expect(flexElement.tagName.toLowerCase()).toBe('div'); // Chakra Flex renders as div
-    // Avoid checking for specific Chakra classes like 'chakra-stack' or 'css-b95f0i'
-    // Instead, verify its role or that it contains the main content correctly.
+    expect(flexElement).toBeInTheDocument();
 
     const mainElement = screen.getByRole('main'); // <Box as="main">
     expect(mainElement).toBeInTheDocument();

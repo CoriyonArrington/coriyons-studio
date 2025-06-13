@@ -1,20 +1,20 @@
 // src/app/(resources)/ux-problems/page.tsx
-
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
-import { Heading, Text } from '@/src/components/typography';
-import { VStack, SimpleGrid, HStack } from '@chakra-ui/react';
 import {
-  UICard,
-  UICardHeader,
-  UICardBody,
-  UICardHeading,
-  UICardText,
-  UICardFooter,
-} from '@/src/components/ui/card';
+  VStack,
+  SimpleGrid,
+  HStack,
+  Card,
+  CardHeader,
+  CardBody,
+  Heading,
+  Text,
+  CardFooter,
+} from '@chakra-ui/react';
 import HeroCtaButton from '@/src/components/common/hero-cta-button';
 import {
-  getPageContentBySlug,
+  getPageBySlug,
   getNavigablePages,
   type NavigablePageInfo,
 } from '@/src/lib/data/pages';
@@ -25,50 +25,55 @@ import type { Metadata } from 'next';
 import React from 'react';
 import * as LucideIcons from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
-import type { PageRow } from '@/src/lib/data/minimal_pages_schema';
 
 interface UxProblemsPageCmsContent {
   hero?: { headline?: string };
   intro_text?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const SLUG = 'ux-problems';
 
-const DynamicLucideIcon: React.FC<
-  { name: string | undefined | null } & Omit<LucideProps, 'ref' | 'children'>
-> = ({ name, ...props }) => {
-  if (!name) {
-    return <LucideIcons.AlertTriangle {...props} />;
+const DynamicLucideIcon: React.FC<{ name: string | undefined | null } & Omit<LucideProps, 'ref' | 'children'>> = ({ name, ...props }) => {
+  if (name && Object.prototype.hasOwnProperty.call(LucideIcons, name)) {
+    // This is a controlled escape hatch. The lucide-react library's types do not
+    // support this dynamic lookup cleanly. We use 'any' and disable all related
+    // ESLint rules for this single operation to resolve all type and lint errors.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const IconComponent = (LucideIcons as any)[name];
+    if (typeof IconComponent === 'function') {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      return React.createElement(IconComponent, props);
+    }
   }
-  const IconComponent = (LucideIcons as any)[name];
-  if (
-    IconComponent &&
-    (typeof IconComponent === 'function' ||
-      (typeof IconComponent === 'object' && IconComponent.$$typeof === Symbol.for('react.forward_ref')))
-  ) {
-    return React.createElement(IconComponent as React.ComponentType<LucideProps>, props);
-  }
+
   if (process.env.NODE_ENV === 'development') {
-    console.warn(
-      `Lucide icon "${name}" not found or invalid in ux-problems/page.tsx. Rendering fallback 'AlertTriangle'.`,
-    );
+    console.warn(`Lucide icon "${name || ''}" not found or invalid. Rendering fallback 'AlertTriangle'.`);
   }
-  return <LucideIcons.AlertTriangle {...props} />;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+  const FallbackIcon = (LucideIcons as any)['AlertTriangle'];
+  if (typeof FallbackIcon === 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return React.createElement(FallbackIcon, props);
+  }
+
+  return null;
 };
 
 export default async function UxProblemsLandingPage() {
-  // Cast to ensure TS knows slug is string
-  const pageCmsData = (await getPageContentBySlug(SLUG)) as PageRow | null;
-  const uxProblems = (await getAllUxProblems()) as UxProblemCardItem[];
-  const navigablePages = (await getNavigablePages()) as NavigablePageInfo[];
+  const [pageCmsData, uxProblems, navigablePages] = await Promise.all([
+    getPageBySlug(SLUG),
+    getAllUxProblems(),
+    getNavigablePages(),
+  ]);
 
   let previousPageLink: PrevNextNavLinkInfo | undefined;
   let nextPageLink: PrevNextNavLinkInfo | undefined;
 
   if (pageCmsData) {
     const currentPageIndex = navigablePages.findIndex(
-      (p: NavigablePageInfo) => p.slug === (pageCmsData.slug as string),
+      (p: NavigablePageInfo) => p.slug === pageCmsData.slug,
     );
     if (currentPageIndex !== -1) {
       if (currentPageIndex > 0) {
@@ -90,15 +95,12 @@ export default async function UxProblemsLandingPage() {
     }
   }
 
-  const cmsContent = (pageCmsData?.content as unknown) as UxProblemsPageCmsContent | null;
+  const cmsContent = pageCmsData?.content as unknown as UxProblemsPageCmsContent | null;
   let introContent: React.ReactNode = null;
 
   if (cmsContent) {
     const parts: React.ReactNode[] = [];
-    if (
-      cmsContent.hero?.headline &&
-      cmsContent.hero.headline !== (pageCmsData?.title as string)
-    ) {
+    if (cmsContent.hero?.headline && cmsContent.hero.headline !== pageCmsData?.title) {
       parts.push(
         <Heading key="hero-headline" as="h2" size="2xl" mt={4} mb={4} textAlign="center">
           {cmsContent.hero.headline}
@@ -129,9 +131,9 @@ export default async function UxProblemsLandingPage() {
     }
   }
 
-  const pageTitle = (pageCmsData?.title as string) || 'Common UX Problems';
+  const pageTitle = pageCmsData?.title || 'Common UX Problems';
 
-  if (!pageCmsData && (!uxProblems || uxProblems.length === 0)) {
+  if (!pageCmsData && uxProblems.length === 0) {
     return (
       <Layout>
         <Section id="ux-problems-error" py={{ base: 16, md: 24 }} textAlign="center">
@@ -150,7 +152,7 @@ export default async function UxProblemsLandingPage() {
   return (
     <Layout>
       <Section
-        id={(pageCmsData?.slug as string) || SLUG}
+        id={pageCmsData?.slug || SLUG}
         py={{ base: 12, md: 20 }}
         px={{ base: 4, md: 8 }}
         as="article"
@@ -160,10 +162,10 @@ export default async function UxProblemsLandingPage() {
         </Heading>
         {introContent}
 
-        {uxProblems && uxProblems.length > 0 ? (
+        {uxProblems.length > 0 ? (
           <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: 6, md: 8 }} mt={8}>
             {uxProblems.map((problem: UxProblemCardItem) => (
-              <UICard
+              <Card
                 key={problem.id}
                 variant="outline"
                 h="full"
@@ -172,41 +174,37 @@ export default async function UxProblemsLandingPage() {
                 _hover={{ shadow: 'lg', transform: 'translateY(-2px)' }}
                 transition="all 0.2s"
               >
-                <UICardHeader>
+                <CardHeader>
                   <HStack spacing={3} alignItems="center">
-                    {problem.icon && problem.icon.name && (
+                    {problem.icon?.name && (
                       <DynamicLucideIcon
-                        name={
-                          problem.icon.icon_library === 'lucide-react'
-                            ? problem.icon.name
-                            : undefined
-                        }
+                        name={problem.icon.name}
                         size={24}
                         color="var(--chakra-colors-primary-500)"
                         strokeWidth={2.5}
                       />
                     )}
-                    <UICardHeading size="lg" as="h3">
-                      {problem.title as string}
-                    </UICardHeading>
+                    <Heading size="lg" as="h3">
+                      {problem.title}
+                    </Heading>
                   </HStack>
-                </UICardHeader>
-                <UICardBody flexGrow={1}>
-                  <UICardText color="muted.foreground" mb={4} noOfLines={4}>
-                    {problem.description as string || 'More details about this UX problem.'}
-                  </UICardText>
-                </UICardBody>
-                <UICardFooter>
+                </CardHeader>
+                <CardBody flexGrow={1}>
+                  <Text color="muted.foreground" mb={4} noOfLines={4}>
+                    {problem.description || 'More details about this UX problem.'}
+                  </Text>
+                </CardBody>
+                <CardFooter>
                   <HeroCtaButton
-                    href={`/ux-problems/${problem.slug as string}`}
+                    href={`/ux-problems/${problem.slug}`}
                     size="sm"
-                    variant="themedSolid"
+                    variant="solid"
                     width="full"
                   >
                     Learn More
                   </HeroCtaButton>
-                </UICardFooter>
-              </UICard>
+                </CardFooter>
+              </Card>
             ))}
           </SimpleGrid>
         ) : (
@@ -221,10 +219,10 @@ export default async function UxProblemsLandingPage() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const pageCmsData = await getPageContentBySlug(SLUG);
-  const title = (pageCmsData?.title as string) || "Common UX Problems | Coriyon's Studio";
+  const pageCmsData = await getPageBySlug(SLUG);
+  const title = pageCmsData?.title || "Common UX Problems | Coriyon's Studio";
   const description =
-    (pageCmsData?.meta_description as string) ||
+    pageCmsData?.meta_description ||
     "Explore common user experience problems and learn how Coriyon's Studio can help identify and solve them.";
 
   return {
@@ -234,7 +232,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       url: `/${SLUG}`,
-      images: pageCmsData?.og_image_url ? [{ url: pageCmsData.og_image_url as string }] : undefined,
+      images: pageCmsData?.og_image_url ? [{ url: pageCmsData.og_image_url }] : undefined,
     },
   };
 }

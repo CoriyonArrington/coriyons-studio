@@ -2,32 +2,35 @@
 
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
-import { Heading } from '@/src/components/typography';
+import { Heading } from '@chakra-ui/react';
 import {
-  getPageContentBySlug,
+  getPageBySlug,
   getNavigablePages,
-  type NavigablePageInfo
 } from '@/src/lib/data/pages';
 import PrevNextNavigation, {
-  type NavLinkInfo as PrevNextNavLinkInfo
+  type NavLinkInfo as PrevNextNavLinkInfo,
 } from '@/src/components/common/prev-next-navigation';
 import { mapPageTypeToCategoryLabel } from '@/src/lib/utils';
 import type { Metadata } from 'next';
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import type { PageRow } from '@/src/lib/data/minimal_pages_schema';
 
-interface LegalPageProps {
-  params: {};
+// Use the standard, more specific PageProps interface
+interface PageProps {
+  params: Record<string, never>;
+  searchParams?: { [key:string]: string | string[] | undefined };
 }
 
 const SLUG = 'terms-of-service';
 
-export default async function TermsOfServicePage({}: LegalPageProps) {
-  // Cast to PageRow so TS knows these fields are strings
-  const pageData = (await getPageContentBySlug(SLUG)) as PageRow | null;
-  const navigablePages = (await getNavigablePages()) as NavigablePageInfo[];
+export default async function TermsOfServicePage({
+  params: _params,
+  searchParams: _searchParams,
+}: PageProps) {
+  // Use the corrected function and remove all unnecessary type assertions
+  const pageData = await getPageBySlug(SLUG);
+  const navigablePages = await getNavigablePages();
 
   let previousPageLink: PrevNextNavLinkInfo | undefined;
   let nextPageLink: PrevNextNavLinkInfo | undefined;
@@ -41,7 +44,7 @@ export default async function TermsOfServicePage({}: LegalPageProps) {
       previousPageLink = {
         slug: prev.slug,
         title: prev.title,
-        categoryLabel: mapPageTypeToCategoryLabel(prev.page_type)
+        categoryLabel: mapPageTypeToCategoryLabel(prev.page_type),
       };
     }
     if (currentIndex < navigablePages.length - 1) {
@@ -49,13 +52,14 @@ export default async function TermsOfServicePage({}: LegalPageProps) {
       nextPageLink = {
         slug: next.slug,
         title: next.title,
-        categoryLabel: mapPageTypeToCategoryLabel(next.page_type)
+        categoryLabel: mapPageTypeToCategoryLabel(next.page_type),
       };
     }
   }
 
-  // Narrow the content to a string before passing to ReactMarkdown
-  const content = pageData?.content;
+  // Ensure content is a string before passing to the component
+  const content =
+    typeof pageData?.content === 'string' ? pageData.content : undefined;
 
   return (
     <Layout>
@@ -68,23 +72,23 @@ export default async function TermsOfServicePage({}: LegalPageProps) {
           {pageData?.title ?? 'Terms of Service'}
         </Heading>
 
-        {typeof content === 'string' && (
-          <ReactMarkdown components={{}} remarkPlugins={[remarkGfm]}>
-            {content}
-          </ReactMarkdown>
+        {content && (
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
         )}
       </Section>
 
       <PrevNextNavigation
         previousPage={previousPageLink}
         nextPage={nextPageLink}
+        basePath="/legal"
       />
     </Layout>
   );
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const pageData = (await getPageContentBySlug(SLUG)) as PageRow | null;
+  // Use the corrected function and remove the unnecessary type assertion
+  const pageData = await getPageBySlug(SLUG);
   const title = pageData?.title ?? "Terms of Service | Coriyon's Studio";
   const description = pageData?.meta_description ?? undefined;
   const ogImageUrl = pageData?.og_image_url ?? undefined;
@@ -95,8 +99,8 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: pageData?.title ?? undefined,
       description,
-      url: `/${SLUG}`,
-      images: ogImageUrl ? [{ url: ogImageUrl }] : undefined
-    }
+      url: `/legal/${SLUG}`,
+      images: ogImageUrl ? [{ url: ogImageUrl }] : undefined,
+    },
   };
 }

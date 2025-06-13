@@ -6,8 +6,8 @@ import { createClient as createSupabaseClient, SupabaseClient } from "@supabase/
  * Uses the ANON key (public) so that auth methods (signIn, signUp, resetPassword) work correctly.
  *
  * Requires:
- *   NEXT_PUBLIC_SUPABASE_URL (the Supabase project URL)
- *   NEXT_PUBLIC_SUPABASE_ANON_KEY (the Supabase anon/public key)
+ * NEXT_PUBLIC_SUPABASE_URL (the Supabase project URL)
+ * NEXT_PUBLIC_SUPABASE_ANON_KEY (the Supabase anon/public key)
  */
 export function createClient(): SupabaseClient {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

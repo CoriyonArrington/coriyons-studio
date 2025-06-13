@@ -1,4 +1,6 @@
-// src/components/admin/__tests__/iconography-showcase.test.tsx
+// ATTEMPT #1: Using `extendTheme` idiomatically to resolve unsafe assignment.
+// Change 1: Refactored the `extendTheme` call to pass `baseTheme` as a separate argument instead of using the spread operator. This is the idiomatic and type-safe way to extend the theme in Chakra UI and resolves the `no-unsafe-assignment` error.
+
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -8,10 +10,12 @@ import IconographyShowcase from '../iconography-showcase';
 import baseTheme from '@/src/lib/theme';
 
 const renderWithChakra = (ui: React.ReactElement) => {
-  const theme = extendTheme({
-    ...baseTheme,
-    config: { ...baseTheme.config, initialColorMode: 'light', useSystemColorMode: false },
-  });
+  const theme = extendTheme(
+    baseTheme,
+    {
+      config: { initialColorMode: 'light', useSystemColorMode: false },
+    }
+  );
   return render(<ChakraProvider theme={theme}>{ui}</ChakraProvider>);
 };
 
@@ -26,17 +30,24 @@ describe('IconographyShowcase Component', () => {
     expect(screen.getByText(/Using Lucide Icons with Chakra UI's/i)).toBeInTheDocument();
   });
 
-  it('should render example icons with their descriptions', () => {
+  it('should render all example icons with their correct descriptions', () => {
     const { container } = renderWithChakra(<IconographyShowcase />);
+    
+    // Check for all the icon descriptions
     expect(screen.getByText(/Home Icon \(size 5\)/i)).toBeInTheDocument();
     expect(screen.getByText(/Settings Icon \(size 6\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/External Link \(default color\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/^User Icon$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Mail Icon$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Success Icon$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^External Link$/i)).toBeInTheDocument();
 
+    // Verify the correct number of icons are rendered in the section
     const section = container.querySelector('section#iconography');
     expect(section).toBeInTheDocument();
     if (section) {
+      // There are 6 icons in the <Wrap> and 1 in the link = 7 total
       const svgs = section.querySelectorAll('svg.lucide');
-      expect(svgs.length).toBeGreaterThanOrEqual(3);
+      expect(svgs.length).toBe(7);
     } else {
       throw new Error("Iconography section not found in the DOM for SVG query.");
     }

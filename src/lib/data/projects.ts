@@ -1,235 +1,143 @@
 // src/lib/data/projects.ts
-// - Added RelatedServiceInfo interface.
-// - Updated ProjectDetail interface to include relatedServices.
-// - Modified getProjectBySlug to fetch associated services via project_services table.
-
 import { createClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
+import type { Database } from '@/src/types/supabase';
+import type { PostgrestSingleResponse } from '@supabase/supabase-js';
 
-// Basic Tag interface
-export interface Tag {
-  id: string;
-  name: string;
-  slug: string;
+// --- TYPE DEFINITIONS ---
+
+export interface ProjectContentJson {
+  [key:string]: unknown;
 }
 
-// Interface for basic service info to be displayed on project page
-export interface RelatedServiceInfo {
+// FIX: Removed the `icon` property as it doesn't exist in the schema relationship.
+export interface ProjectService {
   id: string;
-  slug: string;
   title: string;
-  description: string | null;
-  offering_type: 'INDIVIDUAL' | 'BUNDLE' | null; // From services.ts
-}
-
-// For project cards on listing pages
-export interface HomepageProject {
-  id: string;
   slug: string;
-  title: string;
-  description: string | null;
-  featured_image_url: string | null;
-  client_name: string | null;
-  sort_order?: number | null;
-  tags?: Tag[];
 }
 
-// ... (HeroDetail, HeroContent, ActivityLink, Pullquote, ContentVisual, SectionContent, NextUpProjectInfo, ProjectDetailContent interfaces remain the same)
-export interface HeroDetail {
-  Role?: string;
-  Team?: string;
-  Timeline?: string;
-  Tools?: string[];
-  Contributions?: string[];
-}
-
-export interface HeroContent {
-  title?: string;
-  problem?: string;
-  details?: HeroDetail;
-  image?: string | null;
-}
-
-export interface ActivityLink {
-  label: string;
-  href: string | null;
-}
-
-export interface Pullquote {
+export interface ProjectTestimonial {
+  id: string;
   quote: string;
-  attribution?: string;
+  name: string;
 }
 
-export interface ContentVisual {
-  alt?: string;
-  url?: string;
-  caption?: string;
-}
-
-export interface SectionContent {
-  heading: string;
-  body: string;
-  pullquote?: Pullquote;
-  image?: string | null;
-  images?: (string | null)[];
-  activities?: ActivityLink[];
-}
-
-export interface NextUpProjectInfo {
-  title: string;
-  description: string;
-  image: string | null;
-  href: string | null;
-}
-
-export interface ProjectDetailContent {
-  hero?: HeroContent;
-  sections?: SectionContent[];
-  nextUp?: {
-    heading?: string;
-    project?: NextUpProjectInfo;
-  };
-  [key: string]: any;
-}
-
-
-// Interface for the full project detail
-export interface ProjectDetail {
+export interface ProjectCardItem {
   id: string;
   slug: string;
   title: string;
-  client_name: string | null;
-  project_date: string | null;
-  description: string | null; // Short summary from 'projects' table
+  description: string | null;
   featured_image_url: string | null;
-  og_image_url: string | null;
-  content: ProjectDetailContent | null;
-  tags?: Tag[];
-  relatedServices?: RelatedServiceInfo[]; // Added field for related services
+  services: ProjectService[] | null;
 }
 
-
-// Function to get featured projects for the homepage
-export async function getFeaturedProjects(limit: number = 3): Promise<HomepageProject[]> {
-  noStore();
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('projects')
-    .select(`
-      id,
-      slug,
-      title,
-      description,
-      featured_image_url,
-      client_name,
-      sort_order,
-      project_tags (
-        tags (id, name, slug)
-      )
-    `)
-    .eq('featured', true)
-    .order('sort_order', { ascending: true })
-    .limit(limit);
-
-  if (error) {
-    console.error('Error fetching featured projects:', error.message);
-    return [];
-  }
-  return data?.map(project => ({
-    ...project,
-    tags: project.project_tags.map((pt: any) => pt.tags).filter(Boolean) as Tag[],
-  })) || [];
+export interface ProjectDetail extends ProjectCardItem {
+  content: ProjectContentJson | null;
+  testimonial: ProjectTestimonial | null;
+  other_images: { url: string; alt?: string }[] | null;
 }
 
-// Function to get all projects for the /projects listing page
-export async function getAllProjects(): Promise<HomepageProject[]> {
+// --- Internal Types for Supabase Responses ---
+type ServiceRow = { id: string; slug: string; title: string; };
+type TestimonialRow = { id: string; quote: string; name: string; };
+
+type RawProject = Database['public']['Tables']['projects']['Row'] & {
+  project_services: { services: ServiceRow | null; }[];
+  testimonials: TestimonialRow[] | null;
+  other_images: { url: string; alt?: string }[] | null;
+};
+
+
+// --- HELPER FUNCTIONS ---
+function mapRawProjectToCard(project: RawProject): ProjectCardItem {
+    const services = project.project_services
+        .map((ps) => ps.services)
+        .filter((s): s is ServiceRow => s !== null)
+        .map((service) => ({
+            id: service.id,
+            title: service.title,
+            slug: service.slug,
+        }));
+
+    return {
+        id: project.id,
+        slug: project.slug,
+        title: project.title,
+        description: project.description,
+        featured_image_url: project.featured_image_url,
+        services: services.length > 0 ? services : null,
+    };
+}
+
+// --- DATA FETCHING FUNCTIONS ---
+// FIX: Removed the invalid `icons` join from the services query.
+const PROJECT_CARD_SELECT_QUERY = `
+    id, slug, title, description, featured_image_url,
+    project_services ( services ( id, slug, title ))
+`;
+
+export async function getAllProjects(): Promise<ProjectCardItem[]> {
   noStore();
-  const supabase = await createClient();
+  const supabase = createClient();
   const { data, error } = await supabase
     .from('projects')
-    .select(`
-      id,
-      slug,
-      title,
-      description,
-      featured_image_url,
-      client_name,
-      sort_order,
-      project_tags (
-        tags (id, name, slug)
-      )
-    `)
+    .select(PROJECT_CARD_SELECT_QUERY)
     .order('sort_order', { ascending: true });
 
   if (error) {
     console.error('Error fetching all projects:', error.message);
     return [];
   }
-  return data?.map(project => ({
-    ...project,
-    tags: project.project_tags.map((pt: any) => pt.tags).filter(Boolean) as Tag[],
-  })) || [];
+  return (data as unknown as RawProject[]).map(mapRawProjectToCard);
 }
 
-// Function to get a single project by its slug for the detail page
+export async function getFeaturedProjects(limit: number = 3): Promise<ProjectCardItem[]> {
+    noStore();
+    const supabase = createClient();
+    const { data, error } = await supabase
+        .from('projects')
+        .select(PROJECT_CARD_SELECT_QUERY)
+        .eq('featured', true)
+        .order('sort_order', { ascending: true })
+        .limit(limit);
+
+    if (error) {
+        console.error('Error fetching featured projects:', error.message);
+        return [];
+    }
+    return (data as unknown as RawProject[]).map(mapRawProjectToCard);
+}
+
 export async function getProjectBySlug(slug: string): Promise<ProjectDetail | null> {
   noStore();
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const supabase = createClient();
+
+  // FIX: Removed the invalid `icons` join from the services query in this function as well.
+  const { data, error }: PostgrestSingleResponse<RawProject> = await supabase
     .from('projects')
     .select(`
-      id,
-      slug,
-      title,
-      client_name,
-      project_date,
-      description,
-      featured_image_url,
-      og_image_url,
-      content,
-      project_tags (
-        tags (id, name, slug)
-      ),
-      project_services (
-        services (
-          id,
-          slug,
-          title,
-          description,
-          offering_type 
-        )
-      )
+      *,
+      project_services ( services ( id, slug, title ) ),
+      testimonials ( id, quote, name )
     `)
     .eq('slug', slug)
     .single();
 
   if (error) {
-    if (error.code === 'PGRST116') {
-        console.warn(`Project with slug "${slug}" not found.`);
-        return null;
+    if (error.code !== 'PGRST116') {
+        console.error(`Error fetching project by slug "${slug}":`, error.message);
     }
-    console.error(`Error fetching project by slug "${slug}":`, error.message);
     return null;
   }
-  if (!data) {
-    return null;
-  }
-
-  const relatedServices = data.project_services?.map((ps: any) => {
-    if (!ps.services) return null;
-    return {
-      id: ps.services.id,
-      slug: ps.services.slug,
-      title: ps.services.title,
-      description: ps.services.description,
-      offering_type: ps.services.offering_type,
-    };
-  }).filter(Boolean) as RelatedServiceInfo[] || undefined; // Use undefined if empty for optional field
+  
+  const cardData = mapRawProjectToCard(data);
+  const testimonial = data.testimonials?.[0] || null;
 
   return {
-    ...data,
-    content: data.content as ProjectDetailContent | null,
-    tags: data.project_tags.map((pt: any) => pt.tags).filter(Boolean) as Tag[],
-    relatedServices: relatedServices && relatedServices.length > 0 ? relatedServices : undefined,
-  } as ProjectDetail;
+    ...cardData,
+    content: data.content as ProjectContentJson | null,
+    testimonial: testimonial,
+    other_images: data.other_images, 
+  };
 }

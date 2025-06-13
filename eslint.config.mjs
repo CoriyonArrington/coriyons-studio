@@ -1,8 +1,13 @@
 // eslint.config.mjs
+
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from "eslint-plugin-storybook";
+
 import { FlatCompat } from "@eslint/eslintrc";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import tseslint from "typescript-eslint";
+// import eslintPluginNext from "@next/eslint-plugin-next";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,33 +17,42 @@ const compat = new FlatCompat({
 });
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
-const eslintConfig = [
-  // 1. Global ignores: do not lint these folders/files
+const eslintConfig = tseslint.config(
+  // 1. Global ignores
   {
     ignores: [
       "node_modules/**",
       ".next/**",
-      // Add any build/dist folders if needed
+      "out/**",
+      "dist/**",
+      // FIX: Add auto-generated Supabase types files to the ignore list
+      "src/types/supabase.ts",
+      "src/types/supabase.gen.ts",
     ],
   },
 
-  // 2. Base Next.js rules (core-web-vitals)
-  ...compat.extends("next/core-web-vitals"),
+  // 2. TypeScript specific configurations from tseslint
+  ...tseslint.configs.strictTypeChecked,
 
-  // 3. Any overrides to those base rules
+  // 3. Parser options for type-aware linting.
   {
-    rules: {
-      "@next/next/no-duplicate-head": "off",
-      // Add or modify other Next.js rules here if necessary
+    languageOptions: {
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: __dirname,
+      },
     },
   },
 
-  // 4. Custom rules for your source code under src/
+  // 4. Next.js recommended rules
+  ...compat.extends("next/core-web-vitals").map(config => ({
+    ...config,
+    files: ["src/**/*.{js,jsx,ts,tsx}", "*.{js,mjs,cjs,ts}"],
+  })),
+
+  // 5. Custom rules and overrides for your project files
   {
     files: ["src/**/*.{js,jsx,ts,tsx}"],
-    plugins: {
-      "@typescript-eslint": tseslint.plugin,
-    },
     rules: {
       "@typescript-eslint/no-unused-vars": [
         "warn",
@@ -60,15 +74,17 @@ const eslintConfig = [
             "Avoid using literal color values. Use theme tokens from Chakra UI instead (e.g., 'primary.DEFAULT', 'border', 'foreground', 'red.500').",
         },
       ],
+      "@next/next/no-duplicate-head": "off",
     },
   },
 
-  // 5. Specific rules for this config file itself (optional)
+  // 6. Specific rules for configuration files
   {
-    files: ["eslint.config.mjs"],
-    // No additional rule adjustments needed here, since using named export
-    rules: {},
-  },
-];
+    files: ["eslint.config.mjs", "next.config.mjs", "postcss.config.js", "tailwind.config.ts", "vitest.config.ts"],
+    rules: {
+        // Example: "@typescript-eslint/no-var-requires": "off",
+    },
+  }
+);
 
 export default eslintConfig;

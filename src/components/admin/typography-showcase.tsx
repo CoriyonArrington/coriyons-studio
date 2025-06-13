@@ -1,4 +1,9 @@
-// src/components/admin/typography-showcase.tsx
+/*
+ FINAL VERSION - Key Changes:
+ - Removed incorrect imports from the old typography folder.
+ - Updated the file to import 'Heading' and 'Text' directly from '@chakra-ui/react'.
+ - Renamed component usage in the JSX from <CustomHeading> and <CustomText> to <Heading> and <Text>.
+*/
 'use client';
 
 import React from 'react';
@@ -12,10 +17,10 @@ import {
   Icon,
   Code,
   useColorModeValue,
+  Heading,
+  Text,
 } from '@chakra-ui/react';
-import { ExternalLinkIcon } from 'lucide-react'; // Ensure this is the correct icon you want to use
-import { default as CustomHeading } from '@/src/components/typography/heading';
-import { default as CustomText } from '@/src/components/typography/text';
+import { ExternalLink as ExternalLinkIcon } from 'lucide-react';
 import { TypographyInlineCode } from '@/src/components/typography/inline-code';
 
 export default function TypographyShowcase() {
@@ -23,42 +28,42 @@ export default function TypographyShowcase() {
 
   return (
     <Box as="section" id="typography" borderTopWidth="1px" borderColor="border" pt={10}>
-      <CustomHeading as="h2" size="xl" mb={6}>
+      <Heading as="h2" size="xl" mb={6}>
         Typography
-      </CustomHeading>
-      <CustomText mb={6}>
+      </Heading>
+      <Text mb={6}>
         Base fonts (<Code>Nunito Sans</Code> for body, <Code>Montserrat</Code> for headings) configured in{' '}
         <Code>src/lib/theme.ts</Code>.
-      </CustomText>
+      </Text>
       <VStack alignItems="start" spacing={5}>
         <Box>
-          <CustomHeading as="h1" size="2xl">
+          <Heading as="h1" size="2xl">
             Heading 1 (var(--font-montserrat))
-          </CustomHeading>
+          </Heading>
         </Box>
         <Box>
-          <CustomHeading as="h2" size="xl">
+          <Heading as="h2" size="xl">
             Heading 2 (var(--font-montserrat))
-          </CustomHeading>
+          </Heading>
         </Box>
         <Box>
-          <CustomHeading as="h3" size="lg">
+          <Heading as="h3" size="lg">
             Heading 3 (var(--font-montserrat))
-          </CustomHeading>
+          </Heading>
         </Box>
         <Box>
-          <CustomHeading as="h4" size="md">
+          <Heading as="h4" size="md">
             Heading 4 (var(--font-montserrat))
-          </CustomHeading>
+          </Heading>
         </Box>
-        <CustomText fontSize="lg">
+        <Text fontSize="lg">
           This is a lead paragraph style using our <Code>Text</Code> component with{' '}
           <Code>fontSize=&quot;lg&quot;</Code>.
-        </CustomText>
-        <CustomText>
+        </Text>
+        <Text>
           This is a standard paragraph (var(--font-nunito-sans)), using our custom <Code>Text</Code>{' '}
           component. It provides a baseline for body content.
-        </CustomText>
+        </Text>
         <Box
           as="blockquote"
           borderLeftWidth="4px"
@@ -67,18 +72,18 @@ export default function TypographyShowcase() {
           py={2}
           fontStyle="italic"
         >
-          <CustomText>
+          <Text>
             &quot;This is a blockquote. It&apos;s useful for highlighting quotes or important snippets of
             text.&quot;
-          </CustomText>
+          </Text>
         </Box>
-        <CustomText>
+        <Text>
           Use your custom <TypographyInlineCode>TypographyInlineCode</TypographyInlineCode> component for
           inline code snippets, or Chakra&apos;s default <Code>Code</Code> component.
-        </CustomText>
-        <CustomHeading as="h4" size="sm" mt={4} mb={2}>
+        </Text>
+        <Heading as="h4" size="sm" mt={4} mb={2}>
           Unordered List
-        </CustomHeading>
+        </Heading>
         <UnorderedList pl={5} spacing={1}>
           <ListItem>List item one</ListItem>
           <ListItem>List item two</ListItem>
@@ -90,21 +95,21 @@ export default function TypographyShowcase() {
             </UnorderedList>
           </ListItem>
         </UnorderedList>
-        <CustomHeading as="h4" size="sm" mt={4} mb={2}>
+        <Heading as="h4" size="sm" mt={4} mb={2}>
           Ordered List
-        </CustomHeading>
+        </Heading>
         <OrderedList pl={5} spacing={1}>
           <ListItem>First item</ListItem>
           <ListItem>Second item</ListItem>
           <ListItem>Third item</ListItem>
         </OrderedList>
-        <CustomText>
+        <Text>
           This is an example of a{' '}
-          <ChakraLink href="#" color="primary.DEFAULT" isExternal>
+          <ChakraLink href="#" color="primary.500" isExternal>
             ChakraLink <Icon as={ExternalLinkIcon} mx="2px" boxSize="0.8em" />
           </ChakraLink>
           .
-        </CustomText>
+        </Text>
       </VStack>
     </Box>
   );

@@ -1,108 +1,114 @@
 // src/lib/data/process.ts
-// - Ensuring ProcessStepDetailContent includes all expected fields.
-// - Corrected icon data mapping from Supabase join.
 import { createClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
+import type { Database } from '@/src/types/supabase';
+import type { PostgrestSingleResponse } from '@supabase/supabase-js';
+
+// --- TYPE DEFINITIONS ---
 
 export interface IconData {
   name: string;
   icon_library: string | null;
 }
 
+export interface ContentPoint {
+    title: string;
+    description?: string;
+    items?: string[];
+}
+
+export interface ContentVisual {
+    url:string;
+    alt?: string;
+    caption?: string;
+}
+
+export interface ProcessStepContentJson {
+    main_heading?: string;
+    introduction?: string;
+    sub_steps?: ContentPoint[];
+    insights?: { title?: string; items?: string[] };
+    visuals?: ContentVisual[];
+    conclusion?: string;
+    key_activities?: string;
+}
+
 export interface ProcessStepItem {
   id: string;
   slug: string;
   title: string;
+  subtitle: string | null;
   description: string | null;
-  sort_order: number | null;
   icon: IconData | null;
+  sort_order: number;
+  featured_image_url: string | null;
+  content: ProcessStepContentJson | null;
 }
 
-export interface ContentPoint {
-  title?: string;
-  description: string;
-  items?: string[];
-}
+// FIX: Change the empty interface to a type alias.
+export type ProcessStepDetail = ProcessStepItem;
 
-export interface ContentVisual {
-  url: string;
-  alt: string;
-  caption?: string;
-}
 
-// Ensure this matches the structure used in [slug]/page.tsx and your JSONB data
-export interface ProcessStepDetailContent {
-  main_heading?: string;
-  introduction?: string;
-  sub_steps?: ContentPoint[];
-  key_outputs?: { title?: string; items: string[] };
-  insights?: { title?: string; items: string[] };
-  visuals?: ContentVisual[];
-  conclusion?: string;
-  [key: string]: any; // For any other dynamic fields
-}
+// --- Internal Types for Supabase Responses ---
 
-export interface ProcessStepDetail extends Omit<ProcessStepItem, 'icon'|'description'> { // description is part of content too
-  description: string | null; // Short description from top-level
-  content: ProcessStepDetailContent | null;
-  icon: IconData | null;
-}
+type RawIcon = { name: string; icon_library: string | null } | null;
 
-export async function getAllProcessSteps(): Promise<ProcessStepItem[]> {
-  noStore();
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('design_process_steps')
-    .select('id, slug, title, description, sort_order, icons (id, name, icon_library)') // Select icon id too for safety
-    .order('sort_order', { ascending: true });
+type RawProcessStep = Database['public']['Tables']['design_process_steps']['Row'] & {
+  icons: RawIcon;
+};
 
-  if (error) {
-    console.error('Error fetching all design process steps:', error.message);
-    return [];
-  }
-
-  return data?.map(step => {
-    const iconData = step.icons 
-      ? { name: (step.icons as any).name, icon_library: (step.icons as any).icon_library } 
-      : null;
+// --- HELPER FUNCTIONS ---
+function processRawStep(step: RawProcessStep): ProcessStepItem {
+    const content = step.content as ProcessStepContentJson | null;
+    
     return {
       id: step.id,
       slug: step.slug,
       title: step.title,
       description: step.description,
+      icon: step.icons,
       sort_order: step.sort_order,
-      icon: iconData,
+      content: content,
+      subtitle: content?.main_heading || null, 
+      featured_image_url: content?.visuals?.[0]?.url || null,
     };
-  }) || [];
+}
+
+// --- DATA FETCHING FUNCTIONS ---
+
+export async function getAllProcessSteps(): Promise<ProcessStepItem[]> {
+  noStore();
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('design_process_steps')
+    .select('*, icons (name, icon_library)')
+    .order('sort_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching all process steps:', error.message);
+    return [];
+  }
+
+  return (data as unknown as RawProcessStep[]).map(processRawStep);
 }
 
 export async function getProcessStepBySlug(slug: string): Promise<ProcessStepDetail | null> {
-  noStore();
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('design_process_steps')
-    .select('id, slug, title, description, content, sort_order, icons (id, name, icon_library)') // Select icon id
-    .eq('slug', slug)
-    .single();
+    noStore();
+    const supabase = createClient();
 
-  if (error) {
-    if (error.code === 'PGRST116') return null;
-    console.error(`Error fetching process step by slug "${slug}":`, error.message);
-    return null;
-  }
-  if (!data) return null;
+    const { data, error }: PostgrestSingleResponse<RawProcessStep> = await supabase
+      .from('design_process_steps')
+      .select('*, icons (name, icon_library)')
+      .eq('slug', slug)
+      .single();
 
-  const iconData = data.icons 
-    ? { name: (data.icons as any).name, icon_library: (data.icons as any).icon_library } 
-    : null;
+    if (error) {
+        if (error.code !== 'PGRST116') {
+            console.error(`Error fetching process step by slug "${slug}":`, error.message);
+        }
+        return null;
+    }
 
-  return {
-    id: data.id,
-    slug: data.slug,
-    title: data.title,
-    description: data.description, // Top-level short description
-    content: data.content as ProcessStepDetailContent | null,
-    sort_order: data.sort_order,
-    icon: iconData,
-  };
+    return processRawStep(data);
 }

@@ -1,7 +1,10 @@
-// src/components/common/__tests__/site-footer.test.tsx
+// ATTEMPT 1: Fixing unsafe assignment and unnecessary async functions.
+// - Used `extendTheme` idiomatically to resolve the unsafe assignment.
+// - Removed the 'async' keyword from two tests that do not use 'await'.
+
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, type MockedFunction } from 'vitest'; 
-import { render, screen /*, waitFor*/ } from '@testing-library/react'; // waitFor removed
+import { render, screen } from '@testing-library/react';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { axe } from 'jest-axe';
 import SiteFooter from '../site-footer';
@@ -15,23 +18,27 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-// Mock the getCategorizedFooterPages function from the pages data module
 vi.mock('@/src/lib/data/pages', async (importOriginal) => {
   const originalModule = await importOriginal<typeof import('@/src/lib/data/pages')>();
   return {
     ...originalModule,
-    getCategorizedFooterPages: vi.fn(), // Create a Vitest mock function
+    getCategorizedFooterPages: vi.fn(), 
   };
 });
 
-// Cast the mocked function for type safety with mockResolvedValue etc.
 const mockedGetCategorizedFooterPages = getCategorizedFooterPages as MockedFunction<typeof getCategorizedFooterPages>;
 
 const renderWithChakra = (ui: React.ReactElement, colorMode: 'light' | 'dark' = 'light') => {
-  const theme = extendTheme({
-    ...baseTheme,
-    config: { ...baseTheme.config, initialColorMode: colorMode, useSystemColorMode: false },
-  });
+  // FIX: Pass theme objects as separate arguments instead of using the spread operator.
+  const theme = extendTheme(
+    baseTheme,
+    {
+      config: { 
+        initialColorMode: colorMode, 
+        useSystemColorMode: false 
+      },
+    }
+  );
   return render(<ChakraProvider theme={theme}>{ui}</ChakraProvider>);
 };
 
@@ -55,8 +62,7 @@ describe('SiteFooter Accessibility and Content', () => {
   });
 
   it('should have no a11y violations in light mode and render dynamic links', async () => {
-    const SiteFooterComponent = await SiteFooter(); 
-    const { container } = renderWithChakra(SiteFooterComponent, 'light');
+    const { container } = renderWithChakra(<SiteFooter footerPages={sampleFooterData} />, 'light');
 
     expect(screen.getByText(/coriyon's studio. all rights reserved./i)).toBeInTheDocument();
 
@@ -70,8 +76,7 @@ describe('SiteFooter Accessibility and Content', () => {
   });
 
   it('should have no a11y violations in dark mode and render dynamic links', async () => {
-    const SiteFooterComponent = await SiteFooter(); 
-    const { container } = renderWithChakra(SiteFooterComponent, 'dark');
+    const { container } = renderWithChakra(<SiteFooter footerPages={sampleFooterData} />, 'dark');
 
     expect(screen.getByText(/coriyon's studio. all rights reserved./i)).toBeInTheDocument();
     expect(await screen.findByText('Home Test')).toBeInTheDocument();
@@ -81,26 +86,26 @@ describe('SiteFooter Accessibility and Content', () => {
     expect(results).toHaveNoViolations();
   });
 
-  it('should handle cases where some link categories are empty', async () => {
-    mockedGetCategorizedFooterPages.mockResolvedValue({
+  // FIX: Removed unnecessary 'async' keyword.
+  it('should handle cases where some link categories are empty', () => {
+    const partialData = {
       ...sampleFooterData,
       RESOURCES: [], 
-    });
-    const SiteFooterComponent = await SiteFooter();
-    renderWithChakra(SiteFooterComponent, 'light');
+    };
+    renderWithChakra(<SiteFooter footerPages={partialData} />, 'light');
 
     expect(screen.getByText('Home Test')).toBeInTheDocument();
     expect(screen.queryByText('Blog Test')).not.toBeInTheDocument();
     expect(screen.getByText('FAQ Test')).toBeInTheDocument();
   });
 
-  it('should render support column with placeholder if no support links', async () => {
-    mockedGetCategorizedFooterPages.mockResolvedValue({
+  // FIX: Removed unnecessary 'async' keyword.
+  it('should render support column with placeholder if no support links', () => {
+    const noSupportData = {
         ...emptyFooterData,
         SUPPORT: [] 
-    });
-    const SiteFooterComponent = await SiteFooter();
-    renderWithChakra(SiteFooterComponent, 'light');
+    };
+    renderWithChakra(<SiteFooter footerPages={noSupportData} />, 'light');
     expect(screen.getByText('Support')).toBeInTheDocument(); 
     expect(screen.getByText('(No support links yet)')).toBeInTheDocument();
   });

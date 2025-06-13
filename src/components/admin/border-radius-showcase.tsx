@@ -1,4 +1,8 @@
-// src/components/admin/border-radius-showcase.tsx
+/*
+ FINAL VERSION - Key Changes:
+ - Updated imports to use `Heading` and `Text` directly from '@chakra-ui/react',
+   removing references to the old typography folder.
+*/
 'use client';
 
 import React from 'react';
@@ -6,24 +10,24 @@ import {
   Box,
   HStack,
   Code,
+  Heading,
+  Text,
 } from '@chakra-ui/react';
-import { default as CustomHeading } from '@/src/components/typography/heading';
-import { default as CustomText } from '@/src/components/typography/text';
 
 export default function BorderRadiusShowcase() {
   return (
     <Box as="section" id="borderradius" borderTopWidth="1px" borderColor="border" pt={10}>
-      <CustomHeading as="h2" size="xl" mb={6}>
+      <Heading as="h2" size="xl" mb={6}>
         Border Radius
-      </CustomHeading>
-      <CustomText mb={6}>
+      </Heading>
+      <Text mb={6}>
         Defined in <Code>src/lib/theme.ts</Code> using CSS variable <Code>--radius</Code>.
-      </CustomText>
+      </Text>
       <HStack spacing={6} flexWrap="wrap">
         <Box
           w="100px"
           h="100px"
-          bg="secondary.DEFAULT"
+          bg="secondary.500"
           borderWidth="1px"
           borderColor="border"
           borderRadius="sm"
@@ -31,12 +35,12 @@ export default function BorderRadiusShowcase() {
           alignItems="center"
           justifyContent="center"
         >
-          <CustomText color="secondary.foreground">sm</CustomText>
+          <Text color="secondary.foreground">sm</Text>
         </Box>
         <Box
           w="100px"
           h="100px"
-          bg="secondary.DEFAULT"
+          bg="secondary.500"
           borderWidth="1px"
           borderColor="border"
           borderRadius="md"
@@ -44,12 +48,12 @@ export default function BorderRadiusShowcase() {
           alignItems="center"
           justifyContent="center"
         >
-          <CustomText color="secondary.foreground">md</CustomText>
+          <Text color="secondary.foreground">md</Text>
         </Box>
         <Box
           w="100px"
           h="100px"
-          bg="secondary.DEFAULT"
+          bg="secondary.500"
           borderWidth="1px"
           borderColor="border"
           borderRadius="lg"
@@ -57,12 +61,12 @@ export default function BorderRadiusShowcase() {
           alignItems="center"
           justifyContent="center"
         >
-          <CustomText color="secondary.foreground">lg</CustomText>
+          <Text color="secondary.foreground">lg</Text>
         </Box>
         <Box
           w="100px"
           h="100px"
-          bg="secondary.DEFAULT"
+          bg="secondary.500"
           borderWidth="1px"
           borderColor="border"
           borderRadius="full"
@@ -70,7 +74,7 @@ export default function BorderRadiusShowcase() {
           alignItems="center"
           justifyContent="center"
         >
-          <CustomText color="secondary.foreground">full</CustomText>
+          <Text color="secondary.foreground">full</Text>
         </Box>
       </HStack>
     </Box>

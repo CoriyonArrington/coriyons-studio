@@ -151,10 +151,9 @@ try {
     }
     fs.writeFileSync(outputFilePath, JSON.stringify(allComponents, null, 2));
     console.log(\`   Component list successfully written to \${outputFilePath}\`);
-    process.exit(0); // Explicitly exit 0 on success
 } catch (writeErr) {
     console.error(\`   Error writing component list JSON to \${outputFilePath}:\`, writeErr);
-    process.exit(1); // Explicitly exit 1 on failure
+    throw writeErr; // Re-throw error to ensure shell script exits with non-zero code
 }
 NODE_SCRIPT
 # --- End of Node script marker ---

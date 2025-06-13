@@ -1,3 +1,5 @@
+// ATTEMPT 1: Removing the deprecated 'legacyBehavior' prop from the Link component.
+
 import { ArrowUpRight, InfoIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -11,11 +13,12 @@ export function SmtpMessage() {
           increase the rate limit.
         </small>
         <div>
+          {/* FIX: Removed the legacyBehavior prop. */}
           <Link
             href="https://supabase.com/docs/guides/auth/auth-smtp"
             target="_blank"
             className="text-primary/50 hover:text-primary flex items-center text-sm gap-1"
-            legacyBehavior>
+          >
             Learn more <ArrowUpRight size={14} />
           </Link>
         </div>

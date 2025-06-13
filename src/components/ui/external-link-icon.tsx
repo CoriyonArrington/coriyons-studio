@@ -1,6 +1,7 @@
 // src/components/ui/external-link-icon.tsx
 'use client'; // Mark as a client component
 
+import React from 'react';
 import { Icon } from '@chakra-ui/react';
 import { ArrowForwardIcon } from '@chakra-ui/icons';
 

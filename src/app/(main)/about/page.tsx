@@ -1,119 +1,77 @@
-// src/app/(main)/about/page.tsx
-
 import Layout from '@/src/components/common/layout';
 import Section from '@/src/components/common/section';
-import { Heading, Text } from '@/src/components/typography';
 import {
   VStack,
   Box,
-  Accordion,
-  AccordionItem,
-  AccordionButton,
-  AccordionPanel,
-  AccordionIcon,
-  UnorderedList,
-  OrderedList,
-  ListItem,
+  Heading,
+  Text,
+  Image,
+  SimpleGrid,
+  Avatar,
 } from '@chakra-ui/react';
-import {
-  getPageContentBySlug,
-  getNavigablePages,
-  type NavigablePageInfo,
-} from '@/src/lib/data/pages';
-import type { FAQItem, FAQAnswerBlock } from '@/src/lib/data/faqs';
 import PrevNextNavigation, {
   type NavLinkInfo as PrevNextNavLinkInfo,
 } from '@/src/components/common/prev-next-navigation';
+import {
+  getPageBySlug,
+  getNavigablePages,
+  type NavigablePageInfo,
+} from '@/src/lib/data/pages';
 import { mapPageTypeToCategoryLabel } from '@/src/lib/utils';
 import type { Metadata } from 'next';
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import type { PageRow } from '@/src/lib/data/minimal_pages_schema';
-
-interface AboutPageCmsContent {
-  hero?: { headline?: string };
-  bio_section?: { title?: string; text?: string };
-  philosophy_section?: { title?: string; text?: string };
-  relatedFaqs?: FAQItem[];
-  [key: string]: any;
-}
+import { getFeaturedTestimonials, type HomepageTestimonial } from '@/src/lib/data/testimonials';
+import HeroCtaButton from '@/src/components/common/hero-cta-button';
 
 const SLUG = 'about';
 
-// Renders individual FAQ answer blocks
-const BlockRenderer: React.FC<{ block: FAQAnswerBlock }> = ({ block }) => {
-  switch (block.type) {
-    case 'header': {
-      const level =
-        block.data.level && block.data.level >= 1 && block.data.level <= 6
-          ? `h${block.data.level}`
-          : 'h3';
-      return (
-        <Heading
-          as={level as any}
-          size={level === 'h3' ? 'md' : 'sm'}
-          my={3}
-        >
-          {block.data.text}
-        </Heading>
-      );
-    }
-    case 'paragraph':
-      return (
-        <Text my={2} lineHeight="tall">
-          {block.data.text}
-        </Text>
-      );
-    case 'list': {
-      const ListComponent =
-        block.data.style === 'ordered' ? OrderedList : UnorderedList;
-      return (
-        <ListComponent spacing={1} my={2} pl={5}>
-          {Array.isArray(block.data.items) &&
-            block.data.items.map((item: string, index: number) => (
-              <ListItem key={index}>{item}</ListItem>
-            ))}
-        </ListComponent>
-      );
-    }
-    default:
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(
-          `Unsupported FAQ answer block type on About page: ${block.type}`,
-          block.data
-        );
-        return (
-          <Box
-            as="pre"
-            p={2}
-            borderWidth="1px"
-            my={1}
-            borderRadius="md"
-            fontSize="xs"
-            bg="gray.50"
-          >
-            <code>{JSON.stringify(block, null, 2)}</code>
-          </Box>
-        );
-      }
-      return null;
-  }
-};
+// --- Type Definitions ---
+interface AboutPageCmsContent {
+  hero?: {
+    headline?: string;
+    subheadline?: string;
+    image_url?: string;
+    image_alt?: string;
+  };
+  main_content?: {
+    blocks: ContentBlock[];
+  };
+  cta_section?: {
+    headline?: string;
+    subheadline?: string;
+    cta_text?: string;
+    cta_href?: string;
+  };
+  [key: string]: unknown;
+}
 
-const MarkdownComponents = {}; // If any markdown-specific overrides are needed
+interface ContentBlock {
+  type: string;
+  data: {
+    level?: number;
+    text?: string;
+    [key: string]: unknown;
+  };
+}
 
-export default async function AboutPage() {
-  // Cast the fetched page row so TS knows its fields are strings
-  const pageData = (await getPageContentBySlug(SLUG)) as PageRow | null;
-  const navigablePages = (await getNavigablePages()) as NavigablePageInfo[];
+interface AboutPageProps {
+  params: unknown;
+}
+
+// --- Page Component ---
+export default async function AboutPage({ params: _params }: AboutPageProps) {
+  const [pageCmsData, navigablePages, featuredTestimonials] = await Promise.all([
+    getPageBySlug(SLUG),
+    getNavigablePages(),
+    getFeaturedTestimonials(3),
+  ]);
 
   let previousPageLink: PrevNextNavLinkInfo | undefined;
   let nextPageLink: PrevNextNavLinkInfo | undefined;
 
-  if (pageData) {
+  if (pageCmsData) {
     const currentPageIndex = navigablePages.findIndex(
-      (p: NavigablePageInfo) => p.slug === pageData.slug
+      (p: NavigablePageInfo) => p.slug === pageCmsData.slug,
     );
     if (currentPageIndex !== -1) {
       if (currentPageIndex > 0) {
@@ -135,150 +93,113 @@ export default async function AboutPage() {
     }
   }
 
-  if (!pageData) {
+  if (!pageCmsData) {
     return (
       <Layout>
-        <Section id="error-about" py={{ base: 16, md: 24 }} textAlign="center">
-          <Heading as="h1" size="2xl">
-            Page Not Found
-          </Heading>
-          <Text>The content for the About page could not be loaded.</Text>
+        <Section id="about-error" py={{ base: 16, md: 24 }} textAlign="center">
+          <Heading as="h1" size="2xl">About Page Not Found</Heading>
+          <Text>We&apos;re sorry, but the content for this page could not be loaded.</Text>
         </Section>
-        <PrevNextNavigation
-          previousPage={previousPageLink}
-          nextPage={nextPageLink}
-        />
       </Layout>
     );
   }
 
-  // Cast JSONB content to our CMS shape
-  const content = pageData.content as AboutPageCmsContent | null;
-  const relatedFaqs: FAQItem[] | undefined = content?.relatedFaqs;
+  const cmsContent = pageCmsData.content as AboutPageCmsContent | null;
+  const pageTitle = pageCmsData.title || 'About Us';
 
   return (
     <Layout>
       <Section
-        id={pageData.slug}
+        id={pageCmsData.slug}
         py={{ base: 12, md: 20 }}
         px={{ base: 4, md: 8 }}
         as="article"
       >
-        <VStack spacing={8} alignItems="stretch" maxW="container.lg" mx="auto">
-          <Heading as="h1" size="3xl" mb={6} textAlign="center">
-            {content?.hero?.headline || pageData.title}
-          </Heading>
-
-          {content?.bio_section && (
-            <Box>
-              <Heading as="h2" size="xl" mb={3}>
-                {content.bio_section.title || 'My Journey'}
-              </Heading>
-              <Text lineHeight="tall" whiteSpace="pre-line">
-                {content.bio_section.text}
+        <VStack spacing={12} alignItems="stretch">
+          <Box textAlign="center" maxW="3xl" mx="auto">
+            <Heading as="h1" size="3xl" mb={4}>{pageTitle}</Heading>
+            {cmsContent?.hero?.subheadline && (
+              <Text fontSize="xl" color="muted.foreground">
+                {cmsContent.hero.subheadline}
               </Text>
+            )}
+          </Box>
+
+          {cmsContent?.hero?.image_url && (
+            <Image
+              src={cmsContent.hero.image_url}
+              alt={cmsContent.hero.image_alt || 'About Coriyon’s Studio'}
+              borderRadius="lg"
+              boxShadow="lg"
+              maxH="500px"
+              w="full"
+              objectFit="cover"
+            />
+          )}
+
+          {cmsContent?.main_content?.blocks && (
+            <Box maxW="container.md" mx="auto" className="prose" sx={{'.prose': { all: 'revert'}}}>
+                {cmsContent.main_content.blocks.map((block: ContentBlock, index: number) => {
+                    if (block.type === 'header') {
+                        const level = `h${String(block.data.level || 2)}` as 'h1'|'h2'|'h3'|'h4'|'h5'|'h6';
+                        return <Heading key={index} as={level} size="xl" mt={8} mb={4}>{block.data.text}</Heading>
+                    }
+                    if (block.type === 'paragraph') {
+                        return <Text key={index} fontSize="lg" lineHeight="tall" my={4}>{block.data.text}</Text>
+                    }
+                    return null;
+                })}
             </Box>
           )}
 
-          {content?.philosophy_section && (
-            <Box mt={8}>
-              <Heading as="h2" size="xl" mb={3}>
-                {content.philosophy_section.title || 'Design Philosophy'}
+          {featuredTestimonials.length > 0 && (
+            <Section variant="subtle" py={{ base: 12, md: 20 }}>
+              <Heading as="h2" size="2xl" mb={10} textAlign="center">
+                What Our Clients Say
               </Heading>
-              <Text lineHeight="tall" whiteSpace="pre-line">
-                {content.philosophy_section.text}
-              </Text>
-            </Box>
-          )}
-
-          {relatedFaqs && relatedFaqs.length > 0 && (
-            <Box mt={12} pt={8} borderTopWidth="1px" borderColor="border">
-              <Heading as="h2" size="xl" mb={6} textAlign="center">
-                Frequently Asked Questions
-              </Heading>
-              <Accordion
-                allowMultiple
-                defaultIndex={relatedFaqs.length > 1 ? [] : [0]}
-                maxW="container.md"
-                mx="auto"
-              >
-                {relatedFaqs.map((faq: FAQItem) => (
-                  <AccordionItem key={faq.id} mb={2}>
-                    <h2>
-                      <AccordionButton
-                        _expanded={{ bg: 'blue.600', color: 'white' }}
-                      >
-                        <Box
-                          as="span"
-                          flex="1"
-                          textAlign="left"
-                          fontWeight="semibold"
-                          fontSize="lg"
-                        >
-                          {faq.question}
-                        </Box>
-                        <AccordionIcon />
-                      </AccordionButton>
-                    </h2>
-                    <AccordionPanel
-                      pb={4}
-                      pt={4}
-                      borderLeftWidth="1px"
-                      borderRightWidth="1px"
-                      borderBottomWidth="1px"
-                      borderColor="border"
-                    >
-                      {faq.answer?.blocks &&
-                      Array.isArray(faq.answer.blocks) ? (
-                        faq.answer.blocks.map(
-                          (block: FAQAnswerBlock, index: number) => (
-                            <BlockRenderer
-                              key={block.id || `faq-${faq.id}-block-${index}`}
-                              block={block}
-                            />
-                          )
-                        )
-                      ) : faq.answer?.markdown ? (
-                        <ReactMarkdown
-                          components={MarkdownComponents}
-                          remarkPlugins={[remarkGfm]}
-                        >
-                          {faq.answer.markdown}
-                        </ReactMarkdown>
-                      ) : (
-                        <Text color="muted.foreground">
-                          Answer not available.
-                        </Text>
-                      )}
-                    </AccordionPanel>
-                  </AccordionItem>
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={8}>
+                {featuredTestimonials.map((testimonial: HomepageTestimonial) => (
+                  <VStack key={testimonial.id} spacing={4} textAlign="center" p={6} bg="background" borderRadius="md" boxShadow="md">
+                    <Avatar src={testimonial.avatar_url || undefined} name={testimonial.name} size="xl" />
+                    <Text fontStyle="italic" fontSize="lg">&quot;{testimonial.quote}&quot;</Text>
+                    <Box>
+                        <Text fontWeight="bold">{testimonial.name}</Text>
+                        <Text fontSize="sm" color="muted.foreground">{testimonial.role}, {testimonial.company_name}</Text>
+                    </Box>
+                  </VStack>
                 ))}
-              </Accordion>
-            </Box>
+              </SimpleGrid>
+            </Section>
           )}
+
+          {cmsContent?.cta_section && (
+            <Section variant="inverse" py={{ base: 16, md: 24 }}>
+                <VStack spacing={6} textAlign="center">
+                    <Heading as="h2" size="2xl" color="background">{cmsContent.cta_section.headline}</Heading>
+                    <Text fontSize="xl" color="background" opacity={0.8} maxW="xl">{cmsContent.cta_section.subheadline}</Text>
+                    <HeroCtaButton href={cmsContent.cta_section.cta_href || '#'} colorScheme="gray">{cmsContent.cta_section.cta_text || 'Get In Touch'}</HeroCtaButton>
+                </VStack>
+            </Section>
+          )}
+
         </VStack>
       </Section>
 
-      <PrevNextNavigation
-        previousPage={previousPageLink}
-        nextPage={nextPageLink}
-      />
+      <PrevNextNavigation previousPage={previousPageLink} nextPage={nextPageLink} />
     </Layout>
   );
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  // Cast so TS knows title, meta_description, og_image_url are strings
-  const pageData = (await getPageContentBySlug(SLUG)) as PageRow | null;
-  if (!pageData) {
-    return {
-      title: 'About | Coriyon’s Studio',
-    };
-  }
-  const title = pageData.title;
-  const description = pageData.meta_description ?? undefined;
-  const ogImageUrl = pageData.og_image_url ?? undefined;
+  const pageData = await getPageBySlug(SLUG);
 
+  if (!pageData) {
+    return { title: "About | Coriyon's Studio" };
+  }
+
+  const title = pageData.title || "About Coriyon's Studio";
+  const description = pageData.meta_description || "Learn more about Coriyon's Studio, our mission, and our process.";
+  
   return {
     title,
     description,
@@ -286,7 +207,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       url: `/${SLUG}`,
-      images: ogImageUrl ? [{ url: ogImageUrl }] : undefined,
+      images: pageData.og_image_url ? [{ url: pageData.og_image_url }] : undefined,
     },
   };
 }

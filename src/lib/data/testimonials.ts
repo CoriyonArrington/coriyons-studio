@@ -1,5 +1,3 @@
-// src/lib/data/testimonials.ts
-// - Added getAllTestimonials function to fetch all testimonials.
 import { createClient } from '@/src/utils/supabase/server';
 import { unstable_noStore as noStore } from 'next/cache';
 
@@ -10,43 +8,43 @@ export interface HomepageTestimonial {
   role: string | null;
   company_name: string | null;
   avatar_url: string | null;
-  // project_id: string | null; // Optional
-  // Add sort_order if you want to use it for getAllTestimonials display order
-  sort_order?: number | null;
+  sort_order: number | null;
 }
+
+type TestimonialRow = HomepageTestimonial;
 
 export async function getFeaturedTestimonials(limit: number = 3): Promise<HomepageTestimonial[]> {
   noStore();
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const { data, error } = await supabase
     .from('testimonials')
-    .select('id, quote, name, role, company_name, avatar_url, sort_order')
+    .select('*')
     .eq('featured', true)
     .order('sort_order', { ascending: true })
     .limit(limit);
 
-  if (error) {
-    console.error('Error fetching featured testimonials:', error.message);
-    return [];
-  }
-  return data || [];
+    if (error) {
+        console.error('Error fetching featured testimonials:', error.message);
+        return [];
+    }
+  
+    return data as TestimonialRow[];
 }
 
-// New function to get all testimonials
 export async function getAllTestimonials(): Promise<HomepageTestimonial[]> {
   noStore();
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const { data, error } = await supabase
     .from('testimonials')
-    .select('id, quote, name, role, company_name, avatar_url, sort_order')
-    // No .eq('featured', true) filter, so it fetches all
-    .order('sort_order', { ascending: true }); // Order all testimonials by sort_order
+    .select('*')
+    .order('sort_order', { ascending: true });
 
-  if (error) {
-    console.error('Error fetching all testimonials:', error.message);
-    return [];
-  }
-  return data || [];
+    if (error) {
+        console.error('Error fetching all testimonials:', error.message);
+        return [];
+    }
+  
+    return data as TestimonialRow[];
 }

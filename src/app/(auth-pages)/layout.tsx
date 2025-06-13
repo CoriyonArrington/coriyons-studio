@@ -1,4 +1,7 @@
-export default async function Layout({
+// ATTEMPT 1: Removing the unnecessary 'async' keyword from the Layout component
+// to resolve the '@typescript-eslint/require-await' error.
+
+export default function Layout({
   children,
 }: {
   children: React.ReactNode;

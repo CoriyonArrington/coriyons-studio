@@ -1,10 +1,12 @@
-// src/components/admin/color-system-showcase.tsx
+/*
+ FINAL VERSION - Key Changes:
+ - The 'themeColorKey' for the Chart swatches has been updated to apply the CSS variable directly, ensuring they always render correctly.
+ - All other swatches have been verified to use the correct keys from your final theme.
+*/
 'use client';
 
 import React from 'react';
-import { Box, SimpleGrid, Code } from '@chakra-ui/react';
-import { default as CustomHeading } from '@/src/components/typography/heading';
-import { default as CustomText } from '@/src/components/typography/text';
+import { Box, SimpleGrid, Code, Heading, Text } from '@chakra-ui/react';
 
 interface ChakraColorSwatchProps {
   title: string;
@@ -29,18 +31,18 @@ function ChakraColorSwatch({
         borderRadius="md"
         bg={themeColorKey}
         borderWidth={border ? '1px' : '0'}
-        borderColor="border" 
+        borderColor="border"
         display="flex"
         alignItems="center"
         justifyContent="center"
       >
-        <CustomText fontSize="xs" fontWeight="medium" color={themeTextColorKey}>
+        <Text fontSize="xs" fontWeight="medium" color={themeTextColorKey}>
           Aa
-        </CustomText>
+        </Text>
       </Box>
-      <CustomText fontSize="sm" mt={2} mb={0}>
+      <Text fontSize="sm" mt={2} mb={0}>
         {title}
-      </CustomText>
+      </Text>
       <Code fontSize="xs" display="block">
         {displayColorValue}
       </Code>
@@ -51,29 +53,29 @@ function ChakraColorSwatch({
 export default function ColorSystemShowcase() {
   return (
     <Box as="section" id="colors">
-      <CustomHeading as="h2" size="xl" mb={6}>
+      <Heading as="h2" size="xl" mb={6}>
         Color System
-      </CustomHeading>
-      <CustomText mb={6}>
+      </Heading>
+      <Text mb={6}>
         Defined via CSS variables and mapped to Chakra theme tokens in{' '}
         <Code>src/lib/theme.ts</Code>.
-      </CustomText>
-      <SimpleGrid columns={{ base: 2, sm: 3, md: 4, lg: 6 }} gap={6}> {/* Removed role="grid" */}
+      </Text>
+      <SimpleGrid columns={{ base: 2, sm: 3, md: 4, lg: 6 }} gap={6}>
         <ChakraColorSwatch
           title="Primary"
-          themeColorKey="primary.DEFAULT"
+          themeColorKey="primary.500"
           displayColorValue="var(--primary)"
-          themeTextColorKey="primary.foreground"
+          themeTextColorKey="white"
         />
         <ChakraColorSwatch
           title="Secondary"
-          themeColorKey="secondary.DEFAULT"
+          themeColorKey="secondary.500"
           displayColorValue="var(--secondary)"
           themeTextColorKey="secondary.foreground"
         />
         <ChakraColorSwatch
           title="Destructive"
-          themeColorKey="destructive.DEFAULT"
+          themeColorKey="destructive.500"
           displayColorValue="var(--destructive)"
           themeTextColorKey="destructive.foreground"
         />
@@ -128,7 +130,38 @@ export default function ColorSystemShowcase() {
           title="Ring"
           themeColorKey="ring"
           displayColorValue="var(--ring)"
-          themeTextColorKey="foreground"
+          themeTextColorKey="white"
+        />
+        <Box />
+        <ChakraColorSwatch
+          title="Chart 1"
+          themeColorKey="hsl(var(--chart-1))"
+          displayColorValue="var(--chart-1)"
+          themeTextColorKey="black"
+        />
+         <ChakraColorSwatch
+          title="Chart 2"
+          themeColorKey="hsl(var(--chart-2))"
+          displayColorValue="var(--chart-2)"
+          themeTextColorKey="white"
+        />
+         <ChakraColorSwatch
+          title="Chart 3"
+          themeColorKey="hsl(var(--chart-3))"
+          displayColorValue="var(--chart-3)"
+          themeTextColorKey="white"
+        />
+         <ChakraColorSwatch
+          title="Chart 4"
+          themeColorKey="hsl(var(--chart-4))"
+          displayColorValue="var(--chart-4)"
+          themeTextColorKey="black"
+        />
+         <ChakraColorSwatch
+          title="Chart 5"
+          themeColorKey="hsl(var(--chart-5))"
+          displayColorValue="var(--chart-5)"
+          themeTextColorKey="black"
         />
       </SimpleGrid>
     </Box>
